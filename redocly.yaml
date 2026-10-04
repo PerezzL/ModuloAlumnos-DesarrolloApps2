@@ -1,0 +1,7 @@
+extends:
+  - recommended
+rules:
+  # El contrato es interno entre front y BFF: no lleva licencia
+  info-license: off
+  # El server de localhost es a propósito (BFF local)
+  no-server-example.com: off
