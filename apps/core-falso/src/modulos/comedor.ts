@@ -7,7 +7,11 @@ export function moduloComedor() {
   const router = Router();
   router.get('/api/v1/reservations/me', (req, res) => {
     res.json(
-      esDemo(req) ? fixture('dining/reservations-me.provisional.json') : { reservations: [] },
+      fixture(
+        esDemo(req)
+          ? 'dining/reservations-me.provisional.json'
+          : 'dining/reservations-me-vacio.provisional.json',
+      ),
     );
   });
   return router;
