@@ -1,7 +1,19 @@
-import type { ItemCalendario } from '@uadenet/api-types';
+import type { Asignatura, ItemCalendario } from '@uadenet/api-types';
 import { inicioDelDia, type Rango, solapaDias } from '../../calendario/rango';
 import { idOpaco, parsearOrigen } from '../comun';
-import { TurnosExamen } from './academico.origen';
+import type {
+  Correlativa,
+  CursoOfertado,
+  InscripcionAlumno,
+  PeriodoAcademico,
+} from './academico.modelo';
+import {
+  Correlatividades,
+  Cursos,
+  InscripcionesAlumno,
+  Periodos,
+  TurnosExamen,
+} from './academico.origen';
 
 /**
  * Turnos de examen → ítems de calendario de todo el día. `inicio` y `fin` son las 00:00 del
@@ -20,4 +32,48 @@ export function turnosAItems(datos: unknown, rango: Rango): ItemCalendario[] {
       todoElDia: true,
       lugar: null,
     }));
+}
+
+const asignatura = (a: { id: string | number; codigo?: string; nombre: string }): Asignatura => ({
+  id: idOpaco(a.id),
+  ...(a.codigo !== undefined && { codigo: a.codigo }),
+  nombre: a.nombre,
+});
+
+export function aPeriodos(datos: unknown): PeriodoAcademico[] {
+  return parsearOrigen('GESTION_ACADEMICA', Periodos, datos).map((p) => ({
+    id: idOpaco(p.id),
+    nombre: p.nombre,
+    ...(p.inscripcionDesde !== undefined && { inscripcionDesde: p.inscripcionDesde }),
+    ...(p.inscripcionHasta !== undefined && { inscripcionHasta: p.inscripcionHasta }),
+  }));
+}
+
+export function aCursos(datos: unknown): CursoOfertado[] {
+  return parsearOrigen('GESTION_ACADEMICA', Cursos, datos).map((c) => ({
+    cursoId: idOpaco(c.id),
+    ...(c.comision !== undefined && { nombre: c.comision }),
+    cupoMaximo: c.cupoMaximo,
+    inscriptosActivos: c.inscriptosActivos,
+    asignatura: asignatura(c.asignatura),
+  }));
+}
+
+export function aCorrelativas(datos: unknown): Correlativa[] {
+  return parsearOrigen('GESTION_ACADEMICA', Correlatividades, datos).map((c) => ({
+    asignaturaId: idOpaco(c.asignaturaId),
+    nombre: c.nombre,
+    tipo: c.tipo,
+  }));
+}
+
+export function aInscripciones(datos: unknown): InscripcionAlumno[] {
+  return parsearOrigen('GESTION_ACADEMICA', InscripcionesAlumno, datos).map((i) => ({
+    cursoId: idOpaco(i.cursoId),
+    asignatura: asignatura(i.asignatura),
+    periodo: { id: idOpaco(i.periodo.id), nombre: i.periodo.nombre },
+    notaFinal: i.notaFinal ?? null,
+    estado: i.estado,
+    ...(i.fecha !== undefined && { fecha: i.fecha }),
+  }));
 }

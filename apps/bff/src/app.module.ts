@@ -7,10 +7,18 @@ import { LoggerModule } from './comun/logger.module';
 import { ConfigModule } from './config/config.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { HealthController } from './health/health.controller';
+import { InscripcionModule } from './inscripcion/inscripcion.module';
 import { PerfilModule } from './perfil/perfil.module';
 
 @Module({
-  imports: [ConfigModule, LoggerModule, GatewayModule, PerfilModule, CalendarioModule],
+  imports: [
+    ConfigModule,
+    LoggerModule,
+    GatewayModule,
+    PerfilModule,
+    CalendarioModule,
+    InscripcionModule,
+  ],
   controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: ProblemaFilter },

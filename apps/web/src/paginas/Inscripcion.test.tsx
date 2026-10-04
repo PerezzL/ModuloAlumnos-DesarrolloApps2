@@ -1,0 +1,56 @@
+import { screen, within } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ofertaBase } from '@/test/inscripcion';
+import { renderApp } from '@/test/render';
+import { BFF, reiniciarCore, servidor } from '@/test/servidor';
+
+const conOferta = (cambios: Partial<ReturnType<typeof ofertaBase>>) =>
+  servidor.use(
+    http.get(`${BFF}/inscripcion/oferta`, () => HttpResponse.json({ ...ofertaBase(), ...cambios })),
+  );
+
+describe('inscripción: oferta', () => {
+  beforeEach(() => reiniciarCore(true));
+
+  it('muestra las materias del período con sus comisiones', async () => {
+    renderApp('/academico');
+    expect(
+      await screen.findByRole('heading', { name: 'Oferta del 1° cuatrimestre 2027' }),
+    ).toBeInTheDocument();
+    const comisiones = screen.getByRole('list', {
+      name: 'Comisiones de Algoritmos y Estructuras de Datos',
+    });
+    expect(within(comisiones).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(comisiones).getByText('22/40 inscriptos')).toBeInTheDocument();
+    expect(screen.getByText('3.4.074')).toBeInTheDocument();
+  });
+
+  it('sin materias, estado vacío', async () => {
+    conOferta({ materias: [] });
+    renderApp('/academico');
+    expect(await screen.findByText('No hay materias para inscribirte')).toBeInTheDocument();
+  });
+
+  it('si la oferta no está filtrada por plan, lo avisa', async () => {
+    conOferta({ filtradaPorPlan: false });
+    renderApp('/academico');
+    expect(await screen.findByText(/No pudimos confirmar tu plan/)).toBeInTheDocument();
+  });
+
+  it('si Gestión Académica no responde, error con reintento', async () => {
+    servidor.use(
+      http.get(`${BFF}/inscripcion/oferta`, () =>
+        HttpResponse.json(
+          { title: 'x', status: 503, code: 'UPSTREAM_UNAVAILABLE', modulo: 'GESTION_ACADEMICA' },
+          { status: 503 },
+        ),
+      ),
+    );
+    renderApp('/academico');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /Gestión Académica no está disponible/,
+    );
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+});

@@ -83,6 +83,8 @@ paths:
         con el estado ya resuelto por comisión (inscripto, con cupo, sin cupo, bloqueada por
         correlatividad). El BFF obtiene el `planId` de Backoffice, la oferta y las
         correlatividades del Módulo 9 y las cruza con las inscripciones del alumno.
+        Si Backoffice no devuelve el `planId` (o no responde), la oferta se pide sin filtrar
+        por plan y se informa con `filtradaPorPlan: false`.
         Pantalla: Inscripción a materias (4.3).
       x-fuentes: [Módulo 9, Módulo 8]
       x-estado-fuente: comprometido (filtro planId y asignatura anidada); horarios pedidos
@@ -90,7 +92,9 @@ paths:
         - name: periodoId
           in: query
           required: false
-          description: Período a consultar. Si se omite, se usa el período vigente.
+          description: >
+            Período a consultar. Si se omite, se usa el vigente: el que tiene la inscripción
+            abierta; si no hay, el próximo en abrir; si tampoco, el último que cerró.
           schema: { type: string }
       responses:
         '200':
@@ -100,6 +104,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/OfertaInscripcion'
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404':
+          description: >
+            El `periodoId` pedido no existe, o el Módulo 9 no tiene períodos
+            (`code` `PERIODO_NO_ENCONTRADO`).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
         '502': { $ref: '#/components/responses/ModuloInvalido' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }
         '504': { $ref: '#/components/responses/ModuloTimeout' }
@@ -548,9 +559,15 @@ components:
 
     OfertaInscripcion:
       type: object
-      required: [periodo, inscripcionAbierta, materias]
+      required: [periodo, inscripcionAbierta, filtradaPorPlan, materias]
       properties:
         periodo: { $ref: '#/components/schemas/Periodo' }
+        filtradaPorPlan:
+          type: boolean
+          description: >
+            False si no se conoce el `planId` del alumno (Backoffice no lo devolvió o no
+            respondió): la oferta incluye las comisiones de todos los planes.
+          x-provisional: true
         inscripcionDesde: { type: string, format: date-time }
         inscripcionHasta: { type: string, format: date-time }
         inscripcionAbierta:

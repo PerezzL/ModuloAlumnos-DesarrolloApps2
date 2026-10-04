@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { turnosAItems } from './academico.mapper';
+import {
+  aCorrelativas,
+  aCursos,
+  aInscripciones,
+  aPeriodos,
+  turnosAItems,
+} from './academico.mapper';
 
 const turnos = fixture('academic/turnos-examen.provisional.json');
 const octubre = { desde: '2026-10-01', hasta: '2026-10-31' };
@@ -45,5 +51,67 @@ describe('mapper de Gestión Académica: turnos de examen → calendario', () =>
         modulo: 'GESTION_ACADEMICA',
       });
     }
+  });
+});
+
+describe('mapper de Gestión Académica: datos para la inscripción', () => {
+  it('períodos con su ventana de inscripción', () => {
+    const periodos = aPeriodos(fixture('academic/periodos.provisional.json'));
+    expect(periodos.at(-1)).toEqual({
+      id: '2027-1',
+      nombre: '1° cuatrimestre 2027',
+      inscripcionDesde: '2026-09-28T12:00:00.000Z',
+      inscripcionHasta: '2026-12-19T02:59:59.000Z',
+    });
+  });
+
+  it('un período sin ventana no la inventa', () => {
+    expect(aPeriodos([{ id: 7, nombre: 'Verano' }])).toEqual([{ id: '7', nombre: 'Verano' }]);
+  });
+
+  it('cursos con asignatura anidada, cupo y nombre de comisión', () => {
+    const cursos = aCursos(fixture('academic/cursos.provisional.json'));
+    expect(cursos.find((c) => c.cursoId === 'curso-so-2027-1-a')).toEqual({
+      cursoId: 'curso-so-2027-1-a',
+      nombre: 'A - Noche',
+      cupoMaximo: 45,
+      inscriptosActivos: 10,
+      asignatura: { id: 'asig-so', codigo: '3.4.074', nombre: 'Sistemas Operativos' },
+    });
+  });
+
+  it('ids numéricos se tratan como strings opacos', () => {
+    const [curso] = aCursos([
+      { id: 42, cupoMaximo: 1, inscriptosActivos: 0, asignatura: { id: 9, nombre: 'X' } },
+    ]);
+    expect(curso).toMatchObject({ cursoId: '42', asignatura: { id: '9', nombre: 'X' } });
+  });
+
+  it('correlatividades', () => {
+    const todas = fixture<Record<string, unknown>>('academic/correlatividades.provisional.json');
+    expect(aCorrelativas(todas['asig-so'])).toEqual([
+      { asignaturaId: 'asig-prog2', nombre: 'Programación II', tipo: 'REGULAR' },
+      { asignaturaId: 'asig-discreta', nombre: 'Matemática Discreta', tipo: 'APROBADA' },
+    ]);
+  });
+
+  it('inscripciones del alumno; sin nota final queda null', () => {
+    const inscripciones = aInscripciones(fixture('academic/inscripciones-alumno.provisional.json'));
+    expect(inscripciones[0]).toEqual({
+      cursoId: 'curso-prog1-2025-2-a',
+      asignatura: { id: 'asig-prog1', codigo: '3.4.069', nombre: 'Programación I' },
+      periodo: { id: '2025-2', nombre: '2° cuatrimestre 2025' },
+      notaFinal: 8,
+      estado: 'APROBADO',
+      fecha: '2025-07-22T13:10:00.000Z',
+    });
+    expect(inscripciones.find((i) => i.estado === 'LIBRE')?.notaFinal).toBeNull();
+  });
+
+  it('un estado desconocido es 502 de GESTION_ACADEMICA', () => {
+    const [inscripcion] = fixture<object[]>('academic/inscripciones-alumno.provisional.json');
+    expect(() => aInscripciones([{ ...inscripcion, estado: 'PROMOCIONADO' }])).toThrow(
+      ProblemaError,
+    );
   });
 });

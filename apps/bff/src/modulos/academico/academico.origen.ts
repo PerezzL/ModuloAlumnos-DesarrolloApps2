@@ -18,3 +18,78 @@ export const TurnosExamen = z.array(
     })
     .passthrough(),
 );
+
+const id = z.union([z.string(), z.number()]);
+const instante = z.string().datetime({ offset: true });
+
+const Asignatura = z
+  .object({ id, codigo: z.string().optional(), nombre: z.string() })
+  .passthrough();
+
+/**
+ * Respuesta de `GET /api/planificacion/periodos`. Implementado, pero sin respuesta de ejemplo:
+ * campos PROVISIONALES (fixture `academic/periodos.provisional.json`).
+ */
+export const Periodos = z.array(
+  z
+    .object({
+      id,
+      nombre: z.string(),
+      inscripcionDesde: instante.optional(),
+      inscripcionHasta: instante.optional(),
+    })
+    .passthrough(),
+);
+
+/**
+ * Respuesta de `GET /api/planificacion/cursos?periodoId=&planId=`. Comprometido: filtro
+ * `planId` y `asignatura` anidada. Horarios pedidos, sin confirmar. Campos PROVISIONALES
+ * (fixture `academic/cursos.provisional.json`).
+ */
+export const Cursos = z.array(
+  z
+    .object({
+      id,
+      comision: z.string().optional(),
+      sede: z.string().nullable().optional(),
+      cupoMaximo: z.number().int(),
+      inscriptosActivos: z.number().int(),
+      asignatura: Asignatura,
+    })
+    .passthrough(),
+);
+
+/**
+ * Respuesta de `GET /api/academica/asignaturas/{asignaturaId}/correlatividades`.
+ * Implementado; forma PROVISIONAL (fixture `academic/correlatividades.provisional.json`).
+ */
+export const Correlatividades = z.array(
+  z
+    .object({ asignaturaId: id, nombre: z.string(), tipo: z.enum(['REGULAR', 'APROBADA']) })
+    .passthrough(),
+);
+
+/**
+ * Respuesta de `GET /api/planificacion/alumnos/{alumnoId}/inscripciones?periodoId=`.
+ * Comprometido; forma PROVISIONAL (fixture `academic/inscripciones-alumno.provisional.json`).
+ */
+export const InscripcionesAlumno = z.array(
+  z
+    .object({
+      cursoId: id,
+      asignatura: Asignatura,
+      periodo: z.object({ id, nombre: z.string() }).passthrough(),
+      notaFinal: z.number().nullable().optional(),
+      estado: z.enum([
+        'INSCRIPTO',
+        'CURSANDO',
+        'BAJA',
+        'REGULAR',
+        'LIBRE',
+        'APROBADO',
+        'DESAPROBADO',
+      ]),
+      fecha: instante.optional(),
+    })
+    .passthrough(),
+);
