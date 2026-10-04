@@ -6,9 +6,10 @@ import { LoggerModule } from './comun/logger.module';
 import { ConfigModule } from './config/config.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { HealthController } from './health/health.controller';
+import { PerfilModule } from './perfil/perfil.module';
 
 @Module({
-  imports: [ConfigModule, LoggerModule, GatewayModule],
+  imports: [ConfigModule, LoggerModule, GatewayModule, PerfilModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: ProblemaFilter },

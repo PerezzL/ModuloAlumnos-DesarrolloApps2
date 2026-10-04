@@ -38,7 +38,7 @@ function iniciales(nombre?: string, apellido?: string, email?: string) {
 
 function DatosAlumno() {
   const { estado } = useSesion();
-  const { data: perfil } = usePerfil();
+  const { data: perfil, isError } = usePerfil();
   const email = estado.tipo === 'autenticado' ? estado.usuario.email : undefined;
   // Los datos de Backoffice son provisionales: si no llegan, se muestra el mail
   const nombre = [perfil?.nombre, perfil?.apellido].filter(Boolean).join(' ') || email;
@@ -51,6 +51,11 @@ function DatosAlumno() {
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-white">{nombre}</p>
         {perfil?.carrera && <p className="truncate text-[11px] text-white/50">{perfil.carrera}</p>}
+        {isError && (
+          <p role="status" className="truncate text-[11px] text-white/50">
+            No pudimos cargar tus datos
+          </p>
+        )}
         {perfil?.legajo && (
           <p className="pt-1 text-[10px]">
             <span className="font-medium uppercase tracking-[0.25px] text-white/30">Legajo</span>{' '}

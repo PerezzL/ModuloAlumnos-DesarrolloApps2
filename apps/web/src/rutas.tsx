@@ -5,6 +5,7 @@ import { EnConstruccion } from '@/paginas/EnConstruccion';
 import { Inicio } from '@/paginas/Inicio';
 import { Login } from '@/paginas/Login';
 import { NoEncontrada } from '@/paginas/NoEncontrada';
+import { Perfil } from '@/paginas/Perfil';
 
 export const rutas: RouteObject[] = [
   { path: '/login', element: <Login /> },
@@ -20,7 +21,7 @@ export const rutas: RouteObject[] = [
           { path: 'calendario', element: <EnConstruccion titulo="Calendario" /> },
           { path: 'cuenta-corriente', element: <EnConstruccion titulo="Cuenta Corriente" /> },
           { path: 'notificaciones', element: <EnConstruccion titulo="Notificaciones" /> },
-          { path: 'perfil', element: <EnConstruccion titulo="Perfil" /> },
+          { path: 'perfil', element: <Perfil /> },
           { path: '*', element: <NoEncontrada /> },
         ],
       },

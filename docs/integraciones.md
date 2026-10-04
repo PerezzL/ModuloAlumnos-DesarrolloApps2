@@ -199,6 +199,13 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 
 Sin `planId` no se puede filtrar la oferta de RF2.
 
+Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/`):
+
+- El id y el mail salen del token de CORE; de Backoffice solo se toman nombre, apellido,
+  legajo, carrera y `planId`. Todos opcionales: si no vienen, el perfil sale sin ellos.
+- Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale solo con id y mail.
+  Suposición nuestra, sin confirmar con el Módulo 8.
+
 Fixture: `backoffice/users.provisional.json` con `id`, `email`, `nombre`, `apellido`,
 `legajo`, `carrera`, `planId` y `status`, todos supuestos.
 
