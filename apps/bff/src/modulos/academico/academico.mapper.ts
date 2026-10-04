@@ -1,4 +1,4 @@
-import type { Asignatura, ItemCalendario } from '@uadenet/api-types';
+import type { Asignatura, Inscripcion, ItemCalendario } from '@uadenet/api-types';
 import { inicioDelDia, type Rango, solapaDias } from '../../calendario/rango';
 import { idOpaco, parsearOrigen } from '../comun';
 import type {
@@ -10,6 +10,7 @@ import type {
 import {
   Correlatividades,
   Cursos,
+  InscripcionCreada,
   InscripcionesAlumno,
   Periodos,
   TurnosExamen,
@@ -83,4 +84,14 @@ export function aInscripciones(datos: unknown): InscripcionAlumno[] {
     estado: i.estado,
     ...(i.fecha !== undefined && { fecha: i.fecha }),
   }));
+}
+
+export function aInscripcion(datos: unknown): Inscripcion {
+  const i = parsearOrigen('GESTION_ACADEMICA', InscripcionCreada, datos);
+  return {
+    ...(i.id !== undefined && { id: idOpaco(i.id) }),
+    cursoId: idOpaco(i.cursoId),
+    estado: i.estado,
+    ...(i.fecha !== undefined && { fecha: i.fecha }),
+  };
 }

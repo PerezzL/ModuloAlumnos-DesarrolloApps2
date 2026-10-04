@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { OfertaInscripcion } from '@uadenet/api-types';
+import type { Inscripcion, OfertaInscripcion } from '@uadenet/api-types';
 import type { Alumno } from '../auth/alumno.decorator';
 import { AcademicoAdapter } from '../modulos/academico/academico.adapter';
 import { BackofficeAdapter } from '../modulos/backoffice/backoffice.adapter';
@@ -38,6 +38,11 @@ export class InscripcionService {
       filtradaPorPlan: planId !== null,
       ahora,
     });
+  }
+
+  /** El id del alumno sale del token; el portal no guarda la inscripción. */
+  inscribir(alumno: Alumno, cursoId: string): Promise<Inscripcion> {
+    return this.academico.inscribir(alumno.id, cursoId);
   }
 
   /**

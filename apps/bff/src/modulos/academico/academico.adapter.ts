@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { ItemCalendario } from '@uadenet/api-types';
+import type { Inscripcion, ItemCalendario } from '@uadenet/api-types';
 import type { Rango } from '../../calendario/rango';
 import { CacheTtl } from '../../comun/cache';
+import { ProblemaError } from '../../comun/problema';
 import { GatewayClient, RespuestaModuloError } from '../../gateway/gateway.client';
 import type {
   Correlativa,
@@ -12,6 +13,7 @@ import type {
 import {
   aCorrelativas,
   aCursos,
+  aInscripcion,
   aInscripciones,
   aPeriodos,
   turnosAItems,
@@ -74,5 +76,28 @@ export class AcademicoAdapter {
         throw error;
       }
     });
+  }
+
+  /**
+   * Comanda la inscripción. El Módulo 9 es la fuente de verdad y vuelve a validar todo.
+   * No se reintenta: el GatewayClient nunca repite un POST.
+   */
+  async inscribir(alumnoId: string, cursoId: string): Promise<Inscripcion> {
+    try {
+      return aInscripcion(
+        await this.gateway.post(
+          'GESTION_ACADEMICA',
+          `/planificacion/cursos/${encodeURIComponent(cursoId)}/inscripciones`,
+          { alumnoId },
+        ),
+      );
+    } catch (error) {
+      if (error instanceof RespuestaModuloError && error.estadoOrigen === 404) {
+        throw new ProblemaError(404, 'CURSO_NO_ENCONTRADO', 'La comisión no existe', {
+          modulo: 'GESTION_ACADEMICA',
+        });
+      }
+      throw error;
+    }
   }
 }

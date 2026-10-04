@@ -4,6 +4,7 @@ import { ProblemaError } from '../../comun/problema';
 import {
   aCorrelativas,
   aCursos,
+  aInscripcion,
   aInscripciones,
   aPeriodos,
   turnosAItems,
@@ -158,5 +159,23 @@ describe('mapper de Gestión Académica: datos para la inscripción', () => {
     expect(() => aInscripciones([{ ...inscripcion, estado: 'PROMOCIONADO' }])).toThrow(
       ProblemaError,
     );
+  });
+});
+
+describe('mapper de Gestión Académica: inscripción creada', () => {
+  it('201 del Módulo 9 → Inscripcion (sin el alumnoId)', () => {
+    expect(aInscripcion(fixture('academic/inscripcion-creada.provisional.json'))).toEqual({
+      id: 'c0a8f3d2-5b1e-4f6a-9d7c-2e3f4a5b6c7d',
+      cursoId: 'curso-so-2027-1-a',
+      estado: 'INSCRIPTO',
+      fecha: '2026-10-04T15:00:00.000Z',
+    });
+  });
+
+  it('sin id ni fecha, no los inventa', () => {
+    expect(aInscripcion({ cursoId: 5, estado: 'INSCRIPTO' })).toEqual({
+      cursoId: '5',
+      estado: 'INSCRIPTO',
+    });
   });
 });

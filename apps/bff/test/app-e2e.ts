@@ -30,6 +30,14 @@ export function prepararE2E() {
         .get(`/api/v1${ruta}`)
         .set('Authorization', `Bearer ${ctx.token}`);
     },
+    /** POST JSON autenticado como ALUMNO */
+    post(ruta: string, body: string | object) {
+      return request(ctx.app.getHttpServer())
+        .post(`/api/v1${ruta}`)
+        .set('Authorization', `Bearer ${ctx.token}`)
+        .set('Content-Type', 'application/json')
+        .send(body);
+    },
   };
 
   beforeAll(async () => {

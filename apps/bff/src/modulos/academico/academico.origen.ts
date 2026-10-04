@@ -105,3 +105,25 @@ export const InscripcionesAlumno = z.array(
     })
     .passthrough(),
 );
+
+/**
+ * Respuesta 201 de `POST /api/planificacion/cursos/{cursoId}/inscripciones`. Implementado,
+ * pero falta qué devuelve en caso de éxito: PROVISIONAL
+ * (fixture `academic/inscripcion-creada.provisional.json`).
+ */
+export const InscripcionCreada = z
+  .object({
+    id: id.optional(),
+    cursoId: id,
+    estado: z.enum([
+      'INSCRIPTO',
+      'CURSANDO',
+      'BAJA',
+      'REGULAR',
+      'LIBRE',
+      'APROBADO',
+      'DESAPROBADO',
+    ]),
+    fecha: instante.optional(),
+  })
+  .passthrough();

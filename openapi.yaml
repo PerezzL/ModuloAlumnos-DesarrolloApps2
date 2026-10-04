@@ -147,9 +147,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Inscripcion'
+        '400':
+          description: Falta `cursoId` o no es un string no vacío (`code` `SOLICITUD_INVALIDA`)
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '404':
-          description: La comisión no existe
+          description: La comisión no existe (`code` `CURSO_NO_ENCONTRADO`)
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }

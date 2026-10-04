@@ -1,15 +1,29 @@
 import type { Comision, MateriaOferta } from '@uadenet/api-types';
 import { BookX, Clock, Info, Lock, MapPin } from 'lucide-react';
+import { useState } from 'react';
 import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
-import { useOferta } from '@/inscripcion/consultas';
+import { Button } from '@/componentes/ui/button';
+import { useAvisar } from '@/componentes/Avisos';
+import { useInscribir, useOferta } from '@/inscripcion/consultas';
 import { EstadoComision } from '@/inscripcion/EstadoComision';
+import { ResultadoInscripcion } from '@/inscripcion/ResultadoInscripcion';
 import { VentanaInscripcion } from '@/inscripcion/VentanaInscripcion';
+
+interface Eleccion {
+  materia: MateriaOferta;
+  comision: Comision;
+}
 
 /** Inscripción a materias (4.3): oferta del plan agrupada por materia. */
 export function Inscripcion() {
   const { data, error, isPending, refetch } = useOferta();
+  const inscribir = useInscribir();
+  const avisar = useAvisar();
+  const [confirmando, setConfirmando] = useState<Eleccion | null>(null);
+  // Comisión del último envío: el resultado se muestra en su materia
+  const [enviada, setEnviada] = useState<Eleccion | null>(null);
 
   if (isPending) return <Cargando texto="Cargando la oferta…" />;
   if (error) {
@@ -17,6 +31,18 @@ export function Inscripcion() {
       <ErrorCarga error={error} fuente="La oferta de materias" reintentar={() => void refetch()} />
     );
   }
+
+  const enviar = (eleccion: Eleccion) => {
+    setConfirmando(null);
+    setEnviada(eleccion);
+    inscribir.mutate(eleccion.comision.cursoId, {
+      onSuccess: () =>
+        avisar({
+          titulo: 'Te inscribiste',
+          mensaje: `${eleccion.materia.asignatura.nombre}, comisión ${nombreComision(eleccion.comision)}.`,
+        }),
+    });
+  };
 
   return (
     <section className="flex max-w-5xl flex-col gap-4" aria-labelledby="titulo-oferta">
@@ -46,7 +72,23 @@ export function Inscripcion() {
       ) : (
         <ul className="flex flex-col gap-4">
           {data.materias.map((m) => (
-            <Materia key={m.asignatura.id} materia={m} />
+            <Materia
+              key={m.asignatura.id}
+              materia={m}
+              puedeInscribirse={data.inscripcionAbierta}
+              enviando={inscribir.isPending}
+              confirmando={
+                confirmando?.materia.asignatura.id === m.asignatura.id ? confirmando : null
+              }
+              elegir={(comision) => setConfirmando({ materia: m, comision })}
+              cancelar={() => setConfirmando(null)}
+              confirmar={enviar}
+              resultado={
+                enviada?.materia.asignatura.id === m.asignatura.id && !inscribir.isIdle ? (
+                  <ResultadoInscripcion inscribir={inscribir} reintentar={() => enviar(enviada)} />
+                ) : null
+              }
+            />
           ))}
         </ul>
       )}
@@ -54,8 +96,31 @@ export function Inscripcion() {
   );
 }
 
-function Materia({ materia }: { materia: MateriaOferta }) {
+const nombreComision = (c: Comision) => c.nombre ?? c.cursoId;
+
+function Materia({
+  materia,
+  puedeInscribirse,
+  enviando,
+  confirmando,
+  elegir,
+  cancelar,
+  confirmar,
+  resultado,
+}: {
+  materia: MateriaOferta;
+  puedeInscribirse: boolean;
+  enviando: boolean;
+  confirmando: Eleccion | null;
+  elegir: (comision: Comision) => void;
+  cancelar: () => void;
+  confirmar: (eleccion: Eleccion) => void;
+  resultado: React.ReactNode;
+}) {
   const { asignatura } = materia;
+  // Con una comisión ya inscripta, no se ofrece otra de la misma materia
+  const yaInscripto = materia.comisiones.some((c) => c.estado === 'INSCRIPTO');
+
   return (
     <li className="rounded-campo border border-borde-suave bg-white p-5">
       <h3 className="font-semibold">
@@ -67,9 +132,44 @@ function Materia({ materia }: { materia: MateriaOferta }) {
       {materia.bloqueada && <CorrelativasFaltantes materia={materia} />}
       <ul aria-label={`Comisiones de ${asignatura.nombre}`} className="mt-3 flex flex-col gap-2">
         {materia.comisiones.map((c) => (
-          <ComisionFila key={c.cursoId} comision={c} />
+          <ComisionFila
+            key={c.cursoId}
+            comision={c}
+            accion={
+              puedeInscribirse && !yaInscripto && c.estado === 'CON_CUPO' ? (
+                <Button
+                  disabled={enviando}
+                  aria-label={`Inscribirme en ${asignatura.nombre}, comisión ${nombreComision(c)}`}
+                  onClick={() => elegir(c)}
+                >
+                  Inscribirme
+                </Button>
+              ) : null
+            }
+          />
         ))}
       </ul>
+      {confirmando && (
+        <div
+          role="group"
+          aria-label="Confirmar inscripción"
+          className="mt-3 flex flex-wrap items-center gap-3 rounded-item border border-primario/30 bg-primario/5 p-3"
+        >
+          <p className="min-w-0 flex-1 text-sm">
+            ¿Confirmás la inscripción en <strong>{asignatura.nombre}</strong>, comisión{' '}
+            <strong>{nombreComision(confirmando.comision)}</strong>?
+          </p>
+          <div className="flex gap-2">
+            <Button variant="fantasma" onClick={cancelar}>
+              Cancelar
+            </Button>
+            <Button disabled={enviando} onClick={() => confirmar(confirmando)}>
+              Confirmar inscripción
+            </Button>
+          </div>
+        </div>
+      )}
+      {resultado}
     </li>
   );
 }
@@ -83,13 +183,13 @@ const DIAS: Record<NonNullable<Comision['horarios']>[number]['dia'], string> = {
   SABADO: 'Sábado',
 };
 
-function ComisionFila({ comision }: { comision: Comision }) {
+function ComisionFila({ comision, accion }: { comision: Comision; accion: React.ReactNode }) {
   // Horarios y sede son provisionales: si no vienen, la comisión se muestra sin ellos
   const horarios = comision.horarios ?? [];
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-item border border-borde-suave p-3">
       <div className="min-w-0 flex-1">
-        <p className="font-medium">Comisión {comision.nombre ?? comision.cursoId}</p>
+        <p className="font-medium">Comisión {nombreComision(comision)}</p>
         {(horarios.length > 0 || comision.sede) && (
           <ul aria-label="Horarios" className="flex flex-col gap-0.5 pt-1 text-sm text-texto-suave">
             {horarios.map((h) => (
@@ -114,6 +214,7 @@ function ComisionFila({ comision }: { comision: Comision }) {
         </p>
       )}
       <EstadoComision estado={comision.estado} />
+      {accion}
     </li>
   );
 }
