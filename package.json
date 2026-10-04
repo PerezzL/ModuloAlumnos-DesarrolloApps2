@@ -10,6 +10,7 @@
     "apps/*"
   ],
   "scripts": {
+    "gen": "npm run gen -w @uadenet/api-types",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
