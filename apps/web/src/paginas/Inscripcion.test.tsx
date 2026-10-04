@@ -58,6 +58,20 @@ describe('inscripción: oferta', () => {
     ).toHaveTextContent('Bloqueada');
   });
 
+  it('con la inscripción abierta, dice hasta cuándo', async () => {
+    renderApp('/academico');
+    expect(await screen.findByText('La inscripción está abierta')).toBeInTheDocument();
+    expect(screen.getByText(/hasta el 18 de diciembre de 2026/)).toBeInTheDocument();
+  });
+
+  it('con la inscripción cerrada, lo avisa y muestra la oferta igual', async () => {
+    conOferta({ inscripcionAbierta: false });
+    renderApp('/academico');
+    expect(await screen.findByText('La inscripción está cerrada')).toBeInTheDocument();
+    expect(screen.getByText(/del 28 de septiembre de 2026/)).toBeInTheDocument();
+    expect(screen.getByText('Sistemas Operativos')).toBeInTheDocument();
+  });
+
   it('sin materias, estado vacío', async () => {
     conOferta({ materias: [] });
     renderApp('/academico');

@@ -114,6 +114,17 @@ describe('GET /inscripcion/oferta', () => {
     expect(cuerpo(res)).toMatchObject({ modulo: 'GESTION_ACADEMICA' });
   });
 
+  it('fuera de la ventana devuelve la oferta con inscripcionAbierta false', async () => {
+    e2e.server.use(...academicoConFixtures());
+    const res = await e2e.get('/inscripcion/oferta?periodoId=2026-2');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      inscripcionHasta: '2026-07-31T02:59:59.000Z',
+      inscripcionAbierta: false,
+    });
+    expect((res.body as OfertaInscripcion).materias.length).toBeGreaterThan(0);
+  });
+
   it('con periodoId, la oferta de ese período', async () => {
     e2e.server.use(...academicoConFixtures());
     const res = await e2e.get('/inscripcion/oferta?periodoId=2026-2');

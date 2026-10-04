@@ -8,7 +8,7 @@ import {
   aInscripciones,
   aPeriodos,
 } from '../modulos/academico/academico.mapper';
-import { armarOferta, correlativasFaltantes, elegirPeriodo } from './oferta';
+import { armarOferta, correlativasFaltantes, elegirPeriodo, inscripcionAbierta } from './oferta';
 
 const periodos = aPeriodos(fixture('academic/periodos.provisional.json'));
 const cursos = aCursos(fixture('academic/cursos.provisional.json')).filter((c) =>
@@ -210,5 +210,36 @@ describe('regla de correlatividad', () => {
     expect(
       correlativasFaltantes([correlativa('REGULAR')], [...con('LIBRE'), ...con('REGULAR')]),
     ).toEqual([]);
+  });
+});
+
+describe('ventana de inscripción', () => {
+  const periodo = periodos.find((p) => p.id === '2027-1')!;
+
+  it.each([
+    ['antes de abrir', '2026-09-28T11:59:59.999Z', false],
+    ['justo al abrir', '2026-09-28T12:00:00.000Z', true],
+    ['en el medio', '2026-10-04T15:00:00.000Z', true],
+    ['justo al cerrar', '2026-12-19T02:59:59.000Z', true],
+    ['después de cerrar', '2026-12-19T03:00:00.000Z', false],
+  ])('%s: abierta = %s', (_caso, ahora, abierta) => {
+    expect(inscripcionAbierta(periodo, new Date(ahora))).toBe(abierta);
+  });
+
+  it('un período sin ventana informada se toma como cerrado', () => {
+    expect(inscripcionAbierta({ id: 'x', nombre: 'x' }, OCTUBRE)).toBe(false);
+  });
+
+  it('fuera de la ventana la oferta se arma igual, con inscripcionAbierta false', () => {
+    const oferta = armarOferta({
+      periodo,
+      cursos,
+      inscripciones: [],
+      correlativas: new Map(),
+      filtradaPorPlan: true,
+      ahora: new Date('2027-01-10T00:00:00Z'),
+    });
+    expect(oferta.inscripcionAbierta).toBe(false);
+    expect(oferta.materias).toHaveLength(4);
   });
 });

@@ -5,6 +5,7 @@ import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { useOferta } from '@/inscripcion/consultas';
 import { EstadoComision } from '@/inscripcion/EstadoComision';
+import { VentanaInscripcion } from '@/inscripcion/VentanaInscripcion';
 
 /** Inscripción a materias (4.3): oferta del plan agrupada por materia. */
 export function Inscripcion() {
@@ -24,6 +25,8 @@ export function Inscripcion() {
           Oferta del {data.periodo.nombre}
         </h2>
       </div>
+
+      <VentanaInscripcion oferta={data} />
 
       {!data.filtradaPorPlan && (
         <p className="flex gap-2 rounded-item border border-borde-suave bg-white p-3 text-sm text-etiqueta">
