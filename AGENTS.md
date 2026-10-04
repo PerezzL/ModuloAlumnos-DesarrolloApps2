@@ -14,6 +14,7 @@ agrega información de otros módulos a través del Gateway de CORE.
 | Archivo | Para qué |
 | --- | --- |
 | `openapi.yaml` | Contrato front ↔ BFF. Es la fuente de verdad de la API propia. |
+| `docs/instalacion.md` | Instalación desde cero, Node vs. Docker, Prism. |
 | `docs/arquitectura.md` | Capas, Gateway, fuentes de verdad, auth, decisiones tomadas. |
 | `docs/integraciones.md` | Qué expone cada módulo externo y qué está confirmado o pendiente. |
 | `docs/plan.md` | Decisiones tomadas, pasos de armado y pendientes. |

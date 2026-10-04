@@ -1,0 +1,4 @@
+# Finales de línea LF en todas las plataformas (en Windows, Git convertiría a CRLF y
+# rompería scripts de bash y archivos que se copian a las imágenes de Docker)
+* text=auto eol=lf
+*.png binary
