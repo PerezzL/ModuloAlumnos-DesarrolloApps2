@@ -113,3 +113,78 @@ describe('filtros del calendario', () => {
     expect(pedidos).toHaveLength(0);
   });
 });
+
+describe('calendario con fuentes caídas', () => {
+  const conExamenCaido = {
+    items: calendarioOctubre.items.filter((i) => i.categoria !== 'EXAMEN'),
+    fuentes: [
+      { categoria: 'COMEDOR', estado: 'OK' },
+      { categoria: 'EVENTO', estado: 'OK' },
+      { categoria: 'EXAMEN', estado: 'ERROR', code: 'UPSTREAM_UNAVAILABLE' },
+    ],
+  };
+
+  it('muestra lo que cargó, nombra la categoría que falló y reintenta solo esa', async () => {
+    reiniciarCore(true);
+    const pedidos: URL[] = [];
+    servidor.use(
+      http.get(`${BFF}/calendario`, ({ request }) => {
+        const url = new URL(request.url);
+        pedidos.push(url);
+        if (url.searchParams.get('categorias') === 'EXAMEN') {
+          return HttpResponse.json({
+            items: calendarioOctubre.items.filter((i) => i.categoria === 'EXAMEN'),
+            fuentes: [{ categoria: 'EXAMEN', estado: 'OK' }],
+          });
+        }
+        return HttpResponse.json(conExamenCaido);
+      }),
+    );
+    renderApp('/calendario?vista=mes&fecha=2026-10-15');
+
+    const aviso = await screen.findByRole('alert');
+    expect(aviso).toHaveTextContent(/Exámenes: el servicio no está disponible/);
+    expect(screen.getAllByText('Turno de comedor').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Mesa especial de octubre 2026')).not.toBeInTheDocument();
+
+    await userEvent.click(within(aviso).getByRole('button', { name: /reintentar/i }));
+    const dia20 = await screen.findByRole('listitem', { name: /martes, 20 de octubre/i });
+    expect(await within(dia20).findByText('Mesa especial de octubre 2026')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(pedidos.at(-1)?.searchParams.get('categorias')).toBe('EXAMEN');
+    expect(screen.getAllByText('Turno de comedor').length).toBeGreaterThan(0);
+  });
+
+  it('si el reintento también falla, lo dice y deja lo que había', async () => {
+    reiniciarCore(true);
+    servidor.use(
+      http.get(`${BFF}/calendario`, ({ request }) =>
+        new URL(request.url).searchParams.has('categorias')
+          ? HttpResponse.json(
+              { title: 'x', status: 503, code: 'UPSTREAM_UNAVAILABLE' },
+              { status: 503 },
+            )
+          : HttpResponse.json(conExamenCaido),
+      ),
+    );
+    renderApp('/calendario?vista=mes&fecha=2026-10-15');
+    await userEvent.click(await screen.findByRole('button', { name: /reintentar/i }));
+    expect(await screen.findByText(/el reintento tampoco funcionó/i)).toBeInTheDocument();
+    expect(screen.getAllByText('Turno de comedor').length).toBeGreaterThan(0);
+  });
+
+  it('si fallan las tres, es un error de toda la pantalla', async () => {
+    reiniciarCore(true);
+    servidor.use(
+      http.get(`${BFF}/calendario`, () =>
+        HttpResponse.json(
+          { title: 'Calendario no disponible', status: 503, code: 'UPSTREAM_UNAVAILABLE' },
+          { status: 503 },
+        ),
+      ),
+    );
+    renderApp('/calendario?vista=mes&fecha=2026-10-15');
+    expect(await screen.findByRole('alert')).toHaveTextContent(/el calendario no está disponible/i);
+    expect(screen.queryByRole('listitem', { name: /8 de octubre/i })).not.toBeInTheDocument();
+  });
+});

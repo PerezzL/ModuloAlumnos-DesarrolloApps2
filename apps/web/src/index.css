@@ -19,6 +19,11 @@
   --color-peligro: #fb2c36;
   --color-peligro-texto: #c10007;
   --color-peligro-fondo: #fef2f2;
+  --color-aviso: #b45309;
+  --color-aviso-texto: #78350f;
+  --color-aviso-fondo: #fffbeb;
+  --color-exito: #00a63e;
+  --color-exito-fondo: #f0fdf4;
 
   /* Categorías del calendario */
   --color-examen: #0066ff;

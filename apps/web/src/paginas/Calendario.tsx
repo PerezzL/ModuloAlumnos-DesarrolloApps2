@@ -2,6 +2,7 @@ import type { CategoriaCalendario, ItemCalendario } from '@uadenet/api-types';
 import { CalendarX, Check, ChevronLeft, ChevronRight, ListFilter } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { itemsPorDia } from '@/calendario/agrupar';
+import { AvisoFuentes } from '@/calendario/AvisoFuentes';
 import { CATEGORIAS, ORDEN_CATEGORIAS } from '@/calendario/categorias';
 import {
   diaCorto,
@@ -41,7 +42,7 @@ export function Calendario() {
   const rango = rangoVisible(vista, fecha);
   const dias = diasEntre(rango.desde, rango.hasta);
   const categorias = categoriasDeUrl(params.get('cat'));
-  const { data, error, isPending, refetch } = useCalendario(rango, categorias);
+  const { data, error, isPending, refetch, reintento } = useCalendario(rango, categorias);
 
   const ir = (cambios: { vista?: Vista; fecha?: string; categorias?: CategoriaCalendario[] }) =>
     setParams((actual) => {
@@ -129,7 +130,13 @@ export function Calendario() {
         <ErrorCarga error={error} fuente="El calendario" reintentar={() => void refetch()} />
       ) : (
         <>
-          {data.items.length === 0 && (
+          <AvisoFuentes
+            fuentes={data.fuentes}
+            reintentar={(fallidas) => reintento.mutate(fallidas)}
+            reintentando={reintento.isPending}
+            fallo={reintento.isError}
+          />
+          {data.items.length === 0 && data.fuentes.every((f) => f.estado === 'OK') && (
             <EstadoVacio
               icono={CalendarX}
               titulo="No tenés nada agendado en este período"
