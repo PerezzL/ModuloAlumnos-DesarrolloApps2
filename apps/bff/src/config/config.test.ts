@@ -18,7 +18,7 @@ describe('cargarConfig', () => {
   it('aplica los valores por defecto', () => {
     const config = cargarConfig(completa);
     expect(config.BFF_PORT).toBe(3000);
-    expect(config.GATEWAY_TIMEOUT_MS).toBe(10_000);
+    expect(config.GATEWAY_TIMEOUT_MS).toBe(8_000);
   });
 
   it('nombra todas las variables que faltan', () => {
