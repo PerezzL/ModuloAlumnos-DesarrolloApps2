@@ -1,7 +1,8 @@
 # Levanta el portal completo con un comando: docker compose up --build
 # Front en http://localhost:5173 · Gateway (CORE falso) en http://localhost:4000
 # Para usar el mock del contrato en lugar del BFF:
-#   STUDENT_SERVICE_URL=http://prism:4010 docker compose up --build
+#   COMPOSE_STUDENT_SERVICE_URL=http://prism:4010 docker compose up --build
+# (variable propia: compose lee el .env de la raíz, cuyo STUDENT_SERVICE_URL es para npm run dev)
 
 x-modulos: &modulos
   PREFIJO_DOCENTE: /api/v1/teacher
@@ -19,7 +20,7 @@ services:
       CORE_PORT: 4000
       JWT_ISSUER: http://localhost:4000
       JWT_AUDIENCE: uadenet
-      STUDENT_SERVICE_URL: ${STUDENT_SERVICE_URL:-http://bff:3000/api/v1}
+      STUDENT_SERVICE_URL: ${COMPOSE_STUDENT_SERVICE_URL:-http://bff:3000/api/v1}
       WEB_ORIGIN: http://localhost:5173
 
   bff:
@@ -36,7 +37,10 @@ services:
 
   prism:
     image: stoplight/prism:5
-    command: mock -h 0.0.0.0 -p 4010 /contrato/openapi.yaml
+    # La imagen solo existe para amd64 (en Mac con Apple Silicon corre emulada) y su modo
+    # multiproceso falla al arrancar
+    platform: linux/amd64
+    command: mock -h 0.0.0.0 -p 4010 --multiprocess=false /contrato/openapi.yaml
     volumes: ['./openapi.yaml:/contrato/openapi.yaml:ro']
     ports: ['4010:4010']
 

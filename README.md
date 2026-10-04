@@ -69,7 +69,7 @@ docker compose up --build
 ```
 
 Levanta web (http://localhost:5173), CORE falso (`:4000`), BFF (`:3000`) y Prism (`:4010`).
-Para usar Prism detrás del Gateway: `STUDENT_SERVICE_URL=http://prism:4010 docker compose up --build`.
+Para usar Prism detrás del Gateway: `COMPOSE_STUDENT_SERVICE_URL=http://prism:4010 docker compose up --build`.
 
 ### Verificar
 

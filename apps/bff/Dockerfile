@@ -11,7 +11,8 @@ ENV NODE_ENV=production \
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/bff/package.json ./apps/bff/package.json
 COPY --from=build /app/apps/bff/dist ./apps/bff/dist
-COPY openapi.yaml ./openapi.yaml
+# --chmod: el contenedor corre como `node` y el archivo puede venir con permisos 600
+COPY --chmod=644 openapi.yaml ./openapi.yaml
 USER node
 EXPOSE 3000
 CMD ["node", "apps/bff/dist/main.js"]
