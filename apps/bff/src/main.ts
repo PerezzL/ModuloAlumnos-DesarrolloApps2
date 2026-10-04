@@ -13,7 +13,7 @@ async function bootstrap() {
   // Validar antes de crear la app, para que el error sea solo la lista de variables
   cargarConfig();
 
-  const app = configurarApp(await NestFactory.create(AppModule));
+  const app = configurarApp(await NestFactory.create(AppModule, { bufferLogs: true }));
   const config = app.get<Config>(CONFIG);
   await app.listen(config.BFF_PORT);
 }

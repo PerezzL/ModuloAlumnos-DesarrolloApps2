@@ -13,7 +13,7 @@ describe('health', () => {
   beforeAll(async () => {
     aplicarEnvDePrueba();
     const modulo = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = configurarApp(modulo.createNestApplication());
+    app = configurarApp(modulo.createNestApplication({ bufferLogs: true }));
     await app.init();
   });
 
