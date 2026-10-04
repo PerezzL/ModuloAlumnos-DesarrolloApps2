@@ -71,6 +71,8 @@ docker compose up --build
 Levanta web (http://localhost:5173), CORE falso (`:4000`), BFF (`:3000`) y Prism (`:4010`).
 Para usar Prism detrás del Gateway: `COMPOSE_STUDENT_SERVICE_URL=http://prism:4010 docker compose up --build`.
 
+Con el stack levantado, `scripts/smoke-docker.sh` corre los mismos chequeos que el job `docker` del CI.
+
 ### Verificar
 
 ```bash
