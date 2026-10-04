@@ -36,10 +36,16 @@ agrega información de otros módulos a través del Gateway de CORE.
 
 ## Comandos
 
-> Pendiente: se completa al armar el repo (bloque A).
+| Comando | Qué hace |
+| --- | --- |
+| `npm install` | Instala todo el monorepo (Node 24, ver `.nvmrc`) |
+| `npm run gen` | Regenera `packages/api-types` desde `openapi.yaml` |
+| `npm run verify` | `gen` → typecheck → ESLint → `redocly lint` → Vitest. **Correrlo antes de cada commit.** El CI corre lo mismo |
+| `npm test` | Solo los tests (Vitest, todos los proyectos) |
+| `npm run format` | Prettier |
 
-- `npm run verify`: `gen` → `tsc -b` → `eslint` → `redocly lint` → `vitest run`.
-  Correrlo antes de cada commit de tarjeta y antes de abrir el PR. El CI corre lo mismo.
+Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
+(`new Contrato().validar('get', '/calendario', 200, body)`) en los tests e2e.
 
 ## Reglas del dominio (no negociables)
 

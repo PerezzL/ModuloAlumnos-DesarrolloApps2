@@ -11,13 +11,18 @@
   ],
   "scripts": {
     "gen": "npm run gen -w @uadenet/api-types",
+    "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
+    "lint:contrato": "redocly lint openapi.yaml",
+    "test": "vitest run",
+    "verify": "npm run gen && npm run typecheck && npm run lint && npm run lint:contrato && npm run test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@redocly/cli": "^2.57.0",
+    "@types/node": "^24.19.1",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
@@ -25,5 +30,6 @@
     "typescript": "~5.9",
     "typescript-eslint": "^8.71.0",
     "vitest": "^3.2.7"
-  }
+  },
+  "type": "module"
 }
