@@ -76,3 +76,40 @@ describe('calendario', () => {
     expect(await screen.findByText(/no tenés nada agendado/i)).toBeInTheDocument();
   });
 });
+
+describe('filtros del calendario', () => {
+  it('por defecto pide todas; al sacar una categoría pide solo las otras', async () => {
+    reiniciarCore(true);
+    const pedidos = calendarioQueResponde();
+    renderApp('/calendario?vista=mes&fecha=2026-10-15');
+    const comedor = await screen.findByRole('button', { name: 'Comedor', pressed: true });
+    expect(pedidos[0]?.searchParams.has('categorias')).toBe(false);
+
+    await userEvent.click(comedor);
+    expect(
+      await screen.findByRole('button', { name: 'Comedor', pressed: false }),
+    ).toBeInTheDocument();
+    expect(pedidos.at(-1)?.searchParams.get('categorias')).toBe('EXAMEN,EVENTO');
+  });
+
+  it('el filtro se mantiene al cambiar de mes', async () => {
+    reiniciarCore(true);
+    const pedidos = calendarioQueResponde();
+    renderApp('/calendario?vista=mes&fecha=2026-10-15&cat=EVENTO');
+    await screen.findByRole('heading', { name: /octubre de 2026/i });
+
+    await userEvent.click(screen.getByRole('button', { name: /mes siguiente/i }));
+    await screen.findByRole('heading', { name: /noviembre de 2026/i });
+    expect(screen.getByRole('button', { name: 'Eventos', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Exámenes', pressed: false })).toBeInTheDocument();
+    expect(pedidos.at(-1)?.searchParams.get('categorias')).toBe('EVENTO');
+  });
+
+  it('sin ninguna categoría no pide nada y lo explica', async () => {
+    reiniciarCore(true);
+    const pedidos = calendarioQueResponde();
+    renderApp('/calendario?vista=mes&fecha=2026-10-15&cat=');
+    expect(await screen.findByText(/no elegiste ninguna categoría/i)).toBeInTheDocument();
+    expect(pedidos).toHaveLength(0);
+  });
+});

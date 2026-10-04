@@ -65,6 +65,27 @@ describe('GET /calendario', () => {
     expect(contrato.validar('get', '/calendario', 400, cuerpo(res)).errores).toEqual([]);
   });
 
+  it('con `categorias`, solo consulta los módulos pedidos', async () => {
+    const llamadas: Record<string, number> = {};
+    e2e.server.use(...fuentesConFixtures(llamadas));
+    const res = await e2e.get(`${OCTUBRE}&categorias=EXAMEN,COMEDOR`);
+    expect(res.status).toBe(200);
+    expect(llamadas).toEqual({ COMEDOR: 1, EXAMEN: 1 });
+    const { items, fuentes } = res.body as Calendario;
+    expect(new Set(items.map((i) => i.categoria))).toEqual(new Set(['COMEDOR', 'EXAMEN']));
+    expect(fuentes.map((f) => f.categoria)).toEqual(['COMEDOR', 'EXAMEN']);
+    expect(contrato.validar('get', '/calendario', 200, res.body).errores).toEqual([]);
+  });
+
+  it('una categoría desconocida es 400 y no llama a nadie', async () => {
+    const llamadas: Record<string, number> = {};
+    e2e.server.use(...fuentesConFixtures(llamadas));
+    const res = await e2e.get(`${OCTUBRE}&categorias=EVENTO,BIBLIOTECA`);
+    expect(res.status).toBe(400);
+    expect(cuerpo(res)).toMatchObject({ code: 'SOLICITUD_INVALIDA' });
+    expect(llamadas).toEqual({});
+  });
+
   it('62 días es el máximo permitido', async () => {
     e2e.server.use(...fuentesConFixtures());
     const res = await e2e.get('/calendario?desde=2026-10-01&hasta=2026-12-01');

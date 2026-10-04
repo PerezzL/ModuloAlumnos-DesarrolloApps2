@@ -1,5 +1,5 @@
-import type { ItemCalendario } from '@uadenet/api-types';
-import { CalendarX, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { CategoriaCalendario, ItemCalendario } from '@uadenet/api-types';
+import { CalendarX, Check, ChevronLeft, ChevronRight, ListFilter } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { itemsPorDia } from '@/calendario/agrupar';
 import { CATEGORIAS, ORDEN_CATEGORIAS } from '@/calendario/categorias';
@@ -22,6 +22,13 @@ import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { Button } from '@/componentes/ui/button';
 import { cn } from '@/lib/utils';
 
+/** `cat=COMEDOR,EXAMEN` en la URL; sin el parámetro, todas. Así se mantiene al cambiar de mes. */
+function categoriasDeUrl(valor: string | null): CategoriaCalendario[] {
+  if (valor === null) return [...ORDEN_CATEGORIAS];
+  const pedidas = valor.split(',');
+  return ORDEN_CATEGORIAS.filter((c) => pedidas.includes(c));
+}
+
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const MAX_POR_DIA = 3;
 
@@ -33,14 +40,26 @@ export function Calendario() {
   const fecha = esFechaValida(fechaUrl) ? fechaUrl : hoy();
   const rango = rangoVisible(vista, fecha);
   const dias = diasEntre(rango.desde, rango.hasta);
-  const { data, error, isPending, refetch } = useCalendario(rango);
+  const categorias = categoriasDeUrl(params.get('cat'));
+  const { data, error, isPending, refetch } = useCalendario(rango, categorias);
 
-  const ir = (cambios: { vista?: Vista; fecha?: string }) =>
+  const ir = (cambios: { vista?: Vista; fecha?: string; categorias?: CategoriaCalendario[] }) =>
     setParams((actual) => {
       const nuevos = new URLSearchParams(actual);
       nuevos.set('vista', cambios.vista ?? vista);
       nuevos.set('fecha', cambios.fecha ?? fecha);
+      if (cambios.categorias) {
+        if (cambios.categorias.length === ORDEN_CATEGORIAS.length) nuevos.delete('cat');
+        else nuevos.set('cat', cambios.categorias.join(','));
+      }
       return nuevos;
+    });
+
+  const alternar = (c: CategoriaCalendario) =>
+    ir({
+      categorias: categorias.includes(c)
+        ? categorias.filter((x) => x !== c)
+        : ORDEN_CATEGORIAS.filter((x) => x === c || categorias.includes(x)),
     });
 
   const titulo =
@@ -95,9 +114,16 @@ export function Calendario() {
         </div>
       </div>
 
-      <Leyenda />
+      <Filtros elegidas={categorias} alternar={alternar} />
 
-      {isPending ? (
+      {categorias.length === 0 ? (
+        <EstadoVacio
+          icono={ListFilter}
+          titulo="No elegiste ninguna categoría"
+          mensaje="Activá comedor, eventos o exámenes para ver tu calendario."
+          className="rounded-campo border border-borde-suave bg-white"
+        />
+      ) : isPending ? (
         <Cargando texto="Cargando calendario…" />
       ) : error ? (
         <ErrorCarga error={error} fuente="El calendario" reintentar={() => void refetch()} />
@@ -127,20 +153,39 @@ export function Calendario() {
   );
 }
 
-function Leyenda() {
+function Filtros({
+  elegidas,
+  alternar,
+}: {
+  elegidas: CategoriaCalendario[];
+  alternar: (c: CategoriaCalendario) => void;
+}) {
   return (
-    <ul aria-label="Categorías" className="flex flex-wrap gap-4 text-sm text-texto-suave">
+    <div role="group" aria-label="Filtrar por categoría" className="flex flex-wrap gap-2">
       {ORDEN_CATEGORIAS.map((c) => {
-        const { etiqueta, icono: Icono, punto } = CATEGORIAS[c];
+        const { etiqueta, icono: Icono, clases } = CATEGORIAS[c];
+        const activa = elegidas.includes(c);
         return (
-          <li key={c} className="flex items-center gap-1.5">
-            <span className={cn('size-2 rounded-full', punto)} aria-hidden />
-            <Icono className="size-3.5" aria-hidden />
+          <button
+            key={c}
+            type="button"
+            aria-pressed={activa}
+            onClick={() => alternar(c)}
+            className={cn(
+              'flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primario/40',
+              activa ? clases : 'border-borde bg-white text-texto-suave hover:text-texto',
+            )}
+          >
+            {activa ? (
+              <Check className="size-3.5" aria-hidden />
+            ) : (
+              <Icono className="size-3.5" aria-hidden />
+            )}
             {etiqueta}
-          </li>
+          </button>
         );
       })}
-    </ul>
+    </div>
   );
 }
 
