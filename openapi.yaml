@@ -1,0 +1,845 @@
+openapi: 3.0.3
+info:
+  title: UADEnet — Portal del Estudiante (BFF del Módulo 1)
+  version: 0.1.0
+  description: |
+    Contrato entre el frontend del Portal del Estudiante y su BFF.
+
+    **Alcance.** Este archivo describe solo los endpoints propios del Módulo 1. El frontend
+    consume además, directo contra CORE y por el Gateway, los contratos que CORE ya define y
+    que no se duplican acá:
+
+    - Autenticación: `POST /api/v1/auth/login`, `/auth/refresh`, `/auth/logout`, `GET /api/v1/auth/me`.
+    - Notificaciones: WebSocket `/notifications` y `GET /api/v1/notifications`, `/unread-count`,
+      `PATCH /api/v1/notifications/{id}`, `POST /api/v1/notifications/read-all`.
+    - Saldo: `GET /api/v1/wallets/me`, `GET /api/v1/wallets/me/transactions`,
+      `POST /api/v1/wallets/me/top-ups`.
+
+    **Convenciones.**
+
+    - El alumno se identifica siempre por el token: el Gateway inyecta `X-User-Id`. Ningún
+      endpoint recibe el id del alumno por path, query o body.
+    - Todos los ids son strings opacos (no se asume UUID ni número).
+    - Fechas con hora en ISO 8601 con zona (`date-time`); fechas sin hora en `YYYY-MM-DD` (`date`).
+    - Errores en `application/problem+json`, con un `code` estable para que el frontend decida qué mostrar.
+    - El BFF traduce las respuestas de cada módulo a estos modelos (un adaptador por módulo).
+      Los campos marcados con `x-provisional: true` dependen de un contrato externo todavía
+      no confirmado: pueden cambiar de origen, pero se busca que no cambien de forma.
+
+    **Estado de las fuentes.** Cada operación indica en `x-fuentes` de qué módulos se nutre
+    y en `x-estado-fuente` si ese contrato está confirmado, comprometido, propuesto o pendiente.
+servers:
+  - url: https://{gateway}/api/v1/student
+    description: Ruta pública por el Gateway de CORE (se reescribe a /api/v1/* en el BFF)
+    variables:
+      gateway:
+        default: gateway.uadenet.local
+  - url: http://localhost:3000/api/v1
+    description: BFF local (desarrollo)
+security:
+  - bearerAuth: []
+tags:
+  - name: Perfil
+    description: Datos del alumno autenticado (RF1)
+  - name: Inscripción
+    description: Oferta e inscripción a materias (RF2)
+  - name: Cursadas
+    description: Historial académico, detalle de cursada, asistencia y notas (RF3, RF4)
+  - name: Calendario
+    description: Calendario académico unificado (RF7)
+  - name: Compras
+    description: Historial de compras en la Tienda (RF8)
+
+paths:
+  /me:
+    get:
+      tags: [Perfil]
+      operationId: getPerfil
+      summary: Datos del alumno autenticado
+      description: >
+        Combina la identidad de CORE con los datos personales de Backoffice
+        (`GET /api/v1/backoffice/users/{userId}`). Pantallas: header y Home (4.2).
+      x-fuentes: [CORE, Módulo 8]
+      x-estado-fuente: pendiente (falta saber qué campos trae Backoffice)
+      responses:
+        '200':
+          description: Perfil del alumno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Perfil'
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+  /inscripcion/oferta:
+    get:
+      tags: [Inscripción]
+      operationId: getOfertaInscripcion
+      summary: Oferta de materias del plan del alumno, agrupada por materia
+      description: >
+        Lista las comisiones del período para el plan del alumno, agrupadas por asignatura,
+        con el estado ya resuelto por comisión (inscripto, con cupo, sin cupo, bloqueada por
+        correlatividad). El BFF obtiene el `planId` de Backoffice, la oferta y las
+        correlatividades del Módulo 9 y las cruza con las inscripciones del alumno.
+        Pantalla: Inscripción a materias (4.3).
+      x-fuentes: [Módulo 9, Módulo 8]
+      x-estado-fuente: comprometido (filtro planId y asignatura anidada); horarios pedidos
+      parameters:
+        - name: periodoId
+          in: query
+          required: false
+          description: Período a consultar. Si se omite, se usa el período vigente.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Oferta del período
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfertaInscripcion'
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+  /inscripciones:
+    post:
+      tags: [Inscripción]
+      operationId: crearInscripcion
+      summary: Inscribir al alumno en una comisión
+      description: >
+        Comanda la inscripción en el Módulo 9
+        (`POST /api/planificacion/cursos/{cursoId}/inscripciones`), que es la fuente de verdad
+        y vuelve a validar correlatividades. El portal no persiste la inscripción.
+        No se reintenta automáticamente ante un error de red.
+      x-fuentes: [Módulo 9]
+      x-estado-fuente: implementado (faltan los códigos de error definitivos)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cursoId]
+              properties:
+                cursoId:
+                  type: string
+                  description: Comisión en la que se inscribe
+            example:
+              cursoId: "curso-42"
+      responses:
+        '201':
+          description: Inscripción registrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inscripcion'
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404':
+          description: La comisión no existe
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '409':
+          description: >
+            La inscripción fue rechazada por una regla de negocio. `code` indica el motivo:
+            `YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE`, `SIN_REGULARIDAD` o
+            `FUERA_DE_FECHA`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemaInscripcion' }
+              example:
+                type: about:blank
+                title: Inscripción rechazada
+                status: 409
+                code: CORRELATIVIDAD_FALTANTE
+                detail: Falta aprobar Programación I.
+                correlativasFaltantes:
+                  - asignaturaId: "asig-10"
+                    nombre: Programación I
+                    tipo: APROBADA
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+  /cursadas:
+    get:
+      tags: [Cursadas]
+      operationId: getCursadas
+      summary: Historial académico y cursadas en curso
+      description: >
+        Devuelve las inscripciones del alumno con materia, cuatrimestre, nota final y situación.
+        Incluye las cursadas en curso (`enCurso: true`), que enlazan al detalle de cursada.
+        Consulta en vivo al Módulo 9; el portal no persiste el historial.
+        Pantalla: Historial académico (4.4).
+      x-fuentes: [Módulo 9]
+      x-estado-fuente: comprometido (inscripciones por alumno)
+      parameters:
+        - name: periodoId
+          in: query
+          required: false
+          description: Filtra por período. Si se omite, devuelve todos.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Cursadas del alumno, de la más reciente a la más antigua
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CursadaResumen' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+  /cursadas/{cursoId}:
+    get:
+      tags: [Cursadas]
+      operationId: getCursada
+      summary: Detalle de una cursada con asistencia y notas
+      description: >
+        Situación de la materia (Módulo 9) más asistencia y notas del alumno en ese curso
+        (Módulo 2). Si el Módulo 2 no responde, se devuelve igual la cursada con `asistencia`
+        y `notas` en null y el motivo en `fuentesConError`.
+        Pantalla: Detalle de cursada (4.5). Es también el destino `/alumnos/cursos/{cursoId}`.
+      x-fuentes: [Módulo 9, Módulo 2]
+      x-estado-fuente: pendiente (faltan endpoints y respuesta del Módulo 2)
+      parameters:
+        - $ref: '#/components/parameters/CursoId'
+      responses:
+        '200':
+          description: Detalle de la cursada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CursadaDetalle'
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404':
+          description: El alumno no tiene una inscripción en ese curso
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+  /cursadas/{cursoId}/notas/{notaId}:
+    get:
+      tags: [Cursadas]
+      operationId: getNota
+      summary: Detalle de la nota de un examen
+      description: >
+        Página de destino de la notificación `EXAM_RESULT_PUBLISHED` y del listado de notas
+        del detalle de cursada. Los identificadores salen del `actionUrl` de la notificación.
+        Pantalla: Detalle — Nota de un examen (4.7).
+      x-fuentes: [Módulo 2]
+      x-estado-fuente: pendiente (formato del actionUrl e identificadores)
+      parameters:
+        - $ref: '#/components/parameters/CursoId'
+        - name: notaId
+          in: path
+          required: true
+          description: Identificador de la nota o examen según el Módulo 2
+          schema: { type: string }
+      responses:
+        '200':
+          description: Detalle de la nota
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotaDetalle'
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404':
+          description: La nota no existe o no pertenece al alumno
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+  /calendario:
+    get:
+      tags: [Calendario]
+      operationId: getCalendario
+      summary: Calendario unificado (comedor, eventos y exámenes)
+      description: >
+        Agrega en vivo, con llamadas en paralelo, las reservas de comedor (Módulo 4), los
+        eventos a los que el alumno está inscripto (Módulo 6) y los turnos de examen (Módulo 9).
+        Tolera fallas parciales: responde 200 con lo que sí cargó e informa en `fuentes` qué
+        categoría falló, para que el frontend muestre el aviso con opción de reintentar.
+        Solo responde con error si fallan las tres fuentes.
+        Pantalla: Calendario académico (4.9).
+      x-fuentes: [Módulo 4, Módulo 6, Módulo 9]
+      x-estado-fuente: Módulo 6 confirmado; Módulo 9 implementado; Módulo 4 sin hora del turno
+      parameters:
+        - name: desde
+          in: query
+          required: true
+          description: Inicio del rango visible (inclusive)
+          schema: { type: string, format: date }
+        - name: hasta
+          in: query
+          required: true
+          description: Fin del rango visible (inclusive)
+          schema: { type: string, format: date }
+        - name: categorias
+          in: query
+          required: false
+          description: Categorías a incluir, separadas por coma. Si se omite, todas.
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { $ref: '#/components/schemas/CategoriaCalendario' }
+      responses:
+        '200':
+          description: Ítems del rango, ordenados por inicio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calendario'
+        '400':
+          description: Rango inválido (`hasta` anterior a `desde` o rango mayor al permitido)
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+
+  /compras:
+    get:
+      tags: [Compras]
+      operationId: getCompras
+      summary: Historial de compras del alumno
+      description: >
+        Consulta en vivo a la Tienda (`GET /api/store/orders/me`), sin tabla propia.
+        Solo lectura. Pantalla: Historial de compras (4.10).
+      x-fuentes: [Módulo 5]
+      x-estado-fuente: propuesto (falta listado vs. detalle y filtro por sede)
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+        - name: desde
+          in: query
+          description: Fecha de compra desde (inclusive)
+          schema: { type: string, format: date }
+        - name: hasta
+          in: query
+          description: Fecha de compra hasta (inclusive)
+          schema: { type: string, format: date }
+        - name: estado
+          in: query
+          description: Estado de la orden, tal como lo define la Tienda
+          schema: { type: string }
+        - name: sede
+          in: query
+          description: Filtro por sede (pedido al Módulo 5, todavía no confirmado)
+          x-provisional: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Página de compras, de la más reciente a la más antigua
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaCompras'
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+  /compras/{orderId}:
+    get:
+      tags: [Compras]
+      operationId: getCompra
+      summary: Detalle de una compra
+      description: >
+        Consulta `GET /api/store/orders/:orderId` en la Tienda. Solo compras propias.
+      x-fuentes: [Módulo 5]
+      x-estado-fuente: propuesto
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Detalle de la compra
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompraDetalle'
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404':
+          description: La compra no existe o no pertenece al alumno
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: accessToken emitido por CORE (RS256). El BFF lo valida contra el JWKS de CORE.
+
+  parameters:
+    CursoId:
+      name: cursoId
+      in: path
+      required: true
+      description: Identificador del curso (comisión), compartido con los módulos 9 y 2
+      schema: { type: string }
+
+  responses:
+    NoAutenticado:
+      description: Token ausente, vencido o inválido
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example:
+            type: about:blank
+            title: No autenticado
+            status: 401
+            code: AUTH_TOKEN_INVALID
+    ModuloInvalido:
+      description: Un módulo del que depende la operación respondió algo inválido
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+    ModuloNoDisponible:
+      description: Un módulo del que depende la operación está caído
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example:
+            type: about:blank
+            title: Módulo no disponible
+            status: 503
+            code: UPSTREAM_UNAVAILABLE
+            modulo: GESTION_ACADEMICA
+    ModuloTimeout:
+      description: Un módulo del que depende la operación no respondió a tiempo (10 s en el Gateway)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+
+  schemas:
+    Problema:
+      type: object
+      description: Error en formato problem+json, con un código estable para el frontend
+      required: [title, status, code]
+      properties:
+        type: { type: string, default: about:blank }
+        title: { type: string }
+        status: { type: integer }
+        code:
+          type: string
+          description: Código estable de error (por ejemplo `UPSTREAM_UNAVAILABLE`)
+        detail: { type: string }
+        modulo:
+          allOf:
+            - $ref: '#/components/schemas/ModuloExterno'
+          description: Módulo que originó el error, cuando aplica
+        correlationId:
+          type: string
+          description: Valor de `X-Correlation-Id`, para rastrear el request
+
+    ProblemaInscripcion:
+      allOf:
+        - $ref: '#/components/schemas/Problema'
+        - type: object
+          properties:
+            code:
+              type: string
+              enum: [YA_INSCRIPTO, SIN_CUPO, CORRELATIVIDAD_FALTANTE, SIN_REGULARIDAD, FUERA_DE_FECHA]
+              x-provisional: true
+            correlativasFaltantes:
+              type: array
+              description: Presente cuando `code` es `CORRELATIVIDAD_FALTANTE`
+              items: { $ref: '#/components/schemas/CorrelativaFaltante' }
+
+    ModuloExterno:
+      type: string
+      enum: [CORE, DOCENTE, BIBLIOTECA, COMEDOR, TIENDA, EVENTOS, BACKOFFICE, GESTION_ACADEMICA]
+
+    Perfil:
+      type: object
+      required: [id, email]
+      properties:
+        id:
+          type: string
+          description: Id del alumno, el mismo en todos los módulos (claim `sub` de CORE)
+        email: { type: string, format: email }
+        nombre: { type: string, x-provisional: true }
+        apellido: { type: string, x-provisional: true }
+        legajo: { type: string, x-provisional: true }
+        carrera: { type: string, x-provisional: true }
+        planId:
+          type: string
+          nullable: true
+          x-provisional: true
+          description: Plan de estudios. A confirmar que Backoffice lo devuelva.
+      example:
+        id: "alumno-456"
+        email: jperez@uade.edu.ar
+        nombre: Juan
+        apellido: Pérez
+        legajo: "1123456"
+        carrera: Ingeniería en Informática
+        planId: "plan-2020"
+
+    Asignatura:
+      type: object
+      required: [id, nombre]
+      properties:
+        id: { type: string }
+        codigo: { type: string }
+        nombre: { type: string }
+
+    Periodo:
+      type: object
+      required: [id, nombre]
+      properties:
+        id: { type: string }
+        nombre:
+          type: string
+          example: 2° cuatrimestre 2026
+
+    OfertaInscripcion:
+      type: object
+      required: [periodo, inscripcionAbierta, materias]
+      properties:
+        periodo: { $ref: '#/components/schemas/Periodo' }
+        inscripcionDesde: { type: string, format: date-time }
+        inscripcionHasta: { type: string, format: date-time }
+        inscripcionAbierta:
+          type: boolean
+          description: Si la fecha actual está dentro de la ventana de inscripción
+        materias:
+          type: array
+          items: { $ref: '#/components/schemas/MateriaOferta' }
+
+    MateriaOferta:
+      type: object
+      required: [asignatura, bloqueada, comisiones]
+      properties:
+        asignatura: { $ref: '#/components/schemas/Asignatura' }
+        bloqueada:
+          type: boolean
+          description: True si al alumno le falta alguna correlativa
+        correlativasFaltantes:
+          type: array
+          items: { $ref: '#/components/schemas/CorrelativaFaltante' }
+        comisiones:
+          type: array
+          items: { $ref: '#/components/schemas/Comision' }
+
+    CorrelativaFaltante:
+      type: object
+      required: [asignaturaId, nombre, tipo]
+      properties:
+        asignaturaId: { type: string }
+        nombre: { type: string }
+        tipo:
+          type: string
+          enum: [REGULAR, APROBADA]
+          description: APROBADA exige estado APROBADO; REGULAR acepta REGULAR o APROBADO
+
+    Comision:
+      type: object
+      required: [cursoId, estado]
+      properties:
+        cursoId: { type: string }
+        nombre:
+          type: string
+          description: Nombre o código de la comisión
+        sede:
+          type: string
+          nullable: true
+          x-provisional: true
+        horarios:
+          type: array
+          x-provisional: true
+          description: Pedido al Módulo 9 (horarios anidados en el listado). Vacío si no vienen.
+          items: { $ref: '#/components/schemas/Horario' }
+        cupoMaximo: { type: integer }
+        inscriptosActivos: { type: integer }
+        estado:
+          type: string
+          enum: [INSCRIPTO, CON_CUPO, SIN_CUPO, BLOQUEADA]
+
+    Horario:
+      type: object
+      required: [dia, desde, hasta]
+      properties:
+        dia:
+          type: string
+          enum: [LUNES, MARTES, MIERCOLES, JUEVES, VIERNES, SABADO]
+        desde: { type: string, example: "18:30" }
+        hasta: { type: string, example: "22:30" }
+        aula: { type: string, nullable: true }
+
+    Inscripcion:
+      type: object
+      required: [cursoId, estado]
+      properties:
+        id: { type: string }
+        cursoId: { type: string }
+        asignatura: { $ref: '#/components/schemas/Asignatura' }
+        estado: { $ref: '#/components/schemas/EstadoCursada' }
+        fecha: { type: string, format: date-time }
+
+    EstadoCursada:
+      type: string
+      description: Valores de `estado` del Módulo 9
+      enum: [INSCRIPTO, CURSANDO, BAJA, REGULAR, LIBRE, APROBADO, DESAPROBADO]
+
+    CursadaResumen:
+      type: object
+      required: [cursoId, asignatura, periodo, estado, enCurso]
+      properties:
+        cursoId: { type: string }
+        asignatura: { $ref: '#/components/schemas/Asignatura' }
+        periodo: { $ref: '#/components/schemas/Periodo' }
+        notaFinal:
+          type: number
+          nullable: true
+        estado: { $ref: '#/components/schemas/EstadoCursada' }
+        enCurso:
+          type: boolean
+          description: True para INSCRIPTO y CURSANDO; habilita el acceso al detalle
+
+    CursadaDetalle:
+      allOf:
+        - $ref: '#/components/schemas/CursadaResumen'
+        - type: object
+          properties:
+            comision: { type: string }
+            asistencia:
+              allOf:
+                - $ref: '#/components/schemas/Asistencia'
+              nullable: true
+            notas:
+              type: array
+              nullable: true
+              items: { $ref: '#/components/schemas/NotaResumen' }
+            fuentesConError:
+              type: array
+              description: Módulos que no respondieron; el resto del detalle es válido
+              items: { $ref: '#/components/schemas/ModuloExterno' }
+
+    Asistencia:
+      type: object
+      x-provisional: true
+      required: [clasesDictadas, presentes, ausentes, porcentaje]
+      properties:
+        clasesDictadas: { type: integer }
+        presentes: { type: integer }
+        ausentes: { type: integer }
+        porcentaje:
+          type: number
+          description: Porcentaje de asistencia sobre las clases dictadas (0 a 100)
+        limiteInasistencias:
+          type: integer
+          nullable: true
+          description: Inasistencias a partir de las cuales el alumno queda libre. Null si el módulo dueño no lo expone.
+        inasistenciasRestantes:
+          type: integer
+          nullable: true
+          description: Cuántas faltas le quedan antes de quedar libre. Null si no hay límite informado.
+        clases:
+          type: array
+          items:
+            type: object
+            required: [fecha, presente]
+            properties:
+              fecha: { type: string, format: date }
+              presente: { type: boolean }
+
+    InstanciaExamen:
+      type: string
+      enum: [PARCIAL, RECUPERATORIO, FINAL]
+      x-provisional: true
+
+    ResultadoExamen:
+      type: string
+      enum: [APROBADO, DESAPROBADO, AUSENTE]
+      x-provisional: true
+
+    NotaResumen:
+      type: object
+      x-provisional: true
+      required: [notaId, instancia]
+      properties:
+        notaId: { type: string }
+        instancia: { $ref: '#/components/schemas/InstanciaExamen' }
+        titulo:
+          type: string
+          example: 1er parcial
+        fecha: { type: string, format: date }
+        nota:
+          type: number
+          nullable: true
+        resultado: { $ref: '#/components/schemas/ResultadoExamen' }
+
+    NotaDetalle:
+      allOf:
+        - $ref: '#/components/schemas/NotaResumen'
+        - type: object
+          required: [cursoId, asignatura]
+          properties:
+            cursoId: { type: string }
+            asignatura: { $ref: '#/components/schemas/Asignatura' }
+            comision: { type: string }
+            docente:
+              type: string
+              nullable: true
+            observaciones:
+              type: string
+              nullable: true
+              description: Solo si el Módulo 2 las expone
+
+    CategoriaCalendario:
+      type: string
+      enum: [COMEDOR, EVENTO, EXAMEN]
+
+    Calendario:
+      type: object
+      required: [items, fuentes]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ItemCalendario' }
+        fuentes:
+          type: array
+          description: Resultado de cada fuente consultada
+          items:
+            type: object
+            required: [categoria, estado]
+            properties:
+              categoria: { $ref: '#/components/schemas/CategoriaCalendario' }
+              estado:
+                type: string
+                enum: [OK, ERROR]
+              code:
+                type: string
+                description: Código del error cuando `estado` es ERROR
+      example:
+        items:
+          - id: "COMEDOR:1"
+            categoria: COMEDOR
+            titulo: Turno de comedor
+            inicio: "2026-10-05T12:30:00-03:00"
+            fin: null
+            todoElDia: false
+            lugar: Monserrat
+          - id: "EVENTO:ev-9"
+            categoria: EVENTO
+            titulo: Charla de IA aplicada
+            inicio: "2026-10-08T18:00:00-03:00"
+            fin: "2026-10-08T20:00:00-03:00"
+            todoElDia: false
+            lugar: Aula Magna — Monserrat
+        fuentes:
+          - { categoria: COMEDOR, estado: OK }
+          - { categoria: EVENTO, estado: OK }
+          - { categoria: EXAMEN, estado: ERROR, code: UPSTREAM_UNAVAILABLE }
+
+    ItemCalendario:
+      type: object
+      required: [id, categoria, titulo, inicio, todoElDia]
+      properties:
+        id:
+          type: string
+          description: Único dentro del calendario (categoría + id de origen)
+        categoria: { $ref: '#/components/schemas/CategoriaCalendario' }
+        titulo: { type: string }
+        inicio: { type: string, format: date-time }
+        fin:
+          type: string
+          format: date-time
+          nullable: true
+        todoElDia:
+          type: boolean
+          description: >
+            True cuando el origen solo informa la fecha. Hoy aplica a los turnos de comedor
+            (hasta que el Módulo 4 agregue la hora) y a las ventanas de examen.
+        lugar:
+          type: string
+          nullable: true
+          description: Campus, sede o locación ya resuelta como texto
+
+    PaginaCompras:
+      type: object
+      required: [items, page, limit, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/CompraResumen' }
+        page: { type: integer }
+        limit: { type: integer }
+        total:
+          type: integer
+          description: Cantidad total de compras que cumplen el filtro
+
+    CompraResumen:
+      type: object
+      x-provisional: true
+      required: [orderId, fecha, estado, total]
+      properties:
+        orderId: { type: string }
+        fecha: { type: string, format: date-time }
+        sede:
+          type: string
+          nullable: true
+        estado:
+          type: string
+          description: Estado de la orden, tal como lo define la Tienda
+        cantidadProductos: { type: integer }
+        total: { $ref: '#/components/schemas/Monto' }
+
+    CompraDetalle:
+      allOf:
+        - $ref: '#/components/schemas/CompraResumen'
+        - type: object
+          required: [productos, subtotal]
+          properties:
+            productos:
+              type: array
+              items:
+                type: object
+                required: [nombre, cantidad, precioUnitario, subtotal]
+                properties:
+                  productoId: { type: string }
+                  nombre:
+                    type: string
+                    description: Nombre congelado al momento de la compra
+                  cantidad: { type: integer }
+                  precioUnitario:
+                    allOf:
+                      - $ref: '#/components/schemas/Monto'
+                    description: Precio histórico, congelado al momento de la compra
+                  subtotal: { $ref: '#/components/schemas/Monto' }
+            subtotal: { $ref: '#/components/schemas/Monto' }
+
+    Monto:
+      type: string
+      description: Importe decimal como string, para no perder precisión (mismo criterio que Biblioteca)
+      example: "2500.00"
