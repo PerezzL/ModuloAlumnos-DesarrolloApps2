@@ -69,7 +69,7 @@ Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 | Bloque | Contenido |
 | --- | --- |
 | A · Esqueleto | T00–T12, T15 y H01–H05 (login, sesión, rutas protegidas y logout) |
-| B · CORE falso parte 2 | T13, T14 |
+| B · CORE falso parte 2 | T13, T14. Rama `bloque/core-falso-2`, sale de `bloque/esqueleto` mientras el PR #1 no esté mergeado |
 | C · Features firmes | Header/Home (`GET /me`), Calendario, Saldo, Centro de notificaciones |
 | D · Features provisionales | Inscripción, Historial, Compras |
 | E · Módulo 2 | Detalle de cursada y detalle de nota, contra la suposición del contrato |

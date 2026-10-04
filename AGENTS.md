@@ -165,6 +165,11 @@ Límites:
   persona antes de arrancar; después se avanza sin frenar entre tarjetas.
 - Una rama `bloque/<nombre>` y un PR por bloque. Adentro, un commit por tarjeta con su código
   en el título (`T07: guard JWT`). Se mergea sin squash.
+- Si el bloque anterior todavía no está mergeado, la rama nueva sale de la rama de ese bloque
+  y su PR apunta a ella (no a `main`). Si el bloque anterior recibe cambios, se traen con
+  `git merge`. Cuando se mergea a `main`, se cambia la base del PR nuevo a `main`.
+- Al instalar dependencias, no filtrar la salida de `npm install`: los errores de peers
+  (ERESOLVE) pasan inadvertidos y el paquete no queda instalado.
 - Tests de adaptadores antes que el adaptador.
 - Si el código y la documentación se contradicen, o algo no está especificado,
   frenar y preguntar en lugar de asumir.
