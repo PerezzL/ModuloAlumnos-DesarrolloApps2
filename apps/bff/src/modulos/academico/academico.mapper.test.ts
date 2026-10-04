@@ -74,10 +74,55 @@ describe('mapper de Gestión Académica: datos para la inscripción', () => {
     expect(cursos.find((c) => c.cursoId === 'curso-so-2027-1-a')).toEqual({
       cursoId: 'curso-so-2027-1-a',
       nombre: 'A - Noche',
+      sede: 'Monserrat',
+      horarios: [
+        { dia: 'LUNES', desde: '18:30', hasta: '20:30', aula: 'Aula 501' },
+        { dia: 'VIERNES', desde: '18:30', hasta: '20:30', aula: 'Aula 501' },
+      ],
       cupoMaximo: 45,
       inscriptosActivos: 10,
       asignatura: { id: 'asig-so', codigo: '3.4.074', nombre: 'Sistemas Operativos' },
     });
+  });
+
+  it('sin horarios ni sede, la comisión sale igual: horarios vacíos y sede null', () => {
+    const cursos = aCursos(fixture('academic/cursos.provisional.json'));
+    expect(cursos.find((c) => c.cursoId === 'curso-desa2-2027-1-a')).toMatchObject({
+      horarios: [],
+    });
+    const [curso] = aCursos([
+      { id: 'c', cupoMaximo: 1, inscriptosActivos: 0, asignatura: { id: 'a', nombre: 'A' } },
+    ]);
+    expect(curso).toMatchObject({ sede: null, horarios: [] });
+  });
+
+  it('un horario sin aula la deja en null', () => {
+    const [curso] = aCursos([
+      {
+        id: 'c',
+        cupoMaximo: 1,
+        inscriptosActivos: 0,
+        asignatura: { id: 'a', nombre: 'A' },
+        horarios: [{ dia: 'SABADO', desde: '09:00', hasta: '13:00' }],
+      },
+    ]);
+    expect(curso!.horarios).toEqual([
+      { dia: 'SABADO', desde: '09:00', hasta: '13:00', aula: null },
+    ]);
+  });
+
+  it('un horario con un día desconocido es 502', () => {
+    expect(() =>
+      aCursos([
+        {
+          id: 'c',
+          cupoMaximo: 1,
+          inscriptosActivos: 0,
+          asignatura: { id: 'a', nombre: 'A' },
+          horarios: [{ dia: 'DOMINGO', desde: '09:00', hasta: '13:00' }],
+        },
+      ]),
+    ).toThrow(ProblemaError);
   });
 
   it('ids numéricos se tratan como strings opacos', () => {

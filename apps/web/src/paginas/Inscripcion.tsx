@@ -1,5 +1,5 @@
 import type { Comision, MateriaOferta } from '@uadenet/api-types';
-import { BookX, Info, Lock } from 'lucide-react';
+import { BookX, Clock, Info, Lock, MapPin } from 'lucide-react';
 import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
@@ -74,10 +74,40 @@ function Materia({ materia }: { materia: MateriaOferta }) {
   );
 }
 
+const DIAS: Record<NonNullable<Comision['horarios']>[number]['dia'], string> = {
+  LUNES: 'Lunes',
+  MARTES: 'Martes',
+  MIERCOLES: 'Miércoles',
+  JUEVES: 'Jueves',
+  VIERNES: 'Viernes',
+  SABADO: 'Sábado',
+};
+
 function ComisionFila({ comision }: { comision: Comision }) {
+  // Horarios y sede son provisionales: si no vienen, la comisión se muestra sin ellos
+  const horarios = comision.horarios ?? [];
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-item border border-borde-suave p-3">
-      <p className="min-w-0 flex-1 font-medium">Comisión {comision.nombre ?? comision.cursoId}</p>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">Comisión {comision.nombre ?? comision.cursoId}</p>
+        {(horarios.length > 0 || comision.sede) && (
+          <ul aria-label="Horarios" className="flex flex-col gap-0.5 pt-1 text-sm text-texto-suave">
+            {horarios.map((h) => (
+              <li key={`${h.dia}-${h.desde}`} className="flex items-center gap-1.5">
+                <Clock className="size-3.5 shrink-0" aria-hidden />
+                {DIAS[h.dia]} {h.desde} a {h.hasta}
+                {h.aula && ` · ${h.aula}`}
+              </li>
+            ))}
+            {comision.sede && (
+              <li className="flex items-center gap-1.5">
+                <MapPin className="size-3.5 shrink-0" aria-hidden />
+                Sede {comision.sede}
+              </li>
+            )}
+          </ul>
+        )}
+      </div>
       {comision.cupoMaximo !== undefined && comision.inscriptosActivos !== undefined && (
         <p className="text-sm text-texto-suave tabular-nums">
           {comision.inscriptosActivos}/{comision.cupoMaximo} inscriptos

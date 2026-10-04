@@ -85,6 +85,8 @@ function comision(curso: CursoOfertado, inscripto: boolean, bloqueada: boolean):
   return {
     cursoId: curso.cursoId,
     ...(curso.nombre !== undefined && { nombre: curso.nombre }),
+    sede: curso.sede,
+    horarios: curso.horarios,
     cupoMaximo: curso.cupoMaximo,
     inscriptosActivos: curso.inscriptosActivos,
     estado: estadoComision(curso, inscripto, bloqueada),

@@ -1,4 +1,10 @@
-import type { Asignatura, CorrelativaFaltante, EstadoCursada, Periodo } from '@uadenet/api-types';
+import type {
+  Asignatura,
+  CorrelativaFaltante,
+  EstadoCursada,
+  Horario,
+  Periodo,
+} from '@uadenet/api-types';
 
 /**
  * Modelos propios con lo que el portal necesita del Módulo 9. Los arma el adaptador; el resto
@@ -13,6 +19,10 @@ export interface PeriodoAcademico extends Periodo {
 export interface CursoOfertado {
   cursoId: string;
   nombre?: string;
+  /** Pedido al Módulo 9, sin confirmar: null si no viene */
+  sede: string | null;
+  /** Pedido al Módulo 9, sin confirmar: vacío si no vienen */
+  horarios: Horario[];
   cupoMaximo: number;
   inscriptosActivos: number;
   asignatura: Asignatura;

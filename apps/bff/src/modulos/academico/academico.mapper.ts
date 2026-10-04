@@ -53,6 +53,13 @@ export function aCursos(datos: unknown): CursoOfertado[] {
   return parsearOrigen('GESTION_ACADEMICA', Cursos, datos).map((c) => ({
     cursoId: idOpaco(c.id),
     ...(c.comision !== undefined && { nombre: c.comision }),
+    sede: c.sede ?? null,
+    horarios: (c.horarios ?? []).map((h) => ({
+      dia: h.dia,
+      desde: h.desde,
+      hasta: h.hasta,
+      aula: h.aula ?? null,
+    })),
     cupoMaximo: c.cupoMaximo,
     inscriptosActivos: c.inscriptosActivos,
     asignatura: asignatura(c.asignatura),

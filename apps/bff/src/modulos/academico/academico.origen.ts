@@ -22,6 +22,17 @@ export const TurnosExamen = z.array(
 const id = z.union([z.string(), z.number()]);
 const instante = z.string().datetime({ offset: true });
 
+const hora = z.string().regex(/^\d{2}:\d{2}$/, 'se esperaba HH:MM');
+
+const Horario = z
+  .object({
+    dia: z.enum(['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO']),
+    desde: hora,
+    hasta: hora,
+    aula: z.string().nullable().optional(),
+  })
+  .passthrough();
+
 const Asignatura = z
   .object({ id, codigo: z.string().optional(), nombre: z.string() })
   .passthrough();
@@ -55,6 +66,7 @@ export const Cursos = z.array(
       cupoMaximo: z.number().int(),
       inscriptosActivos: z.number().int(),
       asignatura: Asignatura,
+      horarios: z.array(Horario).optional(),
     })
     .passthrough(),
 );

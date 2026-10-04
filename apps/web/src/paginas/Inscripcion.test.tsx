@@ -72,6 +72,22 @@ describe('inscripción: oferta', () => {
     expect(screen.getByText('Sistemas Operativos')).toBeInTheDocument();
   });
 
+  it('muestra día, horario, aula y sede de cada comisión; sin horarios, la comisión igual', async () => {
+    renderApp('/academico');
+    const so = await screen.findByRole('list', { name: 'Comisiones de Sistemas Operativos' });
+    const horarios = within(so).getByRole('list', { name: 'Horarios' });
+    expect(
+      within(horarios)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Lunes 18:30 a 20:30 · Aula 501', 'Viernes 18:30 a 20:30', 'Sede Monserrat']);
+    const ayed = screen.getByRole('list', {
+      name: 'Comisiones de Algoritmos y Estructuras de Datos',
+    });
+    expect(within(ayed).queryByRole('list', { name: 'Horarios' })).not.toBeInTheDocument();
+    expect(within(ayed).getByText('Comisión B - Noche')).toBeInTheDocument();
+  });
+
   it('sin materias, estado vacío', async () => {
     conOferta({ materias: [] });
     renderApp('/academico');

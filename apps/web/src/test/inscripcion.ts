@@ -56,6 +56,11 @@ export const ofertaBase = (): OfertaInscripcion => ({
         {
           cursoId: 'curso-so-a',
           nombre: 'A - Noche',
+          sede: 'Monserrat',
+          horarios: [
+            { dia: 'LUNES', desde: '18:30', hasta: '20:30', aula: 'Aula 501' },
+            { dia: 'VIERNES', desde: '18:30', hasta: '20:30', aula: null },
+          ],
           cupoMaximo: 45,
           inscriptosActivos: 10,
           estado: 'CON_CUPO',
