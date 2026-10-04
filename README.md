@@ -8,8 +8,9 @@ módulos a través del Gateway de CORE.
 
 ## Estado
 
-En armado. Todavía no hay código: el repo tiene el contrato de la API, la documentación y
-el plan de construcción.
+Bloque A (esqueleto) terminado: login, sesión, BFF con health, guard JWT y errores,
+CORE falso con auth y Gateway, mock del contrato con Prism y CI. Las pantallas con datos
+llegan en los bloques siguientes (ver `docs/plan.md`).
 
 ## Stack
 
@@ -21,6 +22,7 @@ el plan de construcción.
 
 | Archivo | Para qué |
 | --- | --- |
+| `docs/instalacion.md` | Cómo instalar y levantar el proyecto desde cero |
 | `docs/plan.md` | Decisiones tomadas, pasos de armado y pendientes |
 | `docs/arquitectura.md` | Capas, recorrido de un pedido, auth, mocks, despliegue |
 | `docs/requisitos.md` | Los 9 requisitos funcionales |
@@ -31,4 +33,20 @@ el plan de construcción.
 
 ## Instalar y ejecutar
 
-Pendiente: se completa cuando esté armado el esqueleto (ver `docs/plan.md`).
+**Guía completa desde cero (Mac y Windows), Node vs. Docker y qué es Prism:
+[`docs/instalacion.md`](docs/instalacion.md).**
+
+Resumen, con Node 24 instalado:
+
+```bash
+npm install
+cp .env.example .env   # Windows: Copy-Item .env.example .env
+npm run dev
+```
+
+O con Docker: `docker compose up --build`.
+
+Portal en http://localhost:5173 · usuario de prueba `v.moreno@uade.edu.ar` / `uade2026`.
+
+Antes de subir cambios: `npm run verify` (lo mismo que corre el CI). Con el stack de Docker
+levantado, `scripts/smoke-docker.sh` corre los chequeos del job `docker`.

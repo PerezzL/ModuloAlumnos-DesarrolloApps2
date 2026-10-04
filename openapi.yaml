@@ -307,10 +307,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Calendario'
         '400':
-          description: Rango inválido (`hasta` anterior a `desde` o rango mayor al permitido)
+          description: >
+            Rango inválido, con `code` `RANGO_INVALIDO`: `hasta` anterior a `desde`, o rango
+            mayor a 62 días (alcanza para una vista mensual con las semanas de relleno).
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Rango inválido
+                status: 400
+                code: RANGO_INVALIDO
+                detail: El rango no puede superar los 62 días.
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }
 
@@ -633,9 +641,10 @@ components:
           properties:
             comision: { type: string }
             asistencia:
+              type: object
+              nullable: true
               allOf:
                 - $ref: '#/components/schemas/Asistencia'
-              nullable: true
             notas:
               type: array
               nullable: true
@@ -746,9 +755,9 @@ components:
           - id: "COMEDOR:1"
             categoria: COMEDOR
             titulo: Turno de comedor
-            inicio: "2026-10-05T12:30:00-03:00"
+            inicio: "2026-10-05T00:00:00-03:00"
             fin: null
-            todoElDia: false
+            todoElDia: true
             lugar: Monserrat
           - id: "EVENTO:ev-9"
             categoria: EVENTO
@@ -780,7 +789,9 @@ components:
           type: boolean
           description: >
             True cuando el origen solo informa la fecha. Hoy aplica a los turnos de comedor
-            (hasta que el Módulo 4 agregue la hora) y a las ventanas de examen.
+            (hasta que el Módulo 4 agregue la hora) y a las ventanas de examen. En ese caso
+            `inicio` es las 00:00 de ese día en hora de Argentina (-03:00) y el front muestra
+            solo la fecha.
         lugar:
           type: string
           nullable: true

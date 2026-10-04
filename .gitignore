@@ -26,3 +26,6 @@ npm-debug.log*
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Colección Postman (se genera con `npm run postman`)
+postman/

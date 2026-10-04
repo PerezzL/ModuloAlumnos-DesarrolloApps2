@@ -1,6 +1,6 @@
 # Plan de construcción
 
-Estado al 4 de octubre de 2026. Este archivo se actualiza a medida que se cierran decisiones
+Estado al 4 de octubre de 2026: **bloque A terminado** (PR `bloque/esqueleto`). Este archivo se actualiza a medida que se cierran decisiones
 y pasos. El porqué de cada decisión está en `arquitectura.md`.
 
 ## Repositorio
@@ -69,7 +69,7 @@ Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 | Bloque | Contenido |
 | --- | --- |
 | A · Esqueleto | T00–T12, T15 y H01–H05 (login, sesión, rutas protegidas y logout) |
-| B · CORE falso parte 2 | T13, T14 |
+| B · CORE falso parte 2 | T13, T14. Rama `bloque/core-falso-2`, sale de `bloque/esqueleto` mientras el PR #1 no esté mergeado |
 | C · Features firmes | Header/Home (`GET /me`), Calendario, Saldo, Centro de notificaciones |
 | D · Features provisionales | Inscripción, Historial, Compras |
 | E · Módulo 2 | Detalle de cursada y detalle de nota, contra la suposición del contrato |
@@ -124,13 +124,13 @@ Cada paso termina con algo que se puede correr y verificar.
     notificaciones por socket.io y saldo.
 11. **Features**, por bloques (C, D y E).
 
-## Correcciones al contrato antes de usarlo
+## Correcciones al contrato
 
-- Ejemplo del calendario: el ítem de comedor figura con hora y `todoElDia: false`, pero el
-  Módulo 4 hoy solo manda la fecha.
-- `GET /calendario`: el 400 menciona un rango máximo que no está definido.
-- Deep link de la nota: depende del `actionUrl` del Módulo 2; aislar la traducción de
-  `actionUrl` a ruta propia en un solo lugar del front.
+Aplicadas (T03): ítem de comedor con `todoElDia: true` y sin hora; `GET /calendario` devuelve
+400 `RANGO_INVALIDO` si el rango supera 62 días; `asistencia` nullable válido en OpenAPI 3.0.
+
+Pendiente para el front: el deep link de la nota depende del `actionUrl` del Módulo 2; la
+traducción de `actionUrl` a ruta propia se aísla en un solo lugar.
 
 ## Pendientes externos
 

@@ -14,6 +14,7 @@ agrega información de otros módulos a través del Gateway de CORE.
 | Archivo | Para qué |
 | --- | --- |
 | `openapi.yaml` | Contrato front ↔ BFF. Es la fuente de verdad de la API propia. |
+| `docs/instalacion.md` | Instalación desde cero, Node vs. Docker, Prism. |
 | `docs/arquitectura.md` | Capas, Gateway, fuentes de verdad, auth, decisiones tomadas. |
 | `docs/integraciones.md` | Qué expone cada módulo externo y qué está confirmado o pendiente. |
 | `docs/plan.md` | Decisiones tomadas, pasos de armado y pendientes. |
@@ -36,10 +37,18 @@ agrega información de otros módulos a través del Gateway de CORE.
 
 ## Comandos
 
-> Pendiente: se completa al armar el repo (bloque A).
+| Comando | Qué hace |
+| --- | --- |
+| `npm install` | Instala todo el monorepo (Node 24, ver `.nvmrc`) |
+| `npm run gen` | Regenera `packages/api-types` desde `openapi.yaml` |
+| `npm run verify` | `gen` → typecheck → ESLint → `redocly lint` → Vitest. **Correrlo antes de cada commit.** El CI corre lo mismo |
+| `npm test` | Solo los tests (Vitest, todos los proyectos) |
+| `npm run format` | Prettier |
+| `npm run mock` | Prism en :4010 con los ejemplos de `openapi.yaml`. Para usarlo: `STUDENT_SERVICE_URL=http://localhost:4010` |
+| `npm run postman` | Exporta la colección Postman del contrato a `postman/` (fuera de git) |
 
-- `npm run verify`: `gen` → `tsc -b` → `eslint` → `redocly lint` → `vitest run`.
-  Correrlo antes de cada commit de tarjeta y antes de abrir el PR. El CI corre lo mismo.
+Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
+(`new Contrato().validar('get', '/calendario', 200, body)`) en los tests e2e.
 
 ## Reglas del dominio (no negociables)
 
@@ -156,6 +165,11 @@ Límites:
   persona antes de arrancar; después se avanza sin frenar entre tarjetas.
 - Una rama `bloque/<nombre>` y un PR por bloque. Adentro, un commit por tarjeta con su código
   en el título (`T07: guard JWT`). Se mergea sin squash.
+- Si el bloque anterior todavía no está mergeado, la rama nueva sale de la rama de ese bloque
+  y su PR apunta a ella (no a `main`). Si el bloque anterior recibe cambios, se traen con
+  `git merge`. Cuando se mergea a `main`, se cambia la base del PR nuevo a `main`.
+- Al instalar dependencias, no filtrar la salida de `npm install`: los errores de peers
+  (ERESOLVE) pasan inadvertidos y el paquete no queda instalado.
 - Tests de adaptadores antes que el adaptador.
 - Si el código y la documentación se contradicen, o algo no está especificado,
   frenar y preguntar en lugar de asumir.
