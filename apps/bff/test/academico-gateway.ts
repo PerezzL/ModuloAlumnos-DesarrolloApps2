@@ -31,6 +31,13 @@ export function academicoConFixtures() {
       const cursos = fixture<{ periodoId: string }[]>('academic/cursos.provisional.json');
       return HttpResponse.json(cursos.filter((c) => c.periodoId === periodoId));
     }),
+    http.get(RUTAS_ACADEMICO.CORRELATIVIDADES, ({ params }) => {
+      const todas = fixture<Record<string, object>>('academic/correlatividades.provisional.json');
+      const id = String(params.asignaturaId);
+      return Object.hasOwn(todas, id)
+        ? HttpResponse.json(todas[id])
+        : HttpResponse.json({ code: 'NOT_FOUND' }, { status: 404 });
+    }),
     http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () =>
       HttpResponse.json(fixture('academic/inscripciones-alumno.provisional.json')),
     ),

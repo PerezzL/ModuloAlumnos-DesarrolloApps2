@@ -1,6 +1,7 @@
 import type { Comision, MateriaOferta, OfertaInscripcion } from '@uadenet/api-types';
 import { ProblemaError } from '../comun/problema';
 import type {
+  Correlativa,
   CursoOfertado,
   InscripcionAlumno,
   PeriodoAcademico,
@@ -47,19 +48,46 @@ export function elegirPeriodo(
   return ultimo ?? periodos.at(-1)!;
 }
 
-/** Estado de la comisión para el alumno: inscripto primero; si no, según el cupo. */
-function estadoComision(curso: CursoOfertado, inscripto: boolean): Comision['estado'] {
+/** Estados del alumno que cumplen cada tipo de correlativa */
+const CUMPLE: Record<Correlativa['tipo'], ReadonlySet<InscripcionAlumno['estado']>> = {
+  APROBADA: new Set(['APROBADO']),
+  REGULAR: new Set(['REGULAR', 'APROBADO']),
+};
+
+/**
+ * Correlativas que el alumno todavía no cumple, según su historial. `APROBADA` exige haber
+ * aprobado la materia; `REGULAR` acepta tenerla regular o aprobada.
+ */
+export function correlativasFaltantes(
+  correlativas: Correlativa[],
+  inscripciones: InscripcionAlumno[],
+): Correlativa[] {
+  return correlativas.filter(
+    (c) =>
+      !inscripciones.some(
+        (i) => i.asignatura.id === c.asignaturaId && CUMPLE[c.tipo].has(i.estado),
+      ),
+  );
+}
+
+/** Estado de la comisión para el alumno: inscripto, bloqueada por correlativa o según cupo. */
+function estadoComision(
+  curso: CursoOfertado,
+  inscripto: boolean,
+  bloqueada: boolean,
+): Comision['estado'] {
   if (inscripto) return 'INSCRIPTO';
+  if (bloqueada) return 'BLOQUEADA';
   return curso.inscriptosActivos < curso.cupoMaximo ? 'CON_CUPO' : 'SIN_CUPO';
 }
 
-function comision(curso: CursoOfertado, inscripto: boolean): Comision {
+function comision(curso: CursoOfertado, inscripto: boolean, bloqueada: boolean): Comision {
   return {
     cursoId: curso.cursoId,
     ...(curso.nombre !== undefined && { nombre: curso.nombre }),
     cupoMaximo: curso.cupoMaximo,
     inscriptosActivos: curso.inscriptosActivos,
-    estado: estadoComision(curso, inscripto),
+    estado: estadoComision(curso, inscripto, bloqueada),
   };
 }
 
@@ -68,6 +96,8 @@ export interface DatosOferta {
   cursos: CursoOfertado[];
   /** Todas las inscripciones del alumno, de cualquier período */
   inscripciones: InscripcionAlumno[];
+  /** Correlativas de cada asignatura de la oferta, por id de asignatura */
+  correlativas: ReadonlyMap<string, Correlativa[]>;
   filtradaPorPlan: boolean;
   ahora: Date;
 }
@@ -77,6 +107,7 @@ export function armarOferta({
   periodo,
   cursos,
   inscripciones,
+  correlativas,
   filtradaPorPlan,
   ahora,
 }: DatosOferta): OfertaInscripcion {
@@ -88,10 +119,21 @@ export function armarOferta({
   for (const curso of cursos) {
     let materia = porAsignatura.get(curso.asignatura.id);
     if (!materia) {
-      materia = { asignatura: curso.asignatura, bloqueada: false, comisiones: [] };
+      const faltantes = correlativasFaltantes(
+        correlativas.get(curso.asignatura.id) ?? [],
+        inscripciones,
+      );
+      materia = {
+        asignatura: curso.asignatura,
+        bloqueada: faltantes.length > 0,
+        ...(faltantes.length > 0 && { correlativasFaltantes: faltantes }),
+        comisiones: [],
+      };
       porAsignatura.set(curso.asignatura.id, materia);
     }
-    materia.comisiones.push(comision(curso, cursosInscriptos.has(curso.cursoId)));
+    materia.comisiones.push(
+      comision(curso, cursosInscriptos.has(curso.cursoId), materia.bloqueada),
+    );
   }
 
   const { inscripcionDesde, inscripcionHasta, ...datosPeriodo } = periodo;

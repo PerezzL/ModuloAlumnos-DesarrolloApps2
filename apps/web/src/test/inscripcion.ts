@@ -33,6 +33,23 @@ export const ofertaBase = (): OfertaInscripcion => ({
       ],
     },
     {
+      asignatura: { id: 'asig-desa2', nombre: 'Desarrollo de Aplicaciones II' },
+      bloqueada: true,
+      correlativasFaltantes: [
+        { asignaturaId: 'asig-desa1', nombre: 'Desarrollo de Aplicaciones I', tipo: 'REGULAR' },
+        { asignaturaId: 'asig-bd1', nombre: 'Bases de Datos I', tipo: 'APROBADA' },
+      ],
+      comisiones: [
+        {
+          cursoId: 'curso-desa2-a',
+          nombre: 'A - Noche',
+          cupoMaximo: 35,
+          inscriptosActivos: 5,
+          estado: 'BLOQUEADA',
+        },
+      ],
+    },
+    {
       asignatura: { id: 'asig-so', codigo: '3.4.074', nombre: 'Sistemas Operativos' },
       bloqueada: false,
       comisiones: [

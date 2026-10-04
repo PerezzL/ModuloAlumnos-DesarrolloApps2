@@ -1,5 +1,5 @@
 import type { Comision, MateriaOferta } from '@uadenet/api-types';
-import { BookX, Info } from 'lucide-react';
+import { BookX, Info, Lock } from 'lucide-react';
 import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
@@ -61,6 +61,7 @@ function Materia({ materia }: { materia: MateriaOferta }) {
         )}
         {asignatura.nombre}
       </h3>
+      {materia.bloqueada && <CorrelativasFaltantes materia={materia} />}
       <ul aria-label={`Comisiones de ${asignatura.nombre}`} className="mt-3 flex flex-col gap-2">
         {materia.comisiones.map((c) => (
           <ComisionFila key={c.cursoId} comision={c} />
@@ -81,5 +82,28 @@ function ComisionFila({ comision }: { comision: Comision }) {
       )}
       <EstadoComision estado={comision.estado} />
     </li>
+  );
+}
+
+const QUE_FALTA = { APROBADA: 'aprobar', REGULAR: 'regularizar' } as const;
+
+function CorrelativasFaltantes({ materia }: { materia: MateriaOferta }) {
+  const faltantes = materia.correlativasFaltantes ?? [];
+  return (
+    <div className="mt-2 flex gap-2 rounded-item bg-fondo p-3 text-sm text-etiqueta">
+      <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <div>
+        <p className="font-medium">Todavía no podés cursarla.</p>
+        {faltantes.length > 0 && (
+          <ul aria-label="Correlativas que te faltan" className="list-disc pl-4">
+            {faltantes.map((c) => (
+              <li key={c.asignaturaId}>
+                Te falta {QUE_FALTA[c.tipo]} {c.nombre}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }

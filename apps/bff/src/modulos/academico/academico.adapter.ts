@@ -1,13 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import type { ItemCalendario } from '@uadenet/api-types';
 import type { Rango } from '../../calendario/rango';
-import { GatewayClient } from '../../gateway/gateway.client';
-import type { CursoOfertado, InscripcionAlumno, PeriodoAcademico } from './academico.modelo';
-import { aCursos, aInscripciones, aPeriodos, turnosAItems } from './academico.mapper';
+import { CacheTtl } from '../../comun/cache';
+import { GatewayClient, RespuestaModuloError } from '../../gateway/gateway.client';
+import type {
+  Correlativa,
+  CursoOfertado,
+  InscripcionAlumno,
+  PeriodoAcademico,
+} from './academico.modelo';
+import {
+  aCorrelativas,
+  aCursos,
+  aInscripciones,
+  aPeriodos,
+  turnosAItems,
+} from './academico.mapper';
+
+/** Las correlatividades cambian con el plan de estudios: casi nunca. */
+const TTL_CORRELATIVIDADES_MS = 60 * 60 * 1000;
 
 /** Módulo 9 · Gestión Académica. Único lugar que conoce la forma de sus respuestas. */
 @Injectable()
 export class AcademicoAdapter {
+  // Las correlativas traen el nombre de cada asignatura: con esto se cachean los dos datos
+  private readonly correlatividades = new CacheTtl<Correlativa[]>(TTL_CORRELATIVIDADES_MS);
+
   constructor(private readonly gateway: GatewayClient) {}
 
   async turnosExamen(rango: Rango): Promise<ItemCalendario[]> {
@@ -39,5 +57,22 @@ export class AcademicoAdapter {
         { query: { periodoId } },
       ),
     );
+  }
+
+  /** Correlativas de una asignatura. Si el Módulo 9 no la conoce, no tiene correlativas. */
+  correlativas(asignaturaId: string): Promise<Correlativa[]> {
+    return this.correlatividades.obtener(asignaturaId, async () => {
+      try {
+        return aCorrelativas(
+          await this.gateway.get(
+            'GESTION_ACADEMICA',
+            `/academica/asignaturas/${encodeURIComponent(asignaturaId)}/correlatividades`,
+          ),
+        );
+      } catch (error) {
+        if (error instanceof RespuestaModuloError && error.estadoOrigen === 404) return [];
+        throw error;
+      }
+    });
   }
 }

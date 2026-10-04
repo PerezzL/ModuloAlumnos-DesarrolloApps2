@@ -24,10 +24,17 @@ export class InscripcionService {
     const ahora = new Date();
     const periodo = elegirPeriodo(periodos, ahora, periodoId);
     const cursos = await this.academico.cursos(periodo.id, planId);
+    const asignaturas = [...new Set(cursos.map((c) => c.asignatura.id))];
+    const correlativas = new Map(
+      await Promise.all(
+        asignaturas.map(async (id) => [id, await this.academico.correlativas(id)] as const),
+      ),
+    );
     return armarOferta({
       periodo,
       cursos,
       inscripciones,
+      correlativas,
       filtradaPorPlan: planId !== null,
       ahora,
     });

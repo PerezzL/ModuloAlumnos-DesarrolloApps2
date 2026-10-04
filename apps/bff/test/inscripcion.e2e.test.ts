@@ -54,6 +54,66 @@ describe('GET /inscripcion/oferta', () => {
     expect(estados).toEqual(['INSCRIPTO', 'INSCRIPTO']);
   });
 
+  it('bloquea las materias con correlativas faltantes', async () => {
+    e2e.server.use(...academicoConFixtures());
+    const res = await e2e.get('/inscripcion/oferta');
+    const bloqueadas = (res.body as OfertaInscripcion).materias
+      .filter((m) => m.bloqueada)
+      .map((m) => m.asignatura.id);
+    expect(bloqueadas).toEqual(['asig-bd2', 'asig-desa2']);
+    expect(contrato.validar('get', '/inscripcion/oferta', 200, res.body).errores).toEqual([]);
+  });
+
+  // La caché vive mientras viva el BFF del test: cada caso usa una asignatura propia
+  const unCurso = (asignaturaId: string) =>
+    http.get(RUTAS_ACADEMICO.CURSOS, () =>
+      HttpResponse.json([
+        {
+          id: `curso-${asignaturaId}`,
+          cupoMaximo: 10,
+          inscriptosActivos: 0,
+          asignatura: { id: asignaturaId, nombre: asignaturaId },
+        },
+      ]),
+    );
+
+  it('una asignatura que el Módulo 9 no conoce no tiene correlativas', async () => {
+    e2e.server.use(
+      unCurso('asig-desconocida'),
+      http.get(RUTAS_ACADEMICO.CORRELATIVIDADES, () => new HttpResponse(null, { status: 404 })),
+      ...academicoConFixtures(),
+    );
+    const res = await e2e.get('/inscripcion/oferta');
+    expect(res.status).toBe(200);
+    expect((res.body as OfertaInscripcion).materias[0]).toMatchObject({ bloqueada: false });
+  });
+
+  it('las correlatividades se cachean entre requests', async () => {
+    let pedidos = 0;
+    e2e.server.use(
+      unCurso('asig-cacheada'),
+      http.get(RUTAS_ACADEMICO.CORRELATIVIDADES, () => {
+        pedidos++;
+        return HttpResponse.json([]);
+      }),
+      ...academicoConFixtures(),
+    );
+    await e2e.get('/inscripcion/oferta');
+    await e2e.get('/inscripcion/oferta');
+    expect(pedidos).toBe(1);
+  });
+
+  it('si fallan las correlatividades, falla la oferta (no se ofrece sin validar)', async () => {
+    e2e.server.use(
+      unCurso('asig-sin-correlativas'),
+      http.get(RUTAS_ACADEMICO.CORRELATIVIDADES, () => new HttpResponse(null, { status: 503 })),
+      ...academicoConFixtures(),
+    );
+    const res = await e2e.get('/inscripcion/oferta');
+    expect(res.status).toBe(503);
+    expect(cuerpo(res)).toMatchObject({ modulo: 'GESTION_ACADEMICA' });
+  });
+
   it('con periodoId, la oferta de ese período', async () => {
     e2e.server.use(...academicoConFixtures());
     const res = await e2e.get('/inscripcion/oferta?periodoId=2026-2');

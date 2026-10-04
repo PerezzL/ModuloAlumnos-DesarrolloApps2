@@ -28,7 +28,7 @@ describe('inscripción: oferta', () => {
 
   it('cada comisión muestra su estado con texto', async () => {
     const oferta = ofertaBase();
-    oferta.materias[1]!.comisiones[0]!.estado = 'INSCRIPTO';
+    oferta.materias[2]!.comisiones[0]!.estado = 'INSCRIPTO';
     conOferta(oferta);
     renderApp('/academico');
     const ayed = await screen.findByRole('list', {
@@ -40,6 +40,22 @@ describe('inscripción: oferta', () => {
     expect(
       screen.getByRole('list', { name: 'Comisiones de Sistemas Operativos' }),
     ).toHaveTextContent('Inscripto');
+  });
+
+  it('una materia bloqueada dice qué correlativas faltan y de qué tipo', async () => {
+    renderApp('/academico');
+    const faltantes = await screen.findByRole('list', { name: 'Correlativas que te faltan' });
+    expect(
+      within(faltantes)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual([
+      'Te falta regularizar Desarrollo de Aplicaciones I',
+      'Te falta aprobar Bases de Datos I',
+    ]);
+    expect(
+      screen.getByRole('list', { name: 'Comisiones de Desarrollo de Aplicaciones II' }),
+    ).toHaveTextContent('Bloqueada');
   });
 
   it('sin materias, estado vacío', async () => {

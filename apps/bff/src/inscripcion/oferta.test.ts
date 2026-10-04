@@ -2,14 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { fixture } from '../../test/fixtures';
 import { ProblemaError } from '../comun/problema';
 import type { InscripcionAlumno } from '../modulos/academico/academico.modelo';
-import { aCursos, aInscripciones, aPeriodos } from '../modulos/academico/academico.mapper';
-import { armarOferta, elegirPeriodo } from './oferta';
+import {
+  aCorrelativas,
+  aCursos,
+  aInscripciones,
+  aPeriodos,
+} from '../modulos/academico/academico.mapper';
+import { armarOferta, correlativasFaltantes, elegirPeriodo } from './oferta';
 
 const periodos = aPeriodos(fixture('academic/periodos.provisional.json'));
 const cursos = aCursos(fixture('academic/cursos.provisional.json')).filter((c) =>
   c.cursoId.includes('2027-1'),
 );
 const historial = aInscripciones(fixture('academic/inscripciones-alumno.provisional.json'));
+const correlatividades = new Map(
+  Object.entries(
+    fixture<Record<string, unknown>>('academic/correlatividades.provisional.json'),
+  ).map(([id, datos]) => [id, aCorrelativas(datos)]),
+);
 const OCTUBRE = new Date('2026-10-04T15:00:00Z');
 
 const inscripcionEn = (
@@ -65,6 +75,7 @@ describe('oferta agrupada por materia', () => {
     periodo,
     cursos,
     inscripciones: historial,
+    correlativas: correlatividades,
     filtradaPorPlan: true,
     ahora: OCTUBRE,
   });
@@ -95,6 +106,25 @@ describe('oferta agrupada por materia', () => {
     expect(oferta.periodo).not.toHaveProperty('inscripcionDesde');
   });
 
+  it('materias bloqueadas por correlativa, con las faltantes y comisiones BLOQUEADA', () => {
+    const porNombre = Object.fromEntries(oferta.materias.map((m) => [m.asignatura.nombre, m]));
+    expect(porNombre['Desarrollo de Aplicaciones II']).toMatchObject({
+      bloqueada: true,
+      correlativasFaltantes: [
+        { asignaturaId: 'asig-desa1', nombre: 'Desarrollo de Aplicaciones I', tipo: 'REGULAR' },
+      ],
+      comisiones: [{ estado: 'BLOQUEADA' }],
+    });
+    expect(porNombre['Bases de Datos II']).toMatchObject({
+      bloqueada: true,
+      correlativasFaltantes: [{ asignaturaId: 'asig-bd1', tipo: 'APROBADA' }],
+    });
+    for (const nombre of ['Sistemas Operativos', 'Algoritmos y Estructuras de Datos']) {
+      expect(porNombre[nombre]!.bloqueada).toBe(false);
+      expect(porNombre[nombre]).not.toHaveProperty('correlativasFaltantes');
+    }
+  });
+
   it('cupo: con lugar CON_CUPO, lleno SIN_CUPO', () => {
     const ayed = oferta.materias[0]!.comisiones;
     expect(ayed.map((c) => [c.cursoId, c.estado])).toEqual([
@@ -109,6 +139,7 @@ describe('oferta agrupada por materia', () => {
         periodo,
         cursos: [],
         inscripciones: [],
+        correlativas: new Map(),
         filtradaPorPlan: true,
         ahora: OCTUBRE,
       }).materias,
@@ -116,7 +147,14 @@ describe('oferta agrupada por materia', () => {
   });
 
   const estados = (inscripciones: InscripcionAlumno[]) =>
-    armarOferta({ periodo, cursos, inscripciones, filtradaPorPlan: true, ahora: OCTUBRE })
+    armarOferta({
+      periodo,
+      cursos,
+      inscripciones,
+      correlativas: new Map(),
+      filtradaPorPlan: true,
+      ahora: OCTUBRE,
+    })
       .materias.flatMap((m) => m.comisiones)
       .reduce<Record<string, string>>((acc, c) => ({ ...acc, [c.cursoId]: c.estado }), {});
 
@@ -138,5 +176,39 @@ describe('oferta agrupada por materia', () => {
 
   it('inscripciones de otros períodos no marcan comisiones de este', () => {
     expect(Object.values(estados(historial))).not.toContain('INSCRIPTO');
+  });
+});
+
+describe('regla de correlatividad', () => {
+  const correlativa = (tipo: 'REGULAR' | 'APROBADA') => ({
+    asignaturaId: 'asig-prog2',
+    nombre: 'Programación II',
+    tipo,
+  });
+  const con = (estado: InscripcionAlumno['estado']) => [
+    { ...inscripcionEn('c', estado), asignatura: { id: 'asig-prog2', nombre: 'Programación II' } },
+  ];
+
+  it.each([
+    ['APROBADA', 'APROBADO', true],
+    ['APROBADA', 'REGULAR', false],
+    ['APROBADA', 'CURSANDO', false],
+    ['REGULAR', 'REGULAR', true],
+    ['REGULAR', 'APROBADO', true],
+    ['REGULAR', 'CURSANDO', false],
+    ['REGULAR', 'LIBRE', false],
+    ['REGULAR', 'DESAPROBADO', false],
+  ] as const)('tipo %s con la materia %s: cumple = %s', (tipo, estado, cumple) => {
+    expect(correlativasFaltantes([correlativa(tipo)], con(estado))).toHaveLength(cumple ? 0 : 1);
+  });
+
+  it('sin haberla cursado, falta', () => {
+    expect(correlativasFaltantes([correlativa('REGULAR')], [])).toHaveLength(1);
+  });
+
+  it('basta con un intento que la cumpla (la libre y después la regular)', () => {
+    expect(
+      correlativasFaltantes([correlativa('REGULAR')], [...con('LIBRE'), ...con('REGULAR')]),
+    ).toEqual([]);
   });
 });
