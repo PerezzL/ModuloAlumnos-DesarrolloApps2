@@ -7,9 +7,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { aplicarEnvDePrueba } from './env';
 import { AppModule } from '../src/app.module';
 import { configurarApp } from '../src/app';
+import { Publico } from '../src/auth/publico.decorator';
 import { correlationIdActual } from '../src/comun/contexto';
 import { ProblemaError } from '../src/comun/problema';
 
+@Publico()
 @Controller('prueba')
 class PruebaController {
   @Get('explota')

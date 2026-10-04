@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { Publico } from '../auth/publico.decorator';
 
 export const estadoHealth = () => ({ status: 'ok' as const });
 
@@ -7,6 +8,7 @@ export const estadoHealth = () => ({ status: 'ok' as const });
  * Gateway) y también en la raíz (ver main.ts), que es donde los consulta la infraestructura.
  * El BFF no tiene dependencias propias que chequear: si la configuración cargó, está listo.
  */
+@Publico()
 @Controller('health')
 export class HealthController {
   @Get('live')
