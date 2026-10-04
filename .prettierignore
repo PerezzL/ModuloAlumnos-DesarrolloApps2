@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+packages/api-types/src/generated
+package-lock.json
+*.md
+openapi.yaml
