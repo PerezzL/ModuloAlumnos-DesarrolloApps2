@@ -246,7 +246,7 @@ function VistaMes({
                 </span>
                 <ul className="flex flex-col gap-1">
                   {delDia.slice(0, MAX_POR_DIA).map((item) => (
-                    <ItemCal key={item.id} item={item} compacto />
+                    <ItemCal key={item.id} item={item} dia={dia} compacto />
                   ))}
                 </ul>
                 {delDia.length > MAX_POR_DIA && (
@@ -293,7 +293,7 @@ function VistaSemana({ dias, items }: { dias: string[]; items: ItemCalendario[] 
             {delDia.length > 0 ? (
               <ul className="flex flex-col gap-1.5">
                 {delDia.map((item) => (
-                  <ItemCal key={item.id} item={item} />
+                  <ItemCal key={item.id} item={item} dia={dia} />
                 ))}
               </ul>
             ) : (
@@ -324,7 +324,7 @@ function Agenda({
           <p className="pb-2 text-sm font-semibold first-letter:uppercase">{nombreDia(dia)}</p>
           <ul className="flex flex-col gap-1.5">
             {(porDia.get(dia) ?? []).map((item) => (
-              <ItemCal key={item.id} item={item} />
+              <ItemCal key={item.id} item={item} dia={dia} />
             ))}
           </ul>
         </li>
