@@ -17,7 +17,8 @@
     "test": "vitest run",
     "verify": "npm run gen && npm run typecheck && npm run lint && npm run lint:contrato && npm run test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "postman": "mkdir -p postman && openapi2postmanv2 -s openapi.yaml -o postman/portal-estudiante.postman_collection.json -p -O folderStrategy=Tags"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -26,6 +27,7 @@
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
+    "openapi-to-postmanv2": "^6.3.3",
     "prettier": "^3.9.9",
     "typescript": "~5.9",
     "typescript-eslint": "^8.71.0",

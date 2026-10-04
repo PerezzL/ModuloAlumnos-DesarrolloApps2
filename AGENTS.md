@@ -43,6 +43,7 @@ agrega información de otros módulos a través del Gateway de CORE.
 | `npm run verify` | `gen` → typecheck → ESLint → `redocly lint` → Vitest. **Correrlo antes de cada commit.** El CI corre lo mismo |
 | `npm test` | Solo los tests (Vitest, todos los proyectos) |
 | `npm run format` | Prettier |
+| `npm run postman` | Exporta la colección Postman del contrato a `postman/` (fuera de git) |
 
 Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
 (`new Contrato().validar('get', '/calendario', 200, body)`) en los tests e2e.
