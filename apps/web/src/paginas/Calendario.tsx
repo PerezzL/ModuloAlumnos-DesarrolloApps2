@@ -212,8 +212,8 @@ function VistaMes({
 
   return (
     <>
-      {/* Pantallas medianas y grandes: grilla del mes */}
-      <div className="hidden overflow-hidden rounded-campo border border-borde-suave bg-white md:block">
+      {/* Pantallas grandes: grilla del mes */}
+      <div className="hidden overflow-hidden rounded-campo border border-borde-suave bg-white lg:block">
         <div className="grid grid-cols-7 border-b border-borde-suave bg-fondo" aria-hidden>
           {DIAS_SEMANA.map((d) => (
             <div key={d} className="px-2 py-2 text-xs font-semibold text-texto-suave">
@@ -264,8 +264,8 @@ function VistaMes({
         </ol>
       </div>
 
-      {/* Pantallas chicas: agenda con los días del mes que tienen algo */}
-      <Agenda dias={dias.filter((d) => d.startsWith(mes))} porDia={porDia} className="md:hidden" />
+      {/* Pantallas chicas y medianas: agenda con los días del mes que tienen algo */}
+      <Agenda dias={dias.filter((d) => d.startsWith(mes))} porDia={porDia} className="lg:hidden" />
     </>
   );
 }
@@ -275,7 +275,7 @@ function VistaSemana({ dias, items }: { dias: string[]; items: ItemCalendario[] 
   const hoyAr = hoy();
 
   return (
-    <ol className="grid gap-3 md:grid-cols-7">
+    <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
       {dias.map((dia) => {
         const delDia = porDia.get(dia) ?? [];
         return (
@@ -283,7 +283,7 @@ function VistaSemana({ dias, items }: { dias: string[]; items: ItemCalendario[] 
             key={dia}
             aria-label={nombreDia(dia)}
             className={cn(
-              'rounded-item border border-borde-suave bg-white p-2 md:min-h-64',
+              'min-w-0 rounded-item border border-borde-suave bg-white p-2 xl:min-h-64',
               dia === hoyAr && 'ring-2 ring-primario/40',
             )}
           >

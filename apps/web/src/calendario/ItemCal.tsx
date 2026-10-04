@@ -1,7 +1,7 @@
 import type { ItemCalendario } from '@uadenet/api-types';
 import { cn } from '@/lib/utils';
 import { CATEGORIAS } from './categorias';
-import { diaDe, horaDe } from './fechas';
+import { diaCorto, diaDe, horaDe } from './fechas';
 
 /**
  * Un ítem del calendario. Es informativo: no navega a ningún lado. Si ocupa varios días, la
@@ -18,9 +18,12 @@ export function ItemCal({
 }) {
   const continua = dia !== undefined && dia !== diaDe(item.inicio);
   const { icono: Icono, singular, clases } = CATEGORIAS[item.categoria];
+  const variosDias = !!item.fin && diaDe(item.fin) !== diaDe(item.inicio);
   const hora = item.todoElDia
     ? 'Todo el día'
-    : `${horaDe(item.inicio)}${item.fin ? `–${horaDe(item.fin)}` : ''}`;
+    : variosDias
+      ? `${diaCorto(diaDe(item.inicio))} ${horaDe(item.inicio)} – ${diaCorto(diaDe(item.fin!))} ${horaDe(item.fin!)}`
+      : `${horaDe(item.inicio)}${item.fin ? `–${horaDe(item.fin)}` : ''}`;
   const descripcion = [singular, item.titulo, hora, item.lugar].filter(Boolean).join(' · ');
 
   return (
@@ -30,7 +33,7 @@ export function ItemCal({
     >
       <Icono className="mt-px size-3.5 shrink-0" aria-hidden />
       <span className="sr-only">{singular}: </span>
-      <span className="min-w-0 text-texto">
+      <span className="min-w-0 break-words text-texto">
         {!item.todoElDia && !continua && (
           <span className="pr-1 font-semibold">{horaDe(item.inicio)}</span>
         )}

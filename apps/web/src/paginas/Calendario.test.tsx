@@ -95,6 +95,31 @@ describe('calendario', () => {
     expect(within(dia1).getByText('(continúa)')).toBeInTheDocument();
   });
 
+  it('en la vista semanal, un evento de varios días muestra el rango completo', async () => {
+    reiniciarCore(true);
+    servidor.use(
+      http.get(`${BFF}/calendario`, () =>
+        HttpResponse.json({
+          ...calendarioOctubre,
+          items: [
+            {
+              id: 'EVENTO:semana',
+              categoria: 'EVENTO',
+              titulo: 'Semana de la Ingeniería',
+              inicio: '2026-09-30T15:00:00-03:00',
+              fin: '2026-10-02T20:00:00-03:00',
+              todoElDia: false,
+              lugar: null,
+            },
+          ],
+        }),
+      ),
+    );
+    renderApp('/calendario?vista=semana&fecha=2026-10-01');
+    const dia1 = await screen.findByRole('listitem', { name: /jueves, 1 de octubre/i });
+    expect(within(dia1).getByText(/30 sept\.? 15:00 – 2 oct\.? 20:00/)).toBeInTheDocument();
+  });
+
   it('sin ítems muestra el estado vacío', async () => {
     reiniciarCore(true);
     servidor.use(
