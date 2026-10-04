@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router';
 import { RutaProtegida } from '@/componentes/RutaProtegida';
 import { LayoutAutenticado } from '@/layouts/LayoutAutenticado';
 import { Calendario } from '@/paginas/Calendario';
+import { CuentaCorriente } from '@/paginas/CuentaCorriente';
 import { EnConstruccion } from '@/paginas/EnConstruccion';
 import { Inicio } from '@/paginas/Inicio';
 import { Login } from '@/paginas/Login';
@@ -20,7 +21,7 @@ export const rutas: RouteObject[] = [
           { path: 'mis-cursos', element: <EnConstruccion titulo="Mis Cursos" /> },
           { path: 'academico', element: <EnConstruccion titulo="Académico" /> },
           { path: 'calendario', element: <Calendario /> },
-          { path: 'cuenta-corriente', element: <EnConstruccion titulo="Cuenta Corriente" /> },
+          { path: 'cuenta-corriente', element: <CuentaCorriente /> },
           { path: 'notificaciones', element: <EnConstruccion titulo="Notificaciones" /> },
           { path: 'perfil', element: <Perfil /> },
           { path: '*', element: <NoEncontrada /> },

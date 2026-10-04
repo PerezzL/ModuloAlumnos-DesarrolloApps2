@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { calendarioOctubre } from './calendario';
 
 export const GW = 'http://gateway.test';
 export const BFF = `${GW}/api/v1/student`;
@@ -55,7 +56,41 @@ export const handlersCore = [
   ),
 ];
 
-export const servidor = setupServer(...handlersCore);
+/** Saldo simulado de CORE */
+export const wallet = {
+  balance: '13500.00',
+  transacciones: Array.from({ length: 12 }, (_, i) => ({
+    transactionId: `tx-${i + 1}`,
+    status: 'POSTED',
+    type: i % 3 === 0 ? 'CREDIT' : 'DEBIT',
+    concept: i % 3 === 0 ? 'TOP_UP' : 'STORE_PURCHASE',
+    amount: `${(i + 1) * 100}.00`,
+    currency: 'ARS',
+    createdAt: `2026-09-${String(28 - i).padStart(2, '0')}T12:00:00.000Z`,
+  })),
+};
+
+export const handlersSaldo = [
+  http.get(`${GW}/api/v1/wallets/me`, () =>
+    HttpResponse.json({ userId: usuario.id, balance: wallet.balance, currency: 'ARS' }),
+  ),
+  http.get(`${GW}/api/v1/wallets/me/transactions`, ({ request }) => {
+    const url = new URL(request.url);
+    const limit = Number(url.searchParams.get('limit') ?? 20);
+    const desde = Number(url.searchParams.get('cursor') ?? 0);
+    const hasta = desde + limit;
+    return HttpResponse.json({
+      items: wallet.transacciones.slice(desde, hasta),
+      nextCursor: hasta < wallet.transacciones.length ? String(hasta) : null,
+    });
+  }),
+];
+
+export const handlersBff = [
+  http.get(`${BFF}/calendario`, () => HttpResponse.json(calendarioOctubre)),
+];
+
+export const servidor = setupServer(...handlersCore, ...handlersSaldo, ...handlersBff);
 
 export function reiniciarCore(cookieValida = false) {
   core.cookieValida = cookieValida;

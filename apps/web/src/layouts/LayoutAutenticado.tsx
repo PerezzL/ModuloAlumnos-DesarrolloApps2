@@ -1,5 +1,6 @@
 import { Bell } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
+import { SaldoHeader } from '@/componentes/SaldoHeader';
 import { Button } from '@/componentes/ui/button';
 import { NAVEGACION, Sidebar } from './Sidebar';
 
@@ -18,10 +19,13 @@ export function LayoutAutenticado() {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-borde-suave bg-white px-6">
           <h1 className="text-base font-semibold">{tituloDe(pathname)}</h1>
-          {/* El centro de notificaciones se arma en el bloque C */}
-          <Button variant="fantasma" size="icono" aria-label="Notificaciones">
-            <Bell className="size-[18px]" aria-hidden />
-          </Button>
+          <div className="flex items-center gap-2">
+            <SaldoHeader />
+            {/* El centro de notificaciones se arma en el bloque C */}
+            <Button variant="fantasma" size="icono" aria-label="Notificaciones">
+              <Bell className="size-[18px]" aria-hidden />
+            </Button>
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto p-8">
           <Outlet />
