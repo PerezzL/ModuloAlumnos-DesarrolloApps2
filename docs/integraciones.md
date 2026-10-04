@@ -2,6 +2,8 @@
 
 Extraído del documento técnico v4.1 (1 de octubre de 2026).
 **Este archivo se actualiza primero cada vez que un módulo confirma o cambia algo.**
+Las respuestas de ejemplo de cada módulo están en `packages/fixtures/`; su `README.md`
+explica qué son y cuándo dejan de ser provisionales.
 
 Estados: **Resuelto / Confirmado** (contrato firme) · **Implementado** (ya disponible) ·
 **Comprometido** (acordado, todavía no disponible; se mockea) · **Propuesto** ·

@@ -162,49 +162,13 @@ etc.). Los dos son solo para desarrollo.
 
 ## CORE falso: módulos externos y fallas
 
-Detrás del Gateway (`http://localhost:4000`) responden los módulos 2, 4, 5, 6, 8 y 9 con los
-datos de `packages/fixtures/` (ver su `README.md`). Los datos son de `v.moreno`; `j.perez`
-no tiene nada, para ver los estados vacíos.
+Detrás del Gateway (`http://localhost:4000`) responden los módulos 2, 4, 5, 6, 8 y 9 con
+datos de prueba (las fixtures de `packages/fixtures/`), además de las notificaciones y el
+saldo de CORE. Todo el estado vive en memoria: reiniciar el CORE falso o llamar a
+`POST /__falso/reset` vuelve a los datos iniciales.
 
-```bash
-TOKEN=$(curl -s localhost:4000/api/v1/auth/login -H 'content-type: application/json' -d '{"email":"v.moreno@uade.edu.ar","password":"uade2026"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).accessToken')
-curl -s localhost:4000/api/v1/dining/reservations/me -H "Authorization: Bearer $TOKEN"
-```
-
-Una inscripción hecha (`POST /api/v1/academic/planificacion/cursos/{cursoId}/inscripciones`)
-queda en memoria: suma un inscripto en la oferta y aparece en las inscripciones del alumno
-hasta que se reinicia el CORE falso o se llama a `POST /__falso/reset`.
-
-**Apagar un módulo** para mostrar la falla parcial (sin reiniciar nada):
-
-```bash
-curl -X PUT localhost:4000/__falso/fallas/dining -H 'content-type: application/json' -d '{"tipo":"caido"}'
-```
-
-| `tipo` | Qué devuelve el Gateway |
-| --- | --- |
-| `caido` | 503 `UPSTREAM_UNAVAILABLE` |
-| `invalido` | 502 `UPSTREAM_INVALID` |
-| `lento` | 504 `UPSTREAM_TIMEOUT` a los 10 s; con `"demoraMs": 3000` responde bien, pero tarde |
-
-Los módulos son `teacher`, `dining`, `store`, `events`, `backoffice`, `academic` y `student`
-(nuestro BFF). `GET /__falso/fallas` muestra las activas, `DELETE /__falso/fallas/{modulo}`
-quita una y `POST /__falso/reset` vuelve todo a como arrancó. Para arrancar con fallas:
-`CORE_FALLAS=dining:caido,events:lento:3000` en el `.env`.
-
-**Notificaciones y saldo.** El CORE falso también sirve lo que el front usa directo de CORE:
-`/api/v1/notifications` (con socket.io en `/notifications`) y `/api/v1/wallets/me`. Para
-ver llegar una notificación en vivo, con el portal abierto:
-
-```bash
-curl -X POST localhost:4000/__falso/notificaciones -H 'content-type: application/json' -d '{"tipo":"EXAM_RESULT_PUBLISHED","email":"v.moreno@uade.edu.ar"}'
-```
-
-Los tipos son `EXAM_RESULT_PUBLISHED`, `LIBRARY_PENALTY_APPLIED` y `EVENT_REMINDER`. En la
-carga de saldo, `paymentMethodToken` decide el resultado: `mock-approved` (201, acredita),
-`mock-rejected` (422) o `mock-pending` (202, queda pendiente; este último existe solo en el
-CORE falso). Repetir la carga con la misma `Idempotency-Key` devuelve la respuesta original
-sin acreditar dos veces.
+**Cómo probar** (usuarios, cómo apagar un módulo, disparar notificaciones, cargar saldo y
+los casos preparados para cada pantalla): ver [`pruebas.md`](pruebas.md).
 
 Para probar contra un módulo real, poné su URL en `{MODULO}_SERVICE_URL` (por ejemplo
 `DINING_SERVICE_URL=http://localhost:8080/api/v1`) y el Gateway le reenvía los pedidos.

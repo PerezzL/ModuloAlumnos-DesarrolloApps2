@@ -17,6 +17,8 @@ agrega información de otros módulos a través del Gateway de CORE.
 | `docs/instalacion.md` | Instalación desde cero, Node vs. Docker, Prism. |
 | `docs/arquitectura.md` | Capas, Gateway, fuentes de verdad, auth, decisiones tomadas. |
 | `docs/integraciones.md` | Qué expone cada módulo externo y qué está confirmado o pendiente. |
+| `docs/pruebas.md` | Cómo probar en local: usuarios, fallas simuladas y casos preparados por pantalla. |
+| `packages/fixtures/README.md` | Qué son las fixtures, para qué sirven y por qué casi todas son provisionales. |
 | `docs/plan.md` | Decisiones tomadas, pasos de armado y pendientes. |
 | `docs/requisitos.md` | Los 9 requisitos funcionales (RF1–RF9). |
 | `docs/pantallas.md` | Pantallas, qué muestran y de qué endpoint salen. |
