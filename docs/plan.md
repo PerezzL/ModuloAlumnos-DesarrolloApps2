@@ -1,6 +1,7 @@
 # Plan de construcción
 
-Estado al 4 de octubre de 2026: **bloque A terminado** (PR `bloque/esqueleto`). Este archivo se actualiza a medida que se cierran decisiones
+Estado al 4 de octubre de 2026: **bloques A y B terminados** (PR `bloque/esqueleto` y
+`bloque/core-falso-2`, sin mergear). Este archivo se actualiza a medida que se cierran decisiones
 y pasos. El porqué de cada decisión está en `arquitectura.md`.
 
 ## Repositorio

@@ -47,6 +47,22 @@ Contrato completo en `docs/core/CORE_INTEGRACION.md`.
 - `store.purchase.completed.v1` no se enruta a los portales.
 - No expone un endpoint de calendario agregado.
 
+Lo que no figura en `CORE_INTEGRACION.md` y suponemos en el CORE falso (fixtures en
+`packages/fixtures/core/`, todas provisionales, hasta tener el `contracts/openapi.yaml` de CORE):
+
+| Tema | Suposición |
+| --- | --- |
+| `GET /api/v1/wallets/me` | `{ userId, balance, currency }` |
+| Ítem de `/wallets/me/transactions` | La respuesta del débito de la sección 7.3 más `description` |
+| Ítem de `/notifications` (y del socket) | Campos del `POST /internal/v1/notifications` más `id`, `read`, `createdAt`; sin `userId` |
+| `PATCH /notifications/{id}` | Devuelve la notificación actualizada; 404 si es de otro usuario |
+| Carga sin `Idempotency-Key` | 400 `IDEMPOTENCY_KEY_REQUIRED` |
+| Misma key con otro cuerpo | 409 `IDEMPOTENCY_KEY_CONFLICT` (CORE solo dice "409 conflicto de idempotencia") |
+| Carga pendiente | Token `mock-pending` → 202 `PENDING`. Es extensión nuestra: CORE solo nombra `mock-approved` y `mock-rejected` |
+| Respuesta de la carga aprobada | La misma forma que un movimiento, con `concept: TOP_UP` |
+| `actionUrl` de `EXAM_RESULT_PUBLISHED` | `/teacher/courses/{courseId}/exams/{examId}` (pendiente con el Módulo 2) |
+| `actionUrl` de `LIBRARY_PENALTY_APPLIED` | `/library/{loanId}/penalty` (pendiente con el Módulo 3) |
+
 ## Módulo 2 — Docente
 
 | Tema | Estado |

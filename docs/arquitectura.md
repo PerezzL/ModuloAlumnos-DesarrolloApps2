@@ -324,7 +324,8 @@ que hace de Gateway:
 - Fallas simuladas: por configuración (`CORE_FALLAS`) o en caliente (`/__falso/fallas`), un
   módulo puede devolver 503, 502 o demorar hasta el 504.
 - Notificaciones: socket.io en `/notifications` y un endpoint de prueba para dispararlas.
-- Saldo: wallets y top-ups con los tokens `mock-approved` / `mock-rejected`.
+- Saldo: wallets y top-ups con los tokens `mock-approved` / `mock-rejected`, más
+  `mock-pending` (202) para la carga pendiente, que es solo del CORE falso.
 
 Mientras un endpoint del BFF no existe, `STUDENT_SERVICE_URL` puede apuntar a **Prism**, que
 levanta un mock directo desde `openapi.yaml`. Pasar a la integración real es cambiar la URL

@@ -192,6 +192,20 @@ Los módulos son `teacher`, `dining`, `store`, `events`, `backoffice`, `academic
 quita una y `POST /__falso/reset` vuelve todo a como arrancó. Para arrancar con fallas:
 `CORE_FALLAS=dining:caido,events:lento:3000` en el `.env`.
 
+**Notificaciones y saldo.** El CORE falso también sirve lo que el front usa directo de CORE:
+`/api/v1/notifications` (con socket.io en `/notifications`) y `/api/v1/wallets/me`. Para
+ver llegar una notificación en vivo, con el portal abierto:
+
+```bash
+curl -X POST localhost:4000/__falso/notificaciones -H 'content-type: application/json' -d '{"tipo":"EXAM_RESULT_PUBLISHED","email":"v.moreno@uade.edu.ar"}'
+```
+
+Los tipos son `EXAM_RESULT_PUBLISHED`, `LIBRARY_PENALTY_APPLIED` y `EVENT_REMINDER`. En la
+carga de saldo, `paymentMethodToken` decide el resultado: `mock-approved` (201, acredita),
+`mock-rejected` (422) o `mock-pending` (202, queda pendiente; este último existe solo en el
+CORE falso). Repetir la carga con la misma `Idempotency-Key` devuelve la respuesta original
+sin acreditar dos veces.
+
 Para probar contra un módulo real, poné su URL en `{MODULO}_SERVICE_URL` (por ejemplo
 `DINING_SERVICE_URL=http://localhost:8080/api/v1`) y el Gateway le reenvía los pedidos.
 
