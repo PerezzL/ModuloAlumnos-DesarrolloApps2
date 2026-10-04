@@ -157,6 +157,11 @@ numéricos; en nuestro contrato son strings opacos, el adaptador los convierte.
 Fixture: `dining/reservations-me.provisional.json`. Para `slot` y `campus` suponemos
 `{ id, date, campus }` y `{ id, name }`.
 
+Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/comedor/`): como Comedor
+devuelve todas las reservas, el BFF las recorta al rango pedido. Cada reserva es un ítem de
+todo el día; el lugar sale de `campus.name` (o de `slot.campus.name`). Una respuesta vacía
+está en `dining/reservations-me-vacio.provisional.json`.
+
 ## Módulo 5 — Tienda
 
 | Tema | Estado |
@@ -197,6 +202,11 @@ Listado:
   `fechaInicio`, `fechaFin`, `esPago`, `precio`, `inscriptos`, `disponibles`, `yaInscripto`,
   `creadoPor`.
 - Si `hasta` no resulta inclusivo, pedir hasta el primer día del mes siguiente.
+
+Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/eventos/`): pide desde las
+00:00 del primer día hasta las 00:00 del día siguiente al último (hora de Argentina), así el
+último día entra sea `hasta` inclusivo o no, y después recorta por solapamiento. Se queda con
+los eventos con `yaInscripto` y convierte las fechas a `-03:00`.
 
 Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `titulo`,
 `fechaInicio`, `locacion` (texto ya armado, por ejemplo "Aula Magna — Monserrat") y `url`.
@@ -251,7 +261,9 @@ Fixtures (`academic/*.provisional.json`): aunque varios endpoints están impleme
 tenemos sus respuestas, así que todas son provisionales. Suposiciones:
 
 - Períodos: `id`, `nombre`, `fechaInicio`, `fechaFin`, `inscripcionDesde`, `inscripcionHasta`.
-- Turnos de examen: los campos informados más un `id`; fechas sin hora.
+- Turnos de examen: los campos informados más un `id`; fechas sin hora. No suponemos que
+  acepte filtros de fecha: el BFF pide todos y se queda con los que se solapan con el rango
+  (adaptador en `apps/bff/src/modulos/academico/`).
 - Cursos: `id`, `comision`, `periodoId`, `sede`, `cupoMaximo`, `inscriptosActivos`,
   `asignatura` anidada y `horarios` (pedido, puede faltar).
 - Correlatividades: `[{ asignaturaId, nombre, tipo }]`.
