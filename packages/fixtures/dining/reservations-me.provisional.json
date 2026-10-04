@@ -1,0 +1,28 @@
+{
+  "reservations": [
+    {
+      "id": 1,
+      "userId": 15,
+      "slotId": 32,
+      "createdAt": "2026-10-01T12:30:00.000Z",
+      "slot": { "id": 32, "date": "2026-10-05", "campus": { "id": 1, "name": "Monserrat" } },
+      "campus": { "id": 1, "name": "Monserrat" }
+    },
+    {
+      "id": 7,
+      "userId": 15,
+      "slotId": 41,
+      "createdAt": "2026-10-02T15:10:00.000Z",
+      "slot": { "id": 41, "date": "2026-10-08", "campus": { "id": 1, "name": "Monserrat" } },
+      "campus": { "id": 1, "name": "Monserrat" }
+    },
+    {
+      "id": 12,
+      "userId": 15,
+      "slotId": 57,
+      "createdAt": "2026-10-03T09:45:00.000Z",
+      "slot": { "id": 57, "date": "2026-10-14", "campus": { "id": 2, "name": "Recoleta" } },
+      "campus": { "id": 2, "name": "Recoleta" }
+    }
+  ]
+}

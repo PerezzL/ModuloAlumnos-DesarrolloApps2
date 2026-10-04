@@ -65,7 +65,7 @@ es esperable y no impide que todo funcione.
 | Proceso | URL | Qué es |
 | --- | --- | --- |
 | web | http://localhost:5173 | El portal (lo que se abre en el navegador) |
-| core-falso | http://localhost:4000 | Imitación de CORE: login, tokens y Gateway |
+| core-falso | http://localhost:4000 | Imitación de CORE: login, tokens, Gateway y los módulos externos (ver [CORE falso](#core-falso-módulos-externos-y-fallas)) |
 | bff | http://localhost:3000 | Nuestro backend. Documentación de la API en http://localhost:3000/docs |
 
 Abrí http://localhost:5173 y entrá con **`v.moreno@uade.edu.ar` / `uade2026`**.
@@ -157,8 +157,21 @@ Una forma rápida de ver que está activo: con Prism, el nombre del alumno en la
 lateral pasa a ser "Juan Pérez" (el ejemplo del contrato).
 
 **No confundir con el CORE falso:** Prism imita **nuestro BFF** a partir del contrato. El
-CORE falso imita **a CORE y a los otros módulos** (login, tokens, Gateway, y más adelante
-comedor, eventos, etc.). Los dos son solo para desarrollo.
+CORE falso imita **a CORE y a los otros módulos** (login, tokens, Gateway, comedor, eventos,
+etc.). Los dos son solo para desarrollo.
+
+## CORE falso: módulos externos y fallas
+
+Detrás del Gateway (`http://localhost:4000`) responden los módulos 2, 4, 5, 6, 8 y 9 con
+datos de prueba (las fixtures de `packages/fixtures/`), además de las notificaciones y el
+saldo de CORE. Todo el estado vive en memoria: reiniciar el CORE falso o llamar a
+`POST /__falso/reset` vuelve a los datos iniciales.
+
+**Cómo probar** (usuarios, cómo apagar un módulo, disparar notificaciones, cargar saldo y
+los casos preparados para cada pantalla): ver [`pruebas.md`](pruebas.md).
+
+Para probar contra un módulo real, poné su URL en `{MODULO}_SERVICE_URL` (por ejemplo
+`DINING_SERVICE_URL=http://localhost:8080/api/v1`) y el Gateway le reenvía los pedidos.
 
 ## Problemas comunes
 

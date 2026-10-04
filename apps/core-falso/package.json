@@ -15,6 +15,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/supertest": "^7.2.1",
+    "socket.io-client": "^4.8.4",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15"
   },
@@ -22,6 +23,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "jose": "^6.2.12"
+    "jose": "^6.2.12",
+    "socket.io": "^4.8.4"
   }
 }

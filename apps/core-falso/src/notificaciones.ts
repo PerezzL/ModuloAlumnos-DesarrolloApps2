@@ -1,0 +1,160 @@
+import { randomUUID } from 'node:crypto';
+import { Router } from 'express';
+import { requiereUsuario } from './auth.js';
+import { fixture } from './fixtures.js';
+import { ALUMNO_DEMO } from './modulos/comun.js';
+import { paginar, QueryInvalida } from './paginacion.js';
+import { enviarProblema } from './problema.js';
+import type { Tokens } from './tokens.js';
+
+export const TIPOS_NOTIFICACION = [
+  'EXAM_RESULT_PUBLISHED',
+  'LIBRARY_PENALTY_APPLIED',
+  'EVENT_REMINDER',
+] as const;
+export type TipoNotificacion = (typeof TIPOS_NOTIFICACION)[number];
+
+/** Forma de un ítem de GET /api/v1/notifications (provisional: ver integraciones.md) */
+export interface Notificacion {
+  id: string;
+  type: TipoNotificacion;
+  title: string;
+  message: string;
+  actionUrl: string | null;
+  sourceModule: string;
+  sourceReference: string;
+  read: boolean;
+  createdAt: string;
+  expiresAt: string | null;
+}
+
+type AlCrear = (userId: string, notificacion: Notificacion) => void;
+
+/**
+ * Notificaciones en memoria, por usuario. Como en CORE, se guardan antes de emitirse:
+ * quien escucha (el socket) se entera después de que ya están en el listado.
+ */
+export class Notificaciones {
+  private porUsuario = new Map<string, Notificacion[]>();
+  private readonly oyentes: AlCrear[] = [];
+
+  constructor() {
+    this.reiniciar();
+  }
+
+  reiniciar() {
+    this.porUsuario = new Map([
+      [ALUMNO_DEMO, fixture<Notificacion[]>('core/notificaciones.provisional.json')],
+    ]);
+  }
+
+  /** Más nuevas primero */
+  de(userId: string) {
+    return [...(this.porUsuario.get(userId) ?? [])].sort((a, b) =>
+      b.createdAt.localeCompare(a.createdAt),
+    );
+  }
+
+  alCrear(oyente: AlCrear) {
+    this.oyentes.push(oyente);
+  }
+
+  crear(userId: string, datos: Omit<Notificacion, 'id' | 'read' | 'createdAt'>) {
+    const notificacion: Notificacion = {
+      id: randomUUID(),
+      read: false,
+      createdAt: new Date().toISOString(),
+      ...datos,
+    };
+    this.porUsuario.set(userId, [...(this.porUsuario.get(userId) ?? []), notificacion]);
+    for (const oyente of this.oyentes) oyente(userId, notificacion);
+    return notificacion;
+  }
+}
+
+/** Ejemplo de cada tipo, como lo derivaría CORE del evento del módulo de origen */
+export function ejemplo(tipo: TipoNotificacion) {
+  const ref = randomUUID();
+  const ejemplos: Record<TipoNotificacion, Omit<Notificacion, 'id' | 'read' | 'createdAt'>> = {
+    EXAM_RESULT_PUBLISHED: {
+      type: tipo,
+      title: 'Se publicó tu nota de Desarrollo de Aplicaciones I',
+      message: 'Recuperatorio 1er parcial: 8 (aprobado)',
+      // El formato del actionUrl del Módulo 2 está pendiente
+      actionUrl: '/teacher/courses/curso-desa1-2026-2-a/exams/exam-desa1-2026-2-r1',
+      sourceModule: 'teacher',
+      sourceReference: `exam-result/${ref}`,
+      expiresAt: null,
+    },
+    LIBRARY_PENALTY_APPLIED: {
+      type: tipo,
+      title: 'Tenés una sanción de biblioteca',
+      message: 'Devolviste un libro con 3 días de atraso. Multa: $ 1500,00',
+      actionUrl: `/library/${ref}/penalty`,
+      sourceModule: 'library',
+      sourceReference: `penalty/${ref}`,
+      expiresAt: null,
+    },
+    EVENT_REMINDER: {
+      type: tipo,
+      title: 'Tu evento comienza en una semana',
+      message: 'Torneo interfacultades de ajedrez — 7 de noviembre, 10:00',
+      actionUrl: '/events/0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+      sourceModule: 'events',
+      sourceReference: `event/0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d/reminder/${ref}`,
+      expiresAt: '2026-11-07T13:00:00.000Z',
+    },
+  };
+  return ejemplos[tipo];
+}
+
+export const esTipoNotificacion = (t: unknown): t is TipoNotificacion =>
+  (TIPOS_NOTIFICACION as readonly unknown[]).includes(t);
+
+/** REST de la sección 8.2 de CORE_INTEGRACION.md */
+export function routerNotificaciones(tokens: Tokens, notificaciones: Notificaciones) {
+  const router = Router();
+  router.use(requiereUsuario(tokens));
+
+  router.get('/', (req, res) => {
+    const { read, type, cursor, limit } = req.query;
+    if (read !== undefined && read !== 'true' && read !== 'false') {
+      return enviarProblema(res, 400, 'VALIDATION_ERROR', 'read debe ser true o false');
+    }
+    const filtradas = notificaciones
+      .de(res.locals.usuarioId)
+      .filter((n) => read === undefined || String(n.read) === read)
+      .filter((n) => type === undefined || n.type === type);
+    try {
+      res.json(paginar(filtradas, cursor, limit));
+    } catch (error) {
+      if (!(error instanceof QueryInvalida)) throw error;
+      enviarProblema(res, 400, 'VALIDATION_ERROR', error.message);
+    }
+  });
+
+  router.get('/unread-count', (_req, res) => {
+    res.json({ count: notificaciones.de(res.locals.usuarioId).filter((n) => !n.read).length });
+  });
+
+  router.post('/read-all', (_req, res) => {
+    for (const n of notificaciones.de(res.locals.usuarioId)) n.read = true;
+    res.status(204).end();
+  });
+
+  router.patch('/:id', (req, res) => {
+    const { read } = (req.body ?? {}) as { read?: unknown };
+    if (typeof read !== 'boolean') {
+      return enviarProblema(res, 400, 'VALIDATION_ERROR', 'read debe ser booleano');
+    }
+    // Las de otro usuario no existen para este
+    const notificacion = notificaciones
+      .de(res.locals.usuarioId)
+      .find((n) => n.id === req.params.id);
+    if (!notificacion) return enviarProblema(res, 404, 'NOT_FOUND', 'Notificación inexistente');
+    notificacion.read = read;
+    res.json(notificacion);
+  });
+
+  return router;
+}

@@ -10,6 +10,8 @@ ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/core-falso/package.json ./apps/core-falso/package.json
 COPY --from=build /app/apps/core-falso/dist ./apps/core-falso/dist
+# Las fixtures se leen al responder: apps/core-falso/dist/../../../packages/fixtures
+COPY --from=build /app/packages/fixtures ./packages/fixtures
 USER node
 EXPOSE 4000
 CMD ["node", "apps/core-falso/dist/main.js"]

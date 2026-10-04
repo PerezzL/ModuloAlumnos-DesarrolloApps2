@@ -2,13 +2,37 @@
 
 Extraído del documento técnico v4.1 (1 de octubre de 2026).
 **Este archivo se actualiza primero cada vez que un módulo confirma o cambia algo.**
+Las respuestas de ejemplo de cada módulo están en `packages/fixtures/`; su `README.md`
+explica qué son y cuándo dejan de ser provisionales.
 
 Estados: **Resuelto / Confirmado** (contrato firme) · **Implementado** (ya disponible) ·
 **Comprometido** (acordado, todavía no disponible; se mockea) · **Propuesto** ·
 **Pedido** · **Pendiente**.
 
 Las rutas de los módulos 4, 5, 8 y 9 son las de cada servicio; falta confirmar cómo
-quedan detrás del prefijo del Gateway.
+quedan detrás del prefijo del Gateway (ver abajo la suposición que usamos).
+
+## Rutas detrás del Gateway — Suposición nuestra
+
+Mientras no se confirme, usamos **prefijo del Gateway + recurso**: se quita la base propia
+del servicio (`/api`, `/api/v1`, `/api/store`) y se conserva el resto. El Gateway reescribe el
+prefijo a `/api/v1`, así que el módulo recibe `/api/v1/{recurso}`. En el BFF, prefijos y
+rutas son configuración; el CORE falso y las fixtures (`packages/fixtures/`) siguen esta tabla.
+
+| Módulo | Ruta informada por el módulo | Ruta pública que usamos |
+| --- | --- | --- |
+| 2 | (sin contrato) | `/api/v1/teacher/cursos/{cursoId}/alumnos/{alumnoId}/asistencia` · `/notas` · `/notas/{notaId}` |
+| 4 | `GET /reservations/me` | `/api/v1/dining/reservations/me` |
+| 5 | `GET /api/store/orders/me` · `/api/store/orders/:orderId` | `/api/v1/store/orders/me` · `/api/v1/store/orders/{orderId}` |
+| 6 | `GET /api/v1/eventos` · `/api/v1/eventos/{id}` | `/api/v1/events/eventos` · `/api/v1/events/eventos/{id}` |
+| 8 | `GET /api/v1/backoffice/users/{userId}` | `/api/v1/backoffice/users/{userId}` |
+| 9 | `/api/planificacion/...` · `/api/academica/...` | `/api/v1/academic/planificacion/...` · `/api/v1/academic/academica/...` |
+
+Backoffice usa el prefijo `/api/v1/backoffice/*` de la sección 6 de `CORE_INTEGRACION.md`.
+
+Códigos de error del Gateway que usa el CORE falso: 503 `UPSTREAM_UNAVAILABLE` y 504
+`UPSTREAM_TIMEOUT` (este último, suposición); para el 502 CORE no publica el `code` y usamos
+`UPSTREAM_INVALID`, igual que el BFF.
 
 ## CORE — Resuelto
 
@@ -24,6 +48,22 @@ Contrato completo en `docs/core/CORE_INTEGRACION.md`.
 - Id del alumno: claim `sub`, el mismo en todos los módulos.
 - `store.purchase.completed.v1` no se enruta a los portales.
 - No expone un endpoint de calendario agregado.
+
+Lo que no figura en `CORE_INTEGRACION.md` y suponemos en el CORE falso (fixtures en
+`packages/fixtures/core/`, todas provisionales, hasta tener el `contracts/openapi.yaml` de CORE):
+
+| Tema | Suposición |
+| --- | --- |
+| `GET /api/v1/wallets/me` | `{ userId, balance, currency }` |
+| Ítem de `/wallets/me/transactions` | La respuesta del débito de la sección 7.3 más `description` |
+| Ítem de `/notifications` (y del socket) | Campos del `POST /internal/v1/notifications` más `id`, `read`, `createdAt`; sin `userId` |
+| `PATCH /notifications/{id}` | Devuelve la notificación actualizada; 404 si es de otro usuario |
+| Carga sin `Idempotency-Key` | 400 `IDEMPOTENCY_KEY_REQUIRED` |
+| Misma key con otro cuerpo | 409 `IDEMPOTENCY_KEY_CONFLICT` (CORE solo dice "409 conflicto de idempotencia") |
+| Carga pendiente | Token `mock-pending` → 202 `PENDING`. Es extensión nuestra: CORE solo nombra `mock-approved` y `mock-rejected` |
+| Respuesta de la carga aprobada | La misma forma que un movimiento, con `concept: TOP_UP` |
+| `actionUrl` de `EXAM_RESULT_PUBLISHED` | `/teacher/courses/{courseId}/exams/{examId}` (pendiente con el Módulo 2) |
+| `actionUrl` de `LIBRARY_PENALTY_APPLIED` | `/library/{loanId}/penalty` (pendiente con el Módulo 3) |
 
 ## Módulo 2 — Docente
 
@@ -44,6 +84,8 @@ Contrato completo en `docs/core/CORE_INTEGRACION.md`.
   consultar la API del Módulo 2 con los identificadores del `actionUrl`.
 - **Los schemas `Asistencia`, `NotaResumen` y `NotaDetalle` del `openapi.yaml` son una
   suposición nuestra.** No hay contrato del Módulo 2.
+- Las fixtures (`teacher/*.provisional.json`) y las rutas del CORE falso siguen esa
+  suposición; cada nota trae además `examId`, `docente` y `observaciones`.
 
 ## Módulo 3 — Biblioteca
 
@@ -100,6 +142,9 @@ Respuestas:
 Se cargan todas las reservas, sin filtrar por estado. Ojo: los ids del ejemplo son
 numéricos; en nuestro contrato son strings opacos, el adaptador los convierte.
 
+Fixture: `dining/reservations-me.provisional.json`. Para `slot` y `campus` suponemos
+`{ id, date, campus }` y `{ id, name }`.
+
 ## Módulo 5 — Tienda
 
 | Tema | Estado |
@@ -113,6 +158,11 @@ numéricos; en nuestro contrato son strings opacos, el adaptador los convierte.
 Campos: `orderId`, fecha, sede, estado, productos, cantidades, precio unitario histórico,
 subtotal, total. Nombres y precios congelados al momento de la compra.
 Filtros ofrecidos: paginación, fecha, estado.
+
+Fixture: `store/orders-me.provisional.json`. Salvo `orderId`, los nombres de los campos
+(`fecha`, `sede`, `estado`, `productos[]` con `cantidad`, `precioUnitario` y `subtotal`,
+`total`), los estados y la forma de la paginación (`{ items, page, limit, total }`) son
+suposición nuestra. El detalle tiene la misma forma que un ítem del listado.
 
 ## Módulo 6 — Eventos Académicos
 
@@ -149,6 +199,9 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 
 Sin `planId` no se puede filtrar la oferta de RF2.
 
+Fixture: `backoffice/users.provisional.json` con `id`, `email`, `nombre`, `apellido`,
+`legajo`, `carrera`, `planId` y `status`, todos supuestos.
+
 ## Módulo 9 — Gestión Académica y Planificación
 
 Dueño de la cursada (entidad Curso), de la inscripción y del historial.
@@ -174,6 +227,21 @@ Dueño de la cursada (entidad Curso), de la inscripción y del historial.
 - Inscripciones por alumno: cada una con curso y asignatura, período, `notaFinal`, `estado`.
 - El Módulo 2 obtiene el listado de inscriptos directamente del Módulo 9; el Módulo 1 no lo entrega.
 - Lo comprometido se trabaja con mock hasta que esté disponible.
+
+Fixtures (`academic/*.provisional.json`): aunque varios endpoints están implementados, no
+tenemos sus respuestas, así que todas son provisionales. Suposiciones:
+
+- Períodos: `id`, `nombre`, `fechaInicio`, `fechaFin`, `inscripcionDesde`, `inscripcionHasta`.
+- Turnos de examen: los campos informados más un `id`; fechas sin hora.
+- Cursos: `id`, `comision`, `periodoId`, `sede`, `cupoMaximo`, `inscriptosActivos`,
+  `asignatura` anidada y `horarios` (pedido, puede faltar).
+- Correlatividades: `[{ asignaturaId, nombre, tipo }]`.
+- Inscripciones del alumno: `id`, `cursoId`, `comision`, `asignatura`, `periodo`,
+  `notaFinal`, `estado`, `fecha`.
+- POST de inscripción: 201 `{ id, cursoId, alumnoId, estado, fecha }`. Los rechazos son
+  409 con los `code` de nuestro `openapi.yaml` (`YA_INSCRIPTO`, `SIN_CUPO`,
+  `CORRELATIVIDAD_FALTANTE` con `correlativasFaltantes`). El CORE falso no simula
+  `SIN_REGULARIDAD` ni `FUERA_DE_FECHA`.
 
 ## Lo más urgente
 

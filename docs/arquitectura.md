@@ -94,6 +94,7 @@ El front abre una conexión socket.io contra `/notifications` de CORE, autentica
 | Comedor | `/api/v1/dining/*` | `/api/v1/*` |
 | Tienda | `/api/v1/store/*` | `/api/v1/*` |
 | Eventos | `/api/v1/events/*` | `/api/v1/*` |
+| Backoffice | `/api/v1/backoffice/*` | `/api/v1/*` |
 | Gestión Académica | `/api/v1/academic/*` | `/api/v1/*` |
 
 Comportamiento:
@@ -108,7 +109,9 @@ Comportamiento:
 **Abierto:** las rutas que informaron los módulos 4, 5, 8 y 9 (`/reservations/me`,
 `/api/store/orders/me`, `/api/v1/backoffice/users/{userId}`, `/api/planificacion/...`,
 `/api/academica/...`) son las de cada servicio. Falta confirmar cómo quedan publicadas
-detrás del prefijo del Gateway. Backoffice no figura en la tabla de prefijos.
+detrás del prefijo del Gateway. Mientras tanto suponemos **prefijo + recurso** (por ejemplo
+`/api/v1/store/orders/me` o `/api/v1/academic/planificacion/cursos`); la tabla completa está
+en `integraciones.md`. Backoffice sale de la sección 6 de `CORE_INTEGRACION.md`.
 
 **El JWT sí llega al BFF.** Según el contrato de CORE, `Authorization: Bearer <jwt>` viaja
 siempre (salvo login, refresh, health y JWKS) y los headers `X-User-*` se suman a ese token,
@@ -315,10 +318,14 @@ que hace de Gateway:
 
 - Auth: par de claves RS256 propio, JWKS, login con usuarios de prueba y cookie de refresh.
 - Gateway: reenvía `/api/v1/student/*` a `STUDENT_SERVICE_URL` agregando los headers `X-User-*`.
-- Módulos externos: sirve sus rutas desde fixtures (los mismos JSON de los tests de adaptadores).
-- Fallas simuladas: por configuración, un módulo puede devolver 503 o demorar.
+- Módulos externos: sirve sus rutas desde fixtures (los mismos JSON de los tests de adaptadores),
+  pasando por el mismo Gateway. Con `{MODULO}_SERVICE_URL` se reenvía a un servicio real.
+  Las inscripciones quedan en memoria, para verlas después en la oferta y en el historial.
+- Fallas simuladas: por configuración (`CORE_FALLAS`) o en caliente (`/__falso/fallas`), un
+  módulo puede devolver 503, 502 o demorar hasta el 504.
 - Notificaciones: socket.io en `/notifications` y un endpoint de prueba para dispararlas.
-- Saldo: wallets y top-ups con los tokens `mock-approved` / `mock-rejected`.
+- Saldo: wallets y top-ups con los tokens `mock-approved` / `mock-rejected`, más
+  `mock-pending` (202) para la carga pendiente, que es solo del CORE falso.
 
 Mientras un endpoint del BFF no existe, `STUDENT_SERVICE_URL` puede apuntar a **Prism**, que
 levanta un mock directo desde `openapi.yaml`. Pasar a la integración real es cambiar la URL

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "curso-bd1-2026-2-a",
+    "comision": "A - Noche",
+    "periodoId": "2026-2",
+    "sede": "Monserrat",
+    "cupoMaximo": 40,
+    "inscriptosActivos": 38,
+    "asignatura": { "id": "asig-bd1", "codigo": "3.4.072", "nombre": "Bases de Datos I" },
+    "horarios": [{ "dia": "LUNES", "desde": "18:30", "hasta": "22:30", "aula": "Aula 412" }]
+  },
+  {
+    "id": "curso-desa1-2026-2-a",
+    "comision": "A - Noche",
+    "periodoId": "2026-2",
+    "sede": "Monserrat",
+    "cupoMaximo": 35,
+    "inscriptosActivos": 35,
+    "asignatura": {
+      "id": "asig-desa1",
+      "codigo": "3.4.207",
+      "nombre": "Desarrollo de Aplicaciones I"
+    },
+    "horarios": [
+      { "dia": "MIERCOLES", "desde": "18:30", "hasta": "22:30", "aula": "Laboratorio 3" }
+    ]
+  },
+  {
+    "id": "curso-ayed-2027-1-a",
+    "comision": "A - Mañana",
+    "periodoId": "2027-1",
+    "sede": "Monserrat",
+    "cupoMaximo": 40,
+    "inscriptosActivos": 40,
+    "asignatura": {
+      "id": "asig-ayed",
+      "codigo": "3.4.070",
+      "nombre": "Algoritmos y Estructuras de Datos"
+    },
+    "horarios": [{ "dia": "MARTES", "desde": "08:00", "hasta": "12:00", "aula": "Aula 210" }]
+  },
+  {
+    "id": "curso-ayed-2027-1-b",
+    "comision": "B - Noche",
+    "periodoId": "2027-1",
+    "sede": "Recoleta",
+    "cupoMaximo": 40,
+    "inscriptosActivos": 22,
+    "asignatura": {
+      "id": "asig-ayed",
+      "codigo": "3.4.070",
+      "nombre": "Algoritmos y Estructuras de Datos"
+    },
+    "horarios": [{ "dia": "JUEVES", "desde": "18:30", "hasta": "22:30", "aula": null }]
+  },
+  {
+    "id": "curso-so-2027-1-a",
+    "comision": "A - Noche",
+    "periodoId": "2027-1",
+    "sede": "Monserrat",
+    "cupoMaximo": 45,
+    "inscriptosActivos": 10,
+    "asignatura": { "id": "asig-so", "codigo": "3.4.074", "nombre": "Sistemas Operativos" },
+    "horarios": [
+      { "dia": "LUNES", "desde": "18:30", "hasta": "20:30", "aula": "Aula 501" },
+      { "dia": "VIERNES", "desde": "18:30", "hasta": "20:30", "aula": "Aula 501" }
+    ]
+  },
+  {
+    "id": "curso-desa2-2027-1-a",
+    "comision": "A - Noche",
+    "periodoId": "2027-1",
+    "sede": "Monserrat",
+    "cupoMaximo": 35,
+    "inscriptosActivos": 5,
+    "asignatura": {
+      "id": "asig-desa2",
+      "codigo": "3.4.208",
+      "nombre": "Desarrollo de Aplicaciones II"
+    },
+    "horarios": []
+  },
+  {
+    "id": "curso-bd2-2027-1-a",
+    "comision": "A - Noche",
+    "periodoId": "2027-1",
+    "sede": "Monserrat",
+    "cupoMaximo": 40,
+    "inscriptosActivos": 3,
+    "asignatura": { "id": "asig-bd2", "codigo": "3.4.073", "nombre": "Bases de Datos II" }
+  }
+]

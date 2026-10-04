@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import type { ConfigCore } from './config.js';
 import { enviarProblema } from './problema.js';
 import type { Tokens } from './tokens.js';
@@ -104,4 +104,15 @@ export function routerAuth(config: ConfigCore, tokens: Tokens) {
   });
 
   return router;
+}
+
+/** Para los endpoints propios de CORE que usa el portal: deja los claims en res.locals. */
+export function requiereUsuario(tokens: Tokens): RequestHandler {
+  return async (req, res, next) => {
+    const token = bearer(req);
+    const claims = token ? await tokens.verificarAccess(token) : undefined;
+    if (!claims) return enviarProblema(res, 401, 'AUTH_TOKEN_INVALID', 'No autenticado');
+    res.locals.usuarioId = claims.sub;
+    next();
+  };
 }
