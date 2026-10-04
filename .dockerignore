@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/coverage
+packages/api-types/src/generated
+postman
+.env
+.git
+.claude
+**/*.log

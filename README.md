@@ -8,8 +8,9 @@ módulos a través del Gateway de CORE.
 
 ## Estado
 
-En armado. Todavía no hay código: el repo tiene el contrato de la API, la documentación y
-el plan de construcción.
+Bloque A (esqueleto) terminado: login, sesión, BFF con health, guard JWT y errores,
+CORE falso con auth y Gateway, mock del contrato con Prism y CI. Las pantallas con datos
+llegan en los bloques siguientes (ver `docs/plan.md`).
 
 ## Stack
 
@@ -31,4 +32,49 @@ el plan de construcción.
 
 ## Instalar y ejecutar
 
-Pendiente: se completa cuando esté armado el esqueleto (ver `docs/plan.md`).
+### Con Node (desarrollo diario)
+
+Requiere Node 24 (`.nvmrc`).
+
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
+
+`npm run dev` levanta tres procesos:
+
+| Proceso | URL | Qué es |
+| --- | --- | --- |
+| web | http://localhost:5173 | Front (Vite) |
+| core-falso | http://localhost:4000 | CORE de mentira: auth, JWKS y Gateway |
+| bff | http://localhost:3000 | BFF (NestJS). Swagger UI en http://localhost:3000/docs |
+
+Usuario de prueba: `v.moreno@uade.edu.ar` / `uade2026` (hay más en
+`apps/core-falso/src/usuarios.ts`, incluida una cuenta suspendida).
+
+El navegador solo habla con el Gateway (`:4000`), que reenvía `/api/v1/student/*` al BFF.
+Para que el front reciba los ejemplos del contrato en lugar del BFF:
+
+```bash
+npm run mock
+```
+
+y en `.env`: `STUDENT_SERVICE_URL=http://localhost:4010` (reiniciar `npm run dev`).
+
+### Con Docker
+
+```bash
+docker compose up --build
+```
+
+Levanta web (http://localhost:5173), CORE falso (`:4000`), BFF (`:3000`) y Prism (`:4010`).
+Para usar Prism detrás del Gateway: `STUDENT_SERVICE_URL=http://prism:4010 docker compose up --build`.
+
+### Verificar
+
+```bash
+npm run verify
+```
+
+Tipos, lint, `redocly lint` del contrato y tests. Es lo mismo que corre el CI en cada PR.
