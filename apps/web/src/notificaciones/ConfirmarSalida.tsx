@@ -1,5 +1,6 @@
 import { ExternalLink } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/componentes/ui/button';
 import type { Destino } from './destino';
 
@@ -12,10 +13,13 @@ type Externo = Extract<Destino, { tipo: 'externo' }>;
 export function ConfirmarSalida({ destino, cerrar }: { destino: Externo; cerrar: () => void }) {
   const dialogo = useRef<HTMLDialogElement>(null);
 
+  // Se abre como modal (foco atrapado, Escape cierra). Sin cleanup que lo cierre: en
+  // StrictMode el efecto corre dos veces y cerrarlo dispararía `onClose`.
   useEffect(() => {
     const d = dialogo.current;
-    if (d && !d.open) d.showModal?.();
-    return () => d?.close?.();
+    if (!d || d.open) return;
+    if (typeof d.showModal === 'function') d.showModal();
+    else d.setAttribute('open', '');
   }, []);
 
   const ir = () => {
@@ -23,10 +27,10 @@ export function ConfirmarSalida({ destino, cerrar }: { destino: Externo; cerrar:
     cerrar();
   };
 
-  return (
+  // En un portal: si quedara dentro del panel de la campana, su overflow lo recortaría
+  return createPortal(
     <dialog
       ref={dialogo}
-      open
       aria-labelledby="titulo-salida"
       onClose={cerrar}
       onCancel={cerrar}
@@ -48,6 +52,7 @@ export function ConfirmarSalida({ destino, cerrar }: { destino: Externo; cerrar:
           <ExternalLink className="size-4" aria-hidden />
         </Button>
       </div>
-    </dialog>
+    </dialog>,
+    document.body,
   );
 }
