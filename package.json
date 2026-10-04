@@ -10,6 +10,7 @@
     "apps/*"
   ],
   "scripts": {
+    "dev": "npm run gen && concurrently -k -n core,bff,web -c magenta,blue,green \"npm run dev -w @uadenet/core-falso\" \"npm run dev -w @uadenet/bff\" \"npm run dev -w @uadenet/web\"",
     "gen": "npm run gen -w @uadenet/api-types",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
@@ -26,6 +27,7 @@
     "@redocly/cli": "^2.57.0",
     "@stoplight/prism-cli": "^5.16.0",
     "@types/node": "^24.19.1",
+    "concurrently": "^10.0.5",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",

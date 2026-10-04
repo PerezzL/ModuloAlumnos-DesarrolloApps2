@@ -1,0 +1,34 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+/* Tokens tomados del Figma (docs/pantallas.md, "Referencia visual") */
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-uade-navy: #002b49;
+  --color-primario: #0066ff;
+  --color-primario-oscuro: #0052cc;
+  --color-fondo: #f8fafc;
+  --color-texto: #1d293d;
+  --color-texto-suave: #62748e;
+  --color-etiqueta: #45556c;
+  --color-placeholder: #cad5e2;
+  --color-pista: #90a1b9;
+  --color-borde: rgb(15 23 42 / 0.12);
+  --color-borde-suave: rgb(15 23 42 / 0.07);
+  --color-peligro: #fb2c36;
+  --color-peligro-texto: #c10007;
+  --color-peligro-fondo: #fef2f2;
+
+  /* Categorías del calendario */
+  --color-examen: #0066ff;
+  --color-comedor: #00a63e;
+  --color-evento: #f54900;
+
+  --radius-campo: 16px;
+  --radius-item: 12px;
+}
+
+body {
+  @apply bg-fondo font-sans text-texto antialiased;
+}
