@@ -1,0 +1,26 @@
+[
+  {
+    "id": "turno-2026-12",
+    "nombre": "Turno de diciembre 2026",
+    "fechaInicio": "2026-12-07",
+    "fechaFin": "2026-12-19",
+    "inscripcionDesde": "2026-11-16",
+    "inscripcionHasta": "2026-11-27"
+  },
+  {
+    "id": "turno-2026-10",
+    "nombre": "Mesa especial de octubre 2026",
+    "fechaInicio": "2026-10-19",
+    "fechaFin": "2026-10-23",
+    "inscripcionDesde": "2026-10-05",
+    "inscripcionHasta": "2026-10-09"
+  },
+  {
+    "id": "turno-2027-02",
+    "nombre": "Turno de febrero 2027",
+    "fechaInicio": "2027-02-15",
+    "fechaFin": "2027-03-05",
+    "inscripcionDesde": "2027-02-01",
+    "inscripcionHasta": "2027-02-10"
+  }
+]

@@ -1,0 +1,62 @@
+{
+  "items": [
+    {
+      "orderId": "93b28f67-e111-4a0d-b857-fdd015c4d3f1",
+      "fecha": "2026-09-28T16:20:00.000Z",
+      "sede": "Monserrat",
+      "estado": "COMPLETADA",
+      "productos": [
+        {
+          "productoId": "p-cuaderno",
+          "nombre": "Cuaderno A4 UADE",
+          "cantidad": 2,
+          "precioUnitario": "1250.00",
+          "subtotal": "2500.00"
+        },
+        {
+          "productoId": "p-lapicera",
+          "nombre": "Lapicera azul",
+          "cantidad": 1,
+          "precioUnitario": "1000.00",
+          "subtotal": "1000.00"
+        }
+      ],
+      "total": "3500.00"
+    },
+    {
+      "orderId": "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
+      "fecha": "2026-09-10T13:05:00.000Z",
+      "sede": "Recoleta",
+      "estado": "COMPLETADA",
+      "productos": [
+        {
+          "productoId": "p-buzo",
+          "nombre": "Buzo UADE talle M",
+          "cantidad": 1,
+          "precioUnitario": "18000.00",
+          "subtotal": "18000.00"
+        }
+      ],
+      "total": "18000.00"
+    },
+    {
+      "orderId": "7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d",
+      "fecha": "2026-08-22T11:40:00.000Z",
+      "sede": "Monserrat",
+      "estado": "CANCELADA",
+      "productos": [
+        {
+          "productoId": "p-calculadora",
+          "nombre": "Calculadora científica",
+          "cantidad": 1,
+          "precioUnitario": "22000.00",
+          "subtotal": "22000.00"
+        }
+      ],
+      "total": "22000.00"
+    }
+  ],
+  "page": 1,
+  "limit": 20,
+  "total": 3
+}

@@ -1,0 +1,39 @@
+{
+  "curso-bd1-2026-2-a": [
+    {
+      "notaId": "nota-bd1-p1",
+      "examId": "exam-bd1-2026-2-p1",
+      "instancia": "PARCIAL",
+      "titulo": "1er parcial",
+      "fecha": "2026-09-21",
+      "nota": 7,
+      "resultado": "APROBADO",
+      "docente": "Ing. Laura Gómez",
+      "observaciones": null
+    }
+  ],
+  "curso-desa1-2026-2-a": [
+    {
+      "notaId": "nota-desa1-p1",
+      "examId": "exam-desa1-2026-2-p1",
+      "instancia": "PARCIAL",
+      "titulo": "1er parcial",
+      "fecha": "2026-09-23",
+      "nota": 4,
+      "resultado": "DESAPROBADO",
+      "docente": "Lic. Martín Sosa",
+      "observaciones": "Revisar normalización."
+    },
+    {
+      "notaId": "nota-desa1-r1",
+      "examId": "exam-desa1-2026-2-r1",
+      "instancia": "RECUPERATORIO",
+      "titulo": "Recuperatorio 1er parcial",
+      "fecha": "2026-10-28",
+      "nota": null,
+      "resultado": null,
+      "docente": "Lic. Martín Sosa",
+      "observaciones": null
+    }
+  ]
+}

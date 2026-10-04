@@ -1,0 +1,16 @@
+{
+  "asig-prog1": [],
+  "asig-discreta": [],
+  "asig-prog2": [{ "asignaturaId": "asig-prog1", "nombre": "Programación I", "tipo": "APROBADA" }],
+  "asig-ayed": [{ "asignaturaId": "asig-prog1", "nombre": "Programación I", "tipo": "APROBADA" }],
+  "asig-bd1": [{ "asignaturaId": "asig-prog2", "nombre": "Programación II", "tipo": "REGULAR" }],
+  "asig-desa1": [{ "asignaturaId": "asig-prog2", "nombre": "Programación II", "tipo": "REGULAR" }],
+  "asig-so": [
+    { "asignaturaId": "asig-prog2", "nombre": "Programación II", "tipo": "REGULAR" },
+    { "asignaturaId": "asig-discreta", "nombre": "Matemática Discreta", "tipo": "APROBADA" }
+  ],
+  "asig-desa2": [
+    { "asignaturaId": "asig-desa1", "nombre": "Desarrollo de Aplicaciones I", "tipo": "REGULAR" }
+  ],
+  "asig-bd2": [{ "asignaturaId": "asig-bd1", "nombre": "Bases de Datos I", "tipo": "APROBADA" }]
+}

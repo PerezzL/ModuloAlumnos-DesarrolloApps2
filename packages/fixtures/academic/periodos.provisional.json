@@ -1,0 +1,26 @@
+[
+  {
+    "id": "2025-2",
+    "nombre": "2° cuatrimestre 2025",
+    "fechaInicio": "2025-08-11",
+    "fechaFin": "2025-12-06",
+    "inscripcionDesde": "2025-07-21T12:00:00.000Z",
+    "inscripcionHasta": "2025-08-01T02:59:59.000Z"
+  },
+  {
+    "id": "2026-2",
+    "nombre": "2° cuatrimestre 2026",
+    "fechaInicio": "2026-08-10",
+    "fechaFin": "2026-12-05",
+    "inscripcionDesde": "2026-07-20T12:00:00.000Z",
+    "inscripcionHasta": "2026-07-31T02:59:59.000Z"
+  },
+  {
+    "id": "2027-1",
+    "nombre": "1° cuatrimestre 2027",
+    "fechaInicio": "2027-03-15",
+    "fechaFin": "2027-07-10",
+    "inscripcionDesde": "2026-09-28T12:00:00.000Z",
+    "inscripcionHasta": "2026-12-19T02:59:59.000Z"
+  }
+]

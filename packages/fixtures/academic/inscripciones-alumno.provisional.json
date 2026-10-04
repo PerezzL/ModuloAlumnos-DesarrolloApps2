@@ -1,0 +1,70 @@
+[
+  {
+    "id": "insc-0001",
+    "cursoId": "curso-prog1-2025-2-a",
+    "comision": "A - Noche",
+    "asignatura": { "id": "asig-prog1", "codigo": "3.4.069", "nombre": "Programación I" },
+    "periodo": { "id": "2025-2", "nombre": "2° cuatrimestre 2025" },
+    "notaFinal": 8,
+    "estado": "APROBADO",
+    "fecha": "2025-07-22T13:10:00.000Z"
+  },
+  {
+    "id": "insc-0002",
+    "cursoId": "curso-discreta-2025-2-a",
+    "comision": "A - Noche",
+    "asignatura": { "id": "asig-discreta", "codigo": "3.1.024", "nombre": "Matemática Discreta" },
+    "periodo": { "id": "2025-2", "nombre": "2° cuatrimestre 2025" },
+    "notaFinal": 7,
+    "estado": "APROBADO",
+    "fecha": "2025-07-22T13:12:00.000Z"
+  },
+  {
+    "id": "insc-0003",
+    "cursoId": "curso-ayed-2025-2-a",
+    "comision": "A - Mañana",
+    "asignatura": {
+      "id": "asig-ayed",
+      "codigo": "3.4.070",
+      "nombre": "Algoritmos y Estructuras de Datos"
+    },
+    "periodo": { "id": "2025-2", "nombre": "2° cuatrimestre 2025" },
+    "notaFinal": null,
+    "estado": "LIBRE",
+    "fecha": "2025-07-22T13:15:00.000Z"
+  },
+  {
+    "id": "insc-0004",
+    "cursoId": "curso-prog2-2026-1-a",
+    "comision": "A - Noche",
+    "asignatura": { "id": "asig-prog2", "codigo": "3.4.071", "nombre": "Programación II" },
+    "periodo": { "id": "2026-1", "nombre": "1° cuatrimestre 2026" },
+    "notaFinal": null,
+    "estado": "REGULAR",
+    "fecha": "2026-02-20T14:00:00.000Z"
+  },
+  {
+    "id": "insc-0005",
+    "cursoId": "curso-bd1-2026-2-a",
+    "comision": "A - Noche",
+    "asignatura": { "id": "asig-bd1", "codigo": "3.4.072", "nombre": "Bases de Datos I" },
+    "periodo": { "id": "2026-2", "nombre": "2° cuatrimestre 2026" },
+    "notaFinal": null,
+    "estado": "CURSANDO",
+    "fecha": "2026-07-21T12:30:00.000Z"
+  },
+  {
+    "id": "insc-0006",
+    "cursoId": "curso-desa1-2026-2-a",
+    "comision": "A - Noche",
+    "asignatura": {
+      "id": "asig-desa1",
+      "codigo": "3.4.207",
+      "nombre": "Desarrollo de Aplicaciones I"
+    },
+    "periodo": { "id": "2026-2", "nombre": "2° cuatrimestre 2026" },
+    "notaFinal": null,
+    "estado": "CURSANDO",
+    "fecha": "2026-07-21T12:31:00.000Z"
+  }
+]

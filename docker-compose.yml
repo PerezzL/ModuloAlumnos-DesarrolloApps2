@@ -22,6 +22,8 @@ services:
       JWT_AUDIENCE: uadenet
       STUDENT_SERVICE_URL: ${COMPOSE_STUDENT_SERVICE_URL:-http://bff:3000/api/v1}
       WEB_ORIGIN: http://localhost:5173
+      # Fallas simuladas al arrancar, por ejemplo dining:caido (ver docs/instalacion.md)
+      CORE_FALLAS: ${CORE_FALLAS:-}
 
   bff:
     build: { context: ., dockerfile: apps/bff/Dockerfile }

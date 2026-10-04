@@ -1,0 +1,29 @@
+{
+  "curso-bd1-2026-2-a": {
+    "clasesDictadas": 8,
+    "presentes": 7,
+    "ausentes": 1,
+    "porcentaje": 87.5,
+    "limiteInasistencias": 4,
+    "inasistenciasRestantes": 3,
+    "clases": [
+      { "fecha": "2026-08-10", "presente": true },
+      { "fecha": "2026-08-17", "presente": true },
+      { "fecha": "2026-08-24", "presente": false },
+      { "fecha": "2026-08-31", "presente": true },
+      { "fecha": "2026-09-07", "presente": true },
+      { "fecha": "2026-09-14", "presente": true },
+      { "fecha": "2026-09-21", "presente": true },
+      { "fecha": "2026-09-28", "presente": true }
+    ]
+  },
+  "curso-desa1-2026-2-a": {
+    "clasesDictadas": 8,
+    "presentes": 8,
+    "ausentes": 0,
+    "porcentaje": 100,
+    "limiteInasistencias": null,
+    "inasistenciasRestantes": null,
+    "clases": []
+  }
+}

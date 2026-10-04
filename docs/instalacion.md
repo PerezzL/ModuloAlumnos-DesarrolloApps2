@@ -65,7 +65,7 @@ es esperable y no impide que todo funcione.
 | Proceso | URL | Qué es |
 | --- | --- | --- |
 | web | http://localhost:5173 | El portal (lo que se abre en el navegador) |
-| core-falso | http://localhost:4000 | Imitación de CORE: login, tokens y Gateway |
+| core-falso | http://localhost:4000 | Imitación de CORE: login, tokens, Gateway y los módulos externos (ver [CORE falso](#core-falso-módulos-externos-y-fallas)) |
 | bff | http://localhost:3000 | Nuestro backend. Documentación de la API en http://localhost:3000/docs |
 
 Abrí http://localhost:5173 y entrá con **`v.moreno@uade.edu.ar` / `uade2026`**.
@@ -157,8 +157,43 @@ Una forma rápida de ver que está activo: con Prism, el nombre del alumno en la
 lateral pasa a ser "Juan Pérez" (el ejemplo del contrato).
 
 **No confundir con el CORE falso:** Prism imita **nuestro BFF** a partir del contrato. El
-CORE falso imita **a CORE y a los otros módulos** (login, tokens, Gateway, y más adelante
-comedor, eventos, etc.). Los dos son solo para desarrollo.
+CORE falso imita **a CORE y a los otros módulos** (login, tokens, Gateway, comedor, eventos,
+etc.). Los dos son solo para desarrollo.
+
+## CORE falso: módulos externos y fallas
+
+Detrás del Gateway (`http://localhost:4000`) responden los módulos 2, 4, 5, 6, 8 y 9 con los
+datos de `packages/fixtures/` (ver su `README.md`). Los datos son de `v.moreno`; `j.perez`
+no tiene nada, para ver los estados vacíos.
+
+```bash
+TOKEN=$(curl -s localhost:4000/api/v1/auth/login -H 'content-type: application/json' -d '{"email":"v.moreno@uade.edu.ar","password":"uade2026"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).accessToken')
+curl -s localhost:4000/api/v1/dining/reservations/me -H "Authorization: Bearer $TOKEN"
+```
+
+Una inscripción hecha (`POST /api/v1/academic/planificacion/cursos/{cursoId}/inscripciones`)
+queda en memoria: suma un inscripto en la oferta y aparece en las inscripciones del alumno
+hasta que se reinicia el CORE falso o se llama a `POST /__falso/reset`.
+
+**Apagar un módulo** para mostrar la falla parcial (sin reiniciar nada):
+
+```bash
+curl -X PUT localhost:4000/__falso/fallas/dining -H 'content-type: application/json' -d '{"tipo":"caido"}'
+```
+
+| `tipo` | Qué devuelve el Gateway |
+| --- | --- |
+| `caido` | 503 `UPSTREAM_UNAVAILABLE` |
+| `invalido` | 502 `UPSTREAM_INVALID` |
+| `lento` | 504 `UPSTREAM_TIMEOUT` a los 10 s; con `"demoraMs": 3000` responde bien, pero tarde |
+
+Los módulos son `teacher`, `dining`, `store`, `events`, `backoffice`, `academic` y `student`
+(nuestro BFF). `GET /__falso/fallas` muestra las activas, `DELETE /__falso/fallas/{modulo}`
+quita una y `POST /__falso/reset` vuelve todo a como arrancó. Para arrancar con fallas:
+`CORE_FALLAS=dining:caido,events:lento:3000` en el `.env`.
+
+Para probar contra un módulo real, poné su URL en `{MODULO}_SERVICE_URL` (por ejemplo
+`DINING_SERVICE_URL=http://localhost:8080/api/v1`) y el Gateway le reenvía los pedidos.
 
 ## Problemas comunes
 
