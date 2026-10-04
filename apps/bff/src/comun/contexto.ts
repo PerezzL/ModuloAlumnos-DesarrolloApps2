@@ -6,6 +6,8 @@ export const HEADER_CORRELATION = 'x-correlation-id';
 
 interface ContextoRequest {
   correlationId: string;
+  /** Header Authorization del alumno, para reenviarlo a los otros módulos por el Gateway */
+  authorization?: string;
 }
 
 const almacen = new AsyncLocalStorage<ContextoRequest>();
@@ -13,6 +15,11 @@ const almacen = new AsyncLocalStorage<ContextoRequest>();
 /** Correlation id del request en curso (undefined fuera de un request). */
 export function correlationIdActual(): string | undefined {
   return almacen.getStore()?.correlationId;
+}
+
+/** Header Authorization del request en curso. */
+export function authorizationActual(): string | undefined {
+  return almacen.getStore()?.authorization;
 }
 
 /**
@@ -24,5 +31,5 @@ export function correlationMiddleware(req: Request, res: Response, next: NextFun
   const correlationId = recibido && recibido.length <= 128 ? recibido : randomUUID();
   req.headers[HEADER_CORRELATION] = correlationId;
   res.setHeader('X-Correlation-Id', correlationId);
-  almacen.run({ correlationId }, next);
+  almacen.run({ correlationId, authorization: req.header('authorization') }, next);
 }
