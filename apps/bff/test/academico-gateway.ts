@@ -31,5 +31,8 @@ export function academicoConFixtures() {
       const cursos = fixture<{ periodoId: string }[]>('academic/cursos.provisional.json');
       return HttpResponse.json(cursos.filter((c) => c.periodoId === periodoId));
     }),
+    http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () =>
+      HttpResponse.json(fixture('academic/inscripciones-alumno.provisional.json')),
+    ),
   ];
 }

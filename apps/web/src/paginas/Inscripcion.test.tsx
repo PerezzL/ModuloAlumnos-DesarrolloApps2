@@ -26,6 +26,22 @@ describe('inscripción: oferta', () => {
     expect(screen.getByText('3.4.074')).toBeInTheDocument();
   });
 
+  it('cada comisión muestra su estado con texto', async () => {
+    const oferta = ofertaBase();
+    oferta.materias[1]!.comisiones[0]!.estado = 'INSCRIPTO';
+    conOferta(oferta);
+    renderApp('/academico');
+    const ayed = await screen.findByRole('list', {
+      name: 'Comisiones de Algoritmos y Estructuras de Datos',
+    });
+    const [a, b] = within(ayed).getAllByRole('listitem');
+    expect(a).toHaveTextContent('Sin cupo');
+    expect(b).toHaveTextContent('Con cupo');
+    expect(
+      screen.getByRole('list', { name: 'Comisiones de Sistemas Operativos' }),
+    ).toHaveTextContent('Inscripto');
+  });
+
   it('sin materias, estado vacío', async () => {
     conOferta({ materias: [] });
     renderApp('/academico');

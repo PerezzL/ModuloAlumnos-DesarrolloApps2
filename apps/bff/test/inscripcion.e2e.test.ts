@@ -3,7 +3,7 @@ import type { OfertaInscripcion } from '@uadenet/api-types';
 import { http, HttpResponse } from 'msw';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { academicoConFixtures, RUTAS_ACADEMICO, USUARIO_CON_PLAN } from './academico-gateway';
-import { cuerpo, prepararE2E } from './app-e2e';
+import { ALUMNO, cuerpo, prepararE2E } from './app-e2e';
 
 const contrato = new Contrato();
 
@@ -36,6 +36,22 @@ describe('GET /inscripcion/oferta', () => {
     expect(oferta.materias).toHaveLength(4);
     expect(cursos?.searchParams.get('periodoId')).toBe('2027-1');
     expect(cursos?.searchParams.get('planId')).toBe('plan-2020');
+  });
+
+  it('pide las inscripciones del alumno del token y marca dónde ya está inscripto', async () => {
+    let alumno: unknown;
+    e2e.server.use(
+      http.get(RUTAS_ACADEMICO.INSCRIPCIONES, ({ params }) => {
+        alumno = params.alumnoId;
+      }),
+      ...academicoConFixtures(),
+    );
+    const res = await e2e.get('/inscripcion/oferta?periodoId=2026-2');
+    expect(alumno).toBe(ALUMNO);
+    const estados = (res.body as OfertaInscripcion).materias.flatMap((m) =>
+      m.comisiones.map((c) => c.estado),
+    );
+    expect(estados).toEqual(['INSCRIPTO', 'INSCRIPTO']);
   });
 
   it('con periodoId, la oferta de ese período', async () => {

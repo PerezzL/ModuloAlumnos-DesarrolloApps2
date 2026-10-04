@@ -16,11 +16,21 @@ export class InscripcionService {
   ) {}
 
   async oferta(alumno: Alumno, periodoId?: string): Promise<OfertaInscripcion> {
-    const [planId, periodos] = await Promise.all([this.planId(alumno), this.academico.periodos()]);
+    const [planId, periodos, inscripciones] = await Promise.all([
+      this.planId(alumno),
+      this.academico.periodos(),
+      this.academico.inscripciones(alumno.id),
+    ]);
     const ahora = new Date();
     const periodo = elegirPeriodo(periodos, ahora, periodoId);
     const cursos = await this.academico.cursos(periodo.id, planId);
-    return armarOferta({ periodo, cursos, filtradaPorPlan: planId !== null, ahora });
+    return armarOferta({
+      periodo,
+      cursos,
+      inscripciones,
+      filtradaPorPlan: planId !== null,
+      ahora,
+    });
   }
 
   /**

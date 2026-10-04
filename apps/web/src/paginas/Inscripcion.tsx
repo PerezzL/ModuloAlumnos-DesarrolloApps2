@@ -4,6 +4,7 @@ import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { useOferta } from '@/inscripcion/consultas';
+import { EstadoComision } from '@/inscripcion/EstadoComision';
 
 /** Inscripción a materias (4.3): oferta del plan agrupada por materia. */
 export function Inscripcion() {
@@ -78,6 +79,7 @@ function ComisionFila({ comision }: { comision: Comision }) {
           {comision.inscriptosActivos}/{comision.cupoMaximo} inscriptos
         </p>
       )}
+      <EstadoComision estado={comision.estado} />
     </li>
   );
 }

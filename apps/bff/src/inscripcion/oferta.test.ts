@@ -1,14 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../test/fixtures';
 import { ProblemaError } from '../comun/problema';
-import { aCursos, aPeriodos } from '../modulos/academico/academico.mapper';
+import type { InscripcionAlumno } from '../modulos/academico/academico.modelo';
+import { aCursos, aInscripciones, aPeriodos } from '../modulos/academico/academico.mapper';
 import { armarOferta, elegirPeriodo } from './oferta';
 
 const periodos = aPeriodos(fixture('academic/periodos.provisional.json'));
 const cursos = aCursos(fixture('academic/cursos.provisional.json')).filter((c) =>
   c.cursoId.includes('2027-1'),
 );
+const historial = aInscripciones(fixture('academic/inscripciones-alumno.provisional.json'));
 const OCTUBRE = new Date('2026-10-04T15:00:00Z');
+
+const inscripcionEn = (
+  cursoId: string,
+  estado: InscripcionAlumno['estado'],
+): InscripcionAlumno => ({
+  cursoId,
+  asignatura: { id: 'x', nombre: 'x' },
+  periodo: { id: '2027-1', nombre: '1° cuatrimestre 2027' },
+  notaFinal: null,
+  estado,
+});
 
 describe('período de la oferta', () => {
   it('sin periodoId, el que tiene la inscripción abierta', () => {
@@ -48,7 +61,13 @@ describe('período de la oferta', () => {
 
 describe('oferta agrupada por materia', () => {
   const periodo = elegirPeriodo(periodos, OCTUBRE);
-  const oferta = armarOferta({ periodo, cursos, filtradaPorPlan: true, ahora: OCTUBRE });
+  const oferta = armarOferta({
+    periodo,
+    cursos,
+    inscripciones: historial,
+    filtradaPorPlan: true,
+    ahora: OCTUBRE,
+  });
 
   it('una materia por asignatura, ordenadas por nombre, con sus comisiones', () => {
     expect(oferta.materias.map((m) => m.asignatura.nombre)).toEqual([
@@ -86,7 +105,38 @@ describe('oferta agrupada por materia', () => {
 
   it('sin cursos, sin materias', () => {
     expect(
-      armarOferta({ periodo, cursos: [], filtradaPorPlan: true, ahora: OCTUBRE }).materias,
+      armarOferta({
+        periodo,
+        cursos: [],
+        inscripciones: [],
+        filtradaPorPlan: true,
+        ahora: OCTUBRE,
+      }).materias,
     ).toEqual([]);
+  });
+
+  const estados = (inscripciones: InscripcionAlumno[]) =>
+    armarOferta({ periodo, cursos, inscripciones, filtradaPorPlan: true, ahora: OCTUBRE })
+      .materias.flatMap((m) => m.comisiones)
+      .reduce<Record<string, string>>((acc, c) => ({ ...acc, [c.cursoId]: c.estado }), {});
+
+  it('INSCRIPTO sale de las inscripciones del alumno, aunque la comisión esté llena', () => {
+    const resultado = estados([
+      inscripcionEn('curso-so-2027-1-a', 'INSCRIPTO'),
+      inscripcionEn('curso-ayed-2027-1-a', 'INSCRIPTO'),
+    ]);
+    expect(resultado['curso-so-2027-1-a']).toBe('INSCRIPTO');
+    expect(resultado['curso-ayed-2027-1-a']).toBe('INSCRIPTO');
+    expect(resultado['curso-ayed-2027-1-b']).toBe('CON_CUPO');
+  });
+
+  it('una inscripción dada de baja no cuenta', () => {
+    expect(estados([inscripcionEn('curso-so-2027-1-a', 'BAJA')])['curso-so-2027-1-a']).toBe(
+      'CON_CUPO',
+    );
+  });
+
+  it('inscripciones de otros períodos no marcan comisiones de este', () => {
+    expect(Object.values(estados(historial))).not.toContain('INSCRIPTO');
   });
 });

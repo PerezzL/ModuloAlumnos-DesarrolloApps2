@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { ItemCalendario } from '@uadenet/api-types';
 import type { Rango } from '../../calendario/rango';
 import { GatewayClient } from '../../gateway/gateway.client';
-import type { CursoOfertado, PeriodoAcademico } from './academico.modelo';
-import { aCursos, aPeriodos, turnosAItems } from './academico.mapper';
+import type { CursoOfertado, InscripcionAlumno, PeriodoAcademico } from './academico.modelo';
+import { aCursos, aInscripciones, aPeriodos, turnosAItems } from './academico.mapper';
 
 /** Módulo 9 · Gestión Académica. Único lugar que conoce la forma de sus respuestas. */
 @Injectable()
@@ -27,6 +27,17 @@ export class AcademicoAdapter {
       await this.gateway.get('GESTION_ACADEMICA', '/planificacion/cursos', {
         query: { periodoId, planId: planId ?? undefined },
       }),
+    );
+  }
+
+  /** Inscripciones del alumno (su historial). Sin `periodoId`, todas. */
+  async inscripciones(alumnoId: string, periodoId?: string): Promise<InscripcionAlumno[]> {
+    return aInscripciones(
+      await this.gateway.get(
+        'GESTION_ACADEMICA',
+        `/planificacion/alumnos/${encodeURIComponent(alumnoId)}/inscripciones`,
+        { query: { periodoId } },
+      ),
     );
   }
 }
