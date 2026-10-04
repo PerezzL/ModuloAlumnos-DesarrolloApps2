@@ -157,14 +157,96 @@ export const handlersSaldo = [
   }),
 ];
 
+/** Notificaciones simuladas de CORE, de la más nueva a la más vieja */
+const notificacionesIniciales = () => [
+  {
+    id: 'n-evento',
+    type: 'EVENT_REMINDER',
+    title: 'Se acerca tu evento',
+    message: 'Jornada de Desarrollo de Software — 12 de octubre, 18:00',
+    actionUrl: '/events/ev-1',
+    read: false,
+    createdAt: '2026-10-03T21:00:00.000Z',
+  },
+  {
+    id: 'n-sancion',
+    type: 'LIBRARY_PENALTY_APPLIED',
+    title: 'Tenés una sanción de biblioteca',
+    message: 'Devolviste un libro con 8 días de atraso.',
+    actionUrl: '/library/loan-1/penalty',
+    read: false,
+    createdAt: '2026-09-20T13:00:00.000Z',
+  },
+  {
+    id: 'n-nota',
+    type: 'EXAM_RESULT_PUBLISHED',
+    title: 'Se publicó tu nota de Bases de Datos I',
+    message: '1er parcial: 7 (aprobado)',
+    actionUrl: '/teacher/courses/curso-bd1/exams/exam-p1',
+    read: true,
+    createdAt: '2026-09-15T20:15:00.000Z',
+  },
+];
+
+export const notificaciones = {
+  items: notificacionesIniciales(),
+  /** Si es true, PATCH y read-all responden 503 */
+  fallarEscrituras: false,
+};
+
+function reiniciarNotificaciones() {
+  notificaciones.items = notificacionesIniciales();
+  notificaciones.fallarEscrituras = false;
+}
+
+const noDisponible = () =>
+  HttpResponse.json(
+    { title: 'Servicio no disponible', status: 503, code: 'UPSTREAM_UNAVAILABLE' },
+    { status: 503 },
+  );
+
+export const handlersNotificaciones = [
+  http.get(`${GW}/api/v1/notifications`, ({ request }) => {
+    const url = new URL(request.url);
+    const limit = Number(url.searchParams.get('limit') ?? 20);
+    const desde = Number(url.searchParams.get('cursor') ?? 0);
+    const hasta = desde + limit;
+    return HttpResponse.json({
+      items: notificaciones.items.slice(desde, hasta),
+      nextCursor: hasta < notificaciones.items.length ? String(hasta) : null,
+    });
+  }),
+  http.get(`${GW}/api/v1/notifications/unread-count`, () =>
+    HttpResponse.json({ count: notificaciones.items.filter((n) => !n.read).length }),
+  ),
+  http.patch(`${GW}/api/v1/notifications/:id`, async ({ params, request }) => {
+    if (notificaciones.fallarEscrituras) return noDisponible();
+    const n = notificaciones.items.find((x) => x.id === params.id);
+    if (!n) return HttpResponse.json({ status: 404, code: 'NOT_FOUND' }, { status: 404 });
+    n.read = ((await request.json()) as { read: boolean }).read;
+    return HttpResponse.json(n);
+  }),
+  http.post(`${GW}/api/v1/notifications/read-all`, () => {
+    if (notificaciones.fallarEscrituras) return noDisponible();
+    for (const n of notificaciones.items) n.read = true;
+    return new HttpResponse(null, { status: 204 });
+  }),
+];
+
 export const handlersBff = [
   http.get(`${BFF}/calendario`, () => HttpResponse.json(calendarioOctubre)),
 ];
 
-export const servidor = setupServer(...handlersCore, ...handlersSaldo, ...handlersBff);
+export const servidor = setupServer(
+  ...handlersCore,
+  ...handlersSaldo,
+  ...handlersNotificaciones,
+  ...handlersBff,
+);
 
 export function reiniciarCore(cookieValida = false) {
   reiniciarWallet();
+  reiniciarNotificaciones();
   core.cookieValida = cookieValida;
   core.refreshes = 0;
   core.logouts = 0;

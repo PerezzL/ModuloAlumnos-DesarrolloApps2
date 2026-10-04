@@ -1,7 +1,8 @@
-import { Bell } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
 import { SaldoHeader } from '@/componentes/SaldoHeader';
-import { Button } from '@/componentes/ui/button';
+import { AvisosProvider } from '@/componentes/Avisos';
+import { Campana } from '@/notificaciones/Campana';
+import { useNotificacionesEnVivo } from '@/notificaciones/useNotificacionesEnVivo';
 import { NAVEGACION, Sidebar } from './Sidebar';
 
 function tituloDe(ruta: string) {
@@ -11,6 +12,15 @@ function tituloDe(ruta: string) {
 
 /** Sidebar fija y barra superior con el título y la campana (Figma, docs/pantallas.md). */
 export function LayoutAutenticado() {
+  return (
+    <AvisosProvider>
+      <Contenido />
+    </AvisosProvider>
+  );
+}
+
+function Contenido() {
+  useNotificacionesEnVivo();
   const { pathname } = useLocation();
 
   return (
@@ -21,10 +31,7 @@ export function LayoutAutenticado() {
           <h1 className="text-base font-semibold">{tituloDe(pathname)}</h1>
           <div className="flex items-center gap-2">
             <SaldoHeader />
-            {/* El centro de notificaciones se arma en el bloque C */}
-            <Button variant="fantasma" size="icono" aria-label="Notificaciones">
-              <Bell className="size-[18px]" aria-hidden />
-            </Button>
+            <Campana />
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-8">

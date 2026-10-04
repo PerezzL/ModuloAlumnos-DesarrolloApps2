@@ -7,6 +7,7 @@ import { EnConstruccion } from '@/paginas/EnConstruccion';
 import { Inicio } from '@/paginas/Inicio';
 import { Login } from '@/paginas/Login';
 import { NoEncontrada } from '@/paginas/NoEncontrada';
+import { Notificaciones } from '@/paginas/Notificaciones';
 import { Perfil } from '@/paginas/Perfil';
 
 export const rutas: RouteObject[] = [
@@ -22,7 +23,12 @@ export const rutas: RouteObject[] = [
           { path: 'academico', element: <EnConstruccion titulo="Académico" /> },
           { path: 'calendario', element: <Calendario /> },
           { path: 'cuenta-corriente', element: <CuentaCorriente /> },
-          { path: 'notificaciones', element: <EnConstruccion titulo="Notificaciones" /> },
+          { path: 'notificaciones', element: <Notificaciones /> },
+          // Detalle de nota (4.7): se arma en el bloque E. Ya existe para el deep link (H26)
+          {
+            path: 'cursadas/:cursoId/notas/:notaId',
+            element: <EnConstruccion titulo="Detalle de la nota" />,
+          },
           { path: 'perfil', element: <Perfil /> },
           { path: '*', element: <NoEncontrada /> },
         ],
