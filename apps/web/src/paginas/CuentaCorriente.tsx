@@ -1,5 +1,6 @@
 import { Wallet } from 'lucide-react';
 import { Cargando } from '@/componentes/Cargando';
+import { CargaSaldo } from '@/componentes/CargaSaldo';
 import { Movimientos } from '@/componentes/Movimientos';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { formatearMonto } from '@/core/monto';
@@ -11,6 +12,7 @@ export function CuentaCorriente() {
     <div className="grid max-w-5xl gap-6 lg:grid-cols-[1fr_1.2fr]">
       <div className="flex flex-col gap-6">
         <TarjetaSaldo />
+        <CargaSaldo />
       </div>
       <Movimientos />
     </div>

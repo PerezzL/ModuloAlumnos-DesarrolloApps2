@@ -56,10 +56,8 @@ export const handlersCore = [
   ),
 ];
 
-/** Saldo simulado de CORE */
-export const wallet = {
-  balance: '13500.00',
-  transacciones: Array.from({ length: 12 }, (_, i) => ({
+const transaccionesIniciales = () =>
+  Array.from({ length: 12 }, (_, i) => ({
     transactionId: `tx-${i + 1}`,
     status: 'POSTED',
     type: i % 3 === 0 ? 'CREDIT' : 'DEBIT',
@@ -67,7 +65,39 @@ export const wallet = {
     amount: `${(i + 1) * 100}.00`,
     currency: 'ARS',
     createdAt: `2026-09-${String(28 - i).padStart(2, '0')}T12:00:00.000Z`,
-  })),
+  }));
+
+/**
+ * Saldo simulado de CORE. Las cargas se deduplican por Idempotency-Key como en CORE: la misma
+ * key devuelve la respuesta original sin acreditar de nuevo.
+ */
+export const wallet = {
+  balance: '13500.00',
+  transacciones: transaccionesIniciales(),
+  /** Idempotency-Key → respuesta original */
+  cargas: new Map<string, { status: number; cuerpo: Record<string, unknown> }>(),
+  acreditaciones: 0,
+  /** Keys recibidas, en orden (incluye reintentos) */
+  keys: [] as (string | null)[],
+  /** Si es > 0, la próxima carga se procesa pero la respuesta "se pierde en la red" */
+  perderRespuestas: 0,
+};
+
+function reiniciarWallet() {
+  Object.assign(wallet, {
+    balance: '13500.00',
+    transacciones: transaccionesIniciales(),
+    cargas: new Map(),
+    acreditaciones: 0,
+    keys: [],
+    perderRespuestas: 0,
+  });
+}
+
+const sumar = (a: string, b: string) => {
+  const centavos = (m: string) => BigInt(m.replace('.', ''));
+  const total = centavos(a) + centavos(b);
+  return `${total / 100n}.${String(total % 100n).padStart(2, '0')}`;
 };
 
 export const handlersSaldo = [
@@ -84,6 +114,47 @@ export const handlersSaldo = [
       nextCursor: hasta < wallet.transacciones.length ? String(hasta) : null,
     });
   }),
+  http.post(`${GW}/api/v1/wallets/me/top-ups`, async ({ request }) => {
+    const key = request.headers.get('idempotency-key');
+    wallet.keys.push(key);
+    if (!key) {
+      return HttpResponse.json(
+        { title: 'x', status: 400, code: 'IDEMPOTENCY_KEY_REQUIRED' },
+        { status: 400 },
+      );
+    }
+    let guardada = wallet.cargas.get(key);
+    if (!guardada) {
+      const { amount = '', paymentMethodToken } = (await request.json()) as Record<string, string>;
+      const movimiento = {
+        transactionId: `tx-carga-${wallet.cargas.size + 1}`,
+        type: 'CREDIT',
+        concept: 'TOP_UP',
+        amount,
+        currency: 'ARS',
+        createdAt: '2026-10-04T15:00:00.000Z',
+      };
+      if (paymentMethodToken === 'mock-approved') {
+        wallet.acreditaciones++;
+        wallet.balance = sumar(wallet.balance, amount);
+        wallet.transacciones.unshift({ ...movimiento, status: 'POSTED' });
+        guardada = { status: 201, cuerpo: { ...movimiento, status: 'POSTED' } };
+      } else if (paymentMethodToken === 'mock-pending') {
+        guardada = { status: 202, cuerpo: { ...movimiento, status: 'PENDING' } };
+      } else {
+        guardada = {
+          status: 422,
+          cuerpo: { title: 'Carga rechazada', status: 422, code: 'WALLET_TOPUP_REJECTED' },
+        };
+      }
+      wallet.cargas.set(key, guardada);
+    }
+    if (wallet.perderRespuestas > 0) {
+      wallet.perderRespuestas--;
+      return HttpResponse.error();
+    }
+    return HttpResponse.json(guardada.cuerpo, { status: guardada.status });
+  }),
 ];
 
 export const handlersBff = [
@@ -93,6 +164,7 @@ export const handlersBff = [
 export const servidor = setupServer(...handlersCore, ...handlersSaldo, ...handlersBff);
 
 export function reiniciarCore(cookieValida = false) {
+  reiniciarWallet();
   core.cookieValida = cookieValida;
   core.refreshes = 0;
   core.logouts = 0;
