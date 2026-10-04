@@ -64,6 +64,18 @@ Lo que no figura en `CORE_INTEGRACION.md` y suponemos en el CORE falso (fixtures
 | Respuesta de la carga aprobada | La misma forma que un movimiento, con `concept: TOP_UP` |
 | `actionUrl` de `EXAM_RESULT_PUBLISHED` | `/teacher/courses/{courseId}/exams/{examId}` (pendiente con el Módulo 2) |
 | `actionUrl` de `LIBRARY_PENALTY_APPLIED` | `/library/{loanId}/penalty` (pendiente con el Módulo 3) |
+| `actionUrl` de `EVENT_REMINDER` | `/events/{eventoId}`, relativa (ejemplo de la sección 8.1) |
+
+Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/destino.ts`, el
+único lugar que conoce su formato):
+
+- `EXAM_RESULT_PUBLISHED` → pantalla propia `/cursadas/{cursoId}/notas/{notaId}`. Suponemos que
+  el `examId` del `actionUrl` es el `notaId` de nuestro contrato (pendiente con el Módulo 2).
+- `LIBRARY_PENALTY_APPLIED` y `EVENT_REMINDER` → portal de Biblioteca o de Eventos, con la URL
+  base de `VITE_BIBLIOTECA_URL` y `VITE_EVENTOS_URL`. La de Biblioteca es un valor de ejemplo
+  hasta que el Módulo 3 confirme la suya.
+- Se acepta un `actionUrl` relativo o absoluto hacia el origen del portal configurado; otro
+  origen, otro formato o un tipo desconocido no navega (solo marca la notificación como leída).
 
 ## Módulo 2 — Docente
 

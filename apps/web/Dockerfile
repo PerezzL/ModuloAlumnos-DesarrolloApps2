@@ -3,8 +3,12 @@
 FROM node:24-alpine AS build
 ARG VITE_GATEWAY_URL=http://localhost:4000
 ARG VITE_NOTIFICATIONS_URL=http://localhost:4000/notifications
+ARG VITE_BIBLIOTECA_URL=https://biblioteca.uadenet.example
+ARG VITE_EVENTOS_URL=https://eventos.uadenet.example
 ENV VITE_GATEWAY_URL=$VITE_GATEWAY_URL \
-    VITE_NOTIFICATIONS_URL=$VITE_NOTIFICATIONS_URL
+    VITE_NOTIFICATIONS_URL=$VITE_NOTIFICATIONS_URL \
+    VITE_BIBLIOTECA_URL=$VITE_BIBLIOTECA_URL \
+    VITE_EVENTOS_URL=$VITE_EVENTOS_URL
 WORKDIR /app
 COPY . .
 RUN npm ci && npm run gen && npm run build -w @uadenet/web
