@@ -18,11 +18,13 @@
     "verify": "npm run gen && npm run typecheck && npm run lint && npm run lint:contrato && npm run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "postman": "mkdir -p postman && openapi2postmanv2 -s openapi.yaml -o postman/portal-estudiante.postman_collection.json -p -O folderStrategy=Tags"
+    "postman": "mkdir -p postman && openapi2postmanv2 -s openapi.yaml -o postman/portal-estudiante.postman_collection.json -p -O folderStrategy=Tags",
+    "mock": "prism mock openapi.yaml -p 4010 -h 0.0.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@redocly/cli": "^2.57.0",
+    "@stoplight/prism-cli": "^5.16.0",
     "@types/node": "^24.19.1",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",

@@ -19,7 +19,8 @@ const NO_REENVIAR = new Set([
 
 /**
  * Gateway: valida el token, borra los X-User-* que vengan de afuera, inyecta los propios y
- * reenvía al servicio. `/api/v1/{prefijo}/x` llega al servicio como `/api/v1/x`.
+ * reenvía al servicio. `/api/v1/{prefijo}/x` llega como `{destino}/x`, donde `destino` ya
+ * incluye la base a la que se reescribe (CORE usa `/api/v1`; Prism sirve en la raíz).
  * No transforma la respuesta. Caído → 503, timeout → 504.
  */
 export function gateway(config: ConfigCore, tokens: Tokens, destino: () => string) {
@@ -48,7 +49,7 @@ export function gateway(config: ConfigCore, tokens: Tokens, destino: () => strin
     const tieneCuerpo = !['GET', 'HEAD'].includes(req.method);
     let respuesta: globalThis.Response;
     try {
-      respuesta = await fetch(new URL(`/api/v1${ruta}`, destino()), {
+      respuesta = await fetch(`${destino().replace(/\/$/, '')}${ruta}`, {
         method: req.method,
         headers,
         body: tieneCuerpo && req.body !== undefined ? JSON.stringify(req.body) : undefined,

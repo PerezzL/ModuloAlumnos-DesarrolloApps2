@@ -29,7 +29,7 @@ beforeAll(async () => {
   token = login.body.accessToken;
 });
 beforeEach(() => {
-  destino = `http://localhost:${(servicio.address() as AddressInfo).port}`;
+  destino = `http://localhost:${(servicio.address() as AddressInfo).port}/api/v1`;
   recibido = undefined;
   demora = 0;
 });

@@ -10,6 +10,6 @@ const config = cargarConfig();
 const { app } = await crearApp(config);
 app.listen(config.puerto, () => {
   console.log(`CORE falso en http://localhost:${config.puerto}`);
-  console.log(`  Gateway /api/v1/student/* → ${config.studentServiceUrl}/api/v1/*`);
+  console.log(`  Gateway /api/v1/student/* → ${config.studentServiceUrl}/*`);
   console.log('  Usuario de prueba: v.moreno@uade.edu.ar / uade2026');
 });

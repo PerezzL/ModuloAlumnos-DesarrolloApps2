@@ -43,6 +43,7 @@ agrega información de otros módulos a través del Gateway de CORE.
 | `npm run verify` | `gen` → typecheck → ESLint → `redocly lint` → Vitest. **Correrlo antes de cada commit.** El CI corre lo mismo |
 | `npm test` | Solo los tests (Vitest, todos los proyectos) |
 | `npm run format` | Prettier |
+| `npm run mock` | Prism en :4010 con los ejemplos de `openapi.yaml`. Para usarlo: `STUDENT_SERVICE_URL=http://localhost:4010` |
 | `npm run postman` | Exporta la colección Postman del contrato a `postman/` (fuera de git) |
 
 Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
