@@ -1,11 +1,18 @@
 import type { CompraResumen } from '@uadenet/api-types';
-import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SearchX, ShoppingBag } from 'lucide-react';
 import { useSearchParams } from 'react-router';
-import { estadoLegible, useCompras } from '@/compras/consultas';
+import {
+  ESTADOS_CONOCIDOS,
+  estadoLegible,
+  type FiltrosCompras,
+  useCompras,
+} from '@/compras/consultas';
 import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { Button } from '@/componentes/ui/button';
+import { Input } from '@/componentes/ui/input';
+import { Label } from '@/componentes/ui/label';
 import { formatearMonto } from '@/core/monto';
 
 const fecha = new Intl.DateTimeFormat('es-AR', {
@@ -19,11 +26,49 @@ function paginaDeUrl(valor: string | null) {
   return Number.isInteger(n) && n > 0 ? n : 1;
 }
 
-/** Historial de compras en la Tienda (4.10). Solo lectura; la página va en la URL. */
+const esFecha = (valor: string | null): valor is string =>
+  valor !== null && /^\d{4}-\d{2}-\d{2}$/.test(valor);
+
+function filtrosDeUrl(params: URLSearchParams): FiltrosCompras {
+  const desde = params.get('desde');
+  const hasta = params.get('hasta');
+  const estado = params.get('estado');
+  return {
+    ...(esFecha(desde) && { desde }),
+    ...(esFecha(hasta) && { hasta }),
+    ...(estado && { estado }),
+  };
+}
+
+/**
+ * Historial de compras en la Tienda (4.10). Solo lectura. Página y filtros van en la URL; al
+ * cambiar un filtro se vuelve a la primera página. El filtro por sede existe en el contrato
+ * pero no se muestra hasta que la Tienda lo confirme.
+ */
 export function Compras() {
   const [params, setParams] = useSearchParams();
   const page = paginaDeUrl(params.get('pagina'));
-  const { data, error, isPending, isPlaceholderData, refetch } = useCompras(page);
+  const filtros = filtrosDeUrl(params);
+  const hayFiltros = Object.keys(filtros).length > 0;
+  // YYYY-MM-DD se compara bien como texto
+  const rangoInvalido = !!filtros.desde && !!filtros.hasta && filtros.hasta < filtros.desde;
+  const { data, error, isPending, isPlaceholderData, refetch } = useCompras(
+    page,
+    filtros,
+    !rangoInvalido,
+  );
+
+  const filtrar = (cambio: Partial<Record<keyof FiltrosCompras, string>>) =>
+    setParams((actual) => {
+      const nuevos = new URLSearchParams(actual);
+      for (const [clave, valor] of Object.entries(cambio)) {
+        if (valor) nuevos.set(clave, valor);
+        else nuevos.delete(clave);
+      }
+      nuevos.delete('pagina');
+      return nuevos;
+    });
+  const limpiar = () => setParams(new URLSearchParams());
 
   const irA = (nueva: number) =>
     setParams((actual) => {
@@ -41,10 +86,25 @@ export function Compras() {
       <h2 id="titulo-compras" className="text-lg font-semibold">
         Mis compras
       </h2>
-      {isPending ? (
+      <Filtros filtros={filtros} filtrar={filtrar} />
+      {rangoInvalido ? (
+        <p role="alert" className="text-sm text-peligro-texto">
+          La fecha “hasta” no puede ser anterior a “desde”.
+        </p>
+      ) : isPending ? (
         <Cargando texto="Cargando tus compras…" />
       ) : error ? (
         <ErrorCarga error={error} fuente="La Tienda" reintentar={() => void refetch()} />
+      ) : data.items.length === 0 && hayFiltros ? (
+        <EstadoVacio
+          icono={SearchX}
+          titulo="No hay compras con estos filtros"
+          mensaje="Probá con otras fechas u otro estado."
+        >
+          <Button variant="fantasma" onClick={limpiar}>
+            Limpiar filtros
+          </Button>
+        </EstadoVacio>
       ) : data.items.length === 0 ? (
         <EstadoVacio
           icono={ShoppingBag}
@@ -72,6 +132,59 @@ export function Compras() {
         </>
       )}
     </section>
+  );
+}
+
+function Filtros({
+  filtros,
+  filtrar,
+}: {
+  filtros: FiltrosCompras;
+  filtrar: (cambio: Partial<Record<keyof FiltrosCompras, string>>) => void;
+}) {
+  return (
+    <fieldset className="grid gap-3 sm:grid-cols-3">
+      <legend className="sr-only">Filtros</legend>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="filtro-desde">Desde</Label>
+        <Input
+          id="filtro-desde"
+          type="date"
+          value={filtros.desde ?? ''}
+          max={filtros.hasta}
+          onChange={(e) => filtrar({ desde: e.target.value })}
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="filtro-hasta">Hasta</Label>
+        <Input
+          id="filtro-hasta"
+          type="date"
+          value={filtros.hasta ?? ''}
+          min={filtros.desde}
+          onChange={(e) => filtrar({ hasta: e.target.value })}
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="filtro-estado">Estado</Label>
+        <select
+          id="filtro-estado"
+          value={filtros.estado ?? ''}
+          onChange={(e) => filtrar({ estado: e.target.value })}
+          className="h-10 rounded-item border border-borde bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primario/40"
+        >
+          <option value="">Todos</option>
+          {/* Un estado de la URL que no conocemos se conserva como opción */}
+          {[...new Set([...ESTADOS_CONOCIDOS, ...(filtros.estado ? [filtros.estado] : [])])].map(
+            (e) => (
+              <option key={e} value={e}>
+                {estadoLegible(e)}
+              </option>
+            ),
+          )}
+        </select>
+      </div>
+    </fieldset>
   );
 }
 

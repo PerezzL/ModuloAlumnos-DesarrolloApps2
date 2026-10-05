@@ -20,11 +20,20 @@ export function bffCompras(compras = comprasBase(), queries: URLSearchParams[] =
     queries.push(query);
     const page = Number(query.get('page') ?? 1);
     const limit = Number(query.get('limit') ?? 10);
+    const estado = query.get('estado');
+    const desde = query.get('desde');
+    const hasta = query.get('hasta');
+    const filtradas = compras.filter(
+      (c) =>
+        (!estado || c.estado === estado) &&
+        (!desde || c.fecha.slice(0, 10) >= desde) &&
+        (!hasta || c.fecha.slice(0, 10) <= hasta),
+    );
     return HttpResponse.json({
-      items: compras.slice((page - 1) * limit, page * limit),
+      items: filtradas.slice((page - 1) * limit, page * limit),
       page,
       limit,
-      total: compras.length,
+      total: filtradas.length,
     });
   });
 }

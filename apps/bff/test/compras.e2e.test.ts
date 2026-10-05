@@ -46,15 +46,46 @@ describe('GET /compras', () => {
     expect((res.body as PaginaCompras).items).toHaveLength(1);
   });
 
-  it.each(['page=0', 'page=abc', 'limit=51', 'limit=0', 'page=1.5'])(
-    '%s es 400 SOLICITUD_INVALIDA',
-    async (query) => {
-      const res = await e2e.get(`/compras?${query}`);
-      expect(res.status).toBe(400);
-      expect(cuerpo(res)).toMatchObject({ code: 'SOLICITUD_INVALIDA' });
-      expect(contrato.validar('get', '/compras', 400, cuerpo(res)).errores).toEqual([]);
-    },
-  );
+  it('pasa los filtros a la Tienda', async () => {
+    const queries: URLSearchParams[] = [];
+    e2e.server.use(tienda(queries));
+    const res = await e2e.get(
+      '/compras?desde=2026-09-01&hasta=2026-09-30&estado=COMPLETADA&sede=Monserrat&page=2',
+    );
+    expect(res.status).toBe(200);
+    expect(Object.fromEntries(queries[0]!)).toEqual({
+      page: '2',
+      limit: '10',
+      desde: '2026-09-01',
+      hasta: '2026-09-30',
+      estado: 'COMPLETADA',
+      sede: 'Monserrat',
+    });
+  });
+
+  it('sin filtros, no manda parámetros de filtro', async () => {
+    const queries: URLSearchParams[] = [];
+    e2e.server.use(tienda(queries));
+    await e2e.get('/compras');
+    expect([...queries[0]!.keys()]).toEqual(['page', 'limit']);
+  });
+
+  it.each([
+    'page=0',
+    'page=abc',
+    'limit=51',
+    'limit=0',
+    'page=1.5',
+    'desde=2026-02-30',
+    'hasta=30/09/2026',
+    'desde=2026-09-30&hasta=2026-09-01',
+    'estado=',
+  ])('%s es 400 SOLICITUD_INVALIDA', async (query) => {
+    const res = await e2e.get(`/compras?${query}`);
+    expect(res.status).toBe(400);
+    expect(cuerpo(res)).toMatchObject({ code: 'SOLICITUD_INVALIDA' });
+    expect(contrato.validar('get', '/compras', 400, cuerpo(res)).errores).toEqual([]);
+  });
 
   it.each([
     [503, 'UPSTREAM_UNAVAILABLE'],
