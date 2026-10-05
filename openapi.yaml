@@ -103,6 +103,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OfertaInscripcion'
+        '400':
+          description: '`periodoId` vacío (`code` `SOLICITUD_INVALIDA`)'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '404':
           description: >
@@ -210,6 +215,11 @@ paths:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/CursadaResumen' }
+        '400':
+          description: '`periodoId` vacío (`code` `SOLICITUD_INVALIDA`)'
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '502': { $ref: '#/components/responses/ModuloInvalido' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }

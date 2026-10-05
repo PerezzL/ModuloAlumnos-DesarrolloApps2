@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Post, Query } from '@nestjs/common';
 import type { Inscripcion, OfertaInscripcion } from '@uadenet/api-types';
 import { type Alumno, AlumnoActual } from '../auth/alumno.decorator';
 import { InscripcionService } from './inscripcion.service';
-import { cursoIdDelCuerpo, idOpcional } from './parametros';
+import { cursoIdDelCuerpo, idOpcional } from '../comun/parametros';
 
 /** Inscripción a materias (RF2, pantalla 4.3) */
 @Controller()

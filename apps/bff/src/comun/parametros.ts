@@ -1,4 +1,4 @@
-import { ProblemaError } from '../comun/problema';
+import { ProblemaError } from './problema';
 
 const idInvalido = (nombre: string) =>
   new ProblemaError(400, 'SOLICITUD_INVALIDA', 'Solicitud inválida', {

@@ -4,6 +4,7 @@ import { LayoutAutenticado } from '@/layouts/LayoutAutenticado';
 import { Calendario } from '@/paginas/Calendario';
 import { CuentaCorriente } from '@/paginas/CuentaCorriente';
 import { EnConstruccion } from '@/paginas/EnConstruccion';
+import { Historial } from '@/paginas/Historial';
 import { Inscripcion } from '@/paginas/Inscripcion';
 import { Inicio } from '@/paginas/Inicio';
 import { Login } from '@/paginas/Login';
@@ -20,7 +21,7 @@ export const rutas: RouteObject[] = [
         element: <LayoutAutenticado />,
         children: [
           { index: true, element: <Inicio /> },
-          { path: 'mis-cursos', element: <EnConstruccion titulo="Mis Cursos" /> },
+          { path: 'mis-cursos', element: <Historial /> },
           { path: 'academico', element: <Inscripcion /> },
           { path: 'calendario', element: <Calendario /> },
           { path: 'cuenta-corriente', element: <CuentaCorriente /> },

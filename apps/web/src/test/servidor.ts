@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { calendarioOctubre } from './calendario';
+import { cursadasBase } from './cursadas';
 import { ofertaBase } from './inscripcion';
 
 export const GW = 'http://gateway.test';
@@ -237,6 +238,7 @@ export const handlersNotificaciones = [
 export const handlersBff = [
   http.get(`${BFF}/calendario`, () => HttpResponse.json(calendarioOctubre)),
   http.get(`${BFF}/inscripcion/oferta`, () => HttpResponse.json(ofertaBase())),
+  http.get(`${BFF}/cursadas`, () => HttpResponse.json({ items: cursadasBase() })),
 ];
 
 export const servidor = setupServer(

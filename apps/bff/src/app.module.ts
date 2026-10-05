@@ -5,6 +5,7 @@ import { CalendarioModule } from './calendario/calendario.module';
 import { ProblemaFilter } from './comun/problema.filter';
 import { LoggerModule } from './comun/logger.module';
 import { ConfigModule } from './config/config.module';
+import { CursadasModule } from './cursadas/cursadas.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { HealthController } from './health/health.controller';
 import { InscripcionModule } from './inscripcion/inscripcion.module';
@@ -18,6 +19,7 @@ import { PerfilModule } from './perfil/perfil.module';
     PerfilModule,
     CalendarioModule,
     InscripcionModule,
+    CursadasModule,
   ],
   controllers: [HealthController],
   providers: [
