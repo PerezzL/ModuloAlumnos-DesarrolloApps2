@@ -80,6 +80,18 @@ describe('Módulos externos desde fixtures', () => {
     expect((await get(`/api/v1/store/orders/${id}`, perez)).status).toBe(404);
   });
 
+  it('tienda: filtra por fecha (inclusive, en hora argentina), estado y sede', async () => {
+    const ids = async (query: string) =>
+      ((await get(`/api/v1/store/orders/me?${query}`)).body as { items: { orderId: string }[] })
+        .items.length;
+    expect(await ids('desde=2026-09-10&hasta=2026-09-28')).toBe(2);
+    expect(await ids('desde=2026-09-29')).toBe(0);
+    expect(await ids('estado=CANCELADA')).toBe(1);
+    expect(await ids('sede=Recoleta')).toBe(1);
+    const res = await get('/api/v1/store/orders/me?estado=COMPLETADA&limit=1');
+    expect(res.body).toMatchObject({ total: 2, limit: 1 });
+  });
+
   it('una ruta inexistente del módulo → 404 problem+json', async () => {
     const res = await get('/api/v1/dining/no-existe');
     expect(res.status).toBe(404);

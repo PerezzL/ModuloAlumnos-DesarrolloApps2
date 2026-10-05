@@ -1,0 +1,47 @@
+{
+  "YA_INSCRIPTO": {
+    "type": "about:blank",
+    "title": "Conflict",
+    "status": 409,
+    "code": "YA_INSCRIPTO",
+    "detail": "Ya está inscripto en la asignatura"
+  },
+  "SIN_CUPO": {
+    "type": "about:blank",
+    "title": "Conflict",
+    "status": 409,
+    "code": "SIN_CUPO",
+    "detail": "La comisión no tiene cupo"
+  },
+  "CORRELATIVIDAD_FALTANTE": {
+    "type": "about:blank",
+    "title": "Conflict",
+    "status": 409,
+    "code": "CORRELATIVIDAD_FALTANTE",
+    "detail": "Faltan correlativas",
+    "correlativasFaltantes": [
+      { "asignaturaId": "asig-desa1", "nombre": "Desarrollo de Aplicaciones I", "tipo": "REGULAR" }
+    ]
+  },
+  "SIN_REGULARIDAD": {
+    "type": "about:blank",
+    "title": "Conflict",
+    "status": 409,
+    "code": "SIN_REGULARIDAD",
+    "detail": "El alumno no es regular"
+  },
+  "FUERA_DE_FECHA": {
+    "type": "about:blank",
+    "title": "Conflict",
+    "status": 409,
+    "code": "FUERA_DE_FECHA",
+    "detail": "Fuera del período de inscripción"
+  },
+  "DESCONOCIDO": {
+    "type": "about:blank",
+    "title": "Conflict",
+    "status": 409,
+    "code": "DEUDA_ARANCELARIA",
+    "detail": "El alumno registra deuda"
+  }
+}

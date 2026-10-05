@@ -23,4 +23,9 @@ export class BackofficeAdapter {
       throw error;
     }
   }
+
+  /** Plan de estudios del alumno, o null si Backoffice no lo informa. */
+  async planId(alumno: Alumno): Promise<string | null> {
+    return (await this.perfil(alumno)).planId ?? null;
+  }
 }

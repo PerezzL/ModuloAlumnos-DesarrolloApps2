@@ -181,6 +181,20 @@ Fixture: `store/orders-me.provisional.json`. Salvo `orderId`, los nombres de los
 `total`), los estados y la forma de la paginación (`{ items, page, limit, total }`) son
 suposición nuestra. El detalle tiene la misma forma que un ítem del listado.
 
+Cómo lo usa el BFF (`GET /compras` y `GET /compras/{orderId}`, adaptador en
+`apps/bff/src/modulos/tienda/`):
+
+- Pasa la paginación y los filtros como `page`, `limit`, `desde`, `hasta` (inclusive,
+  `YYYY-MM-DD`), `estado` y `sede`. Los nombres de los filtros son suposición nuestra; `sede`
+  se manda solo si viene en el pedido y la pantalla no lo ofrece hasta que la Tienda lo confirme.
+- En el listado, `productos` es opcional: si viene, `cantidadProductos` es la suma de las
+  cantidades; si no, se omite.
+- Si la orden no trae `subtotal`, el BFF lo calcula sumando los subtotales de los productos
+  como texto decimal (sin float).
+- En el detalle, un 404 o un 403 (compra de otro alumno) son el mismo 404 `COMPRA_NO_ENCONTRADA`.
+- La pantalla ofrece filtrar por los estados de la fixture (`COMPLETADA`, `CANCELADA`); un
+  estado que la Tienda mande y no esté en esa lista se muestra igual en el listado.
+
 ## Módulo 6 — Eventos Académicos
 
 | Tema | Estado |
@@ -219,7 +233,10 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 | Qué campos trae (nombre, apellido, legajo, carrera) | Pendiente |
 | Si incluye `planId` | Pendiente |
 
-Sin `planId` no se puede filtrar la oferta de RF2.
+Sin `planId` no se puede filtrar la oferta de RF2. Decisión del bloque D: el dato debería
+venir, pero mientras no esté confirmado, si Backoffice no lo devuelve (o no responde) el BFF
+pide la oferta sin `planId` y la marca con `filtradaPorPlan: false`; la pantalla avisa que
+puede incluir materias de otros planes. Queda registrado con un warning en el log.
 
 Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/`):
 
@@ -269,10 +286,32 @@ tenemos sus respuestas, así que todas son provisionales. Suposiciones:
 - Correlatividades: `[{ asignaturaId, nombre, tipo }]`.
 - Inscripciones del alumno: `id`, `cursoId`, `comision`, `asignatura`, `periodo`,
   `notaFinal`, `estado`, `fecha`.
-- POST de inscripción: 201 `{ id, cursoId, alumnoId, estado, fecha }`. Los rechazos son
-  409 con los `code` de nuestro `openapi.yaml` (`YA_INSCRIPTO`, `SIN_CUPO`,
-  `CORRELATIVIDAD_FALTANTE` con `correlativasFaltantes`). El CORE falso no simula
+- POST de inscripción: 201 `{ id, cursoId, alumnoId, estado, fecha }`
+  (`academic/inscripcion-creada.provisional.json`). Los rechazos son 409 problem+json con los
+  `code` de nuestro `openapi.yaml` (`YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE` con
+  `correlativasFaltantes`, `SIN_REGULARIDAD`, `FUERA_DE_FECHA`), uno por motivo en
+  `academic/inscripcion-rechazos.provisional.json`. El CORE falso no simula
   `SIN_REGULARIDAD` ni `FUERA_DE_FECHA`.
+
+Cómo lo usa el BFF (oferta, inscripción e historial, adaptador en
+`apps/bff/src/modulos/academico/`):
+
+- Oferta: pide en paralelo el `planId` (Backoffice), los períodos y todas las inscripciones
+  del alumno; elige el período vigente (el de inscripción abierta, si no el próximo en abrir,
+  si no el último que cerró); pide los cursos de ese período y plan y las correlatividades de
+  cada asignatura. Las correlatividades se cachean en memoria una hora; si el Módulo 9 no
+  conoce una asignatura (404), se toma como sin correlativas. Si fallan, falla la oferta: no
+  se ofrece una materia sin validar sus correlativas.
+- Estado por comisión: `INSCRIPTO` si hay una inscripción del alumno en ese curso que no sea
+  `BAJA`; si no, `BLOQUEADA` si falta una correlativa; si no, `CON_CUPO` o `SIN_CUPO`.
+- Horarios con un día fuera de `LUNES`–`SABADO` o una hora que no sea `HH:MM` invalidan la
+  respuesta (502). Si no vienen horarios o sede, la comisión sale con `horarios: []` y
+  `sede: null`.
+- Rechazos: la traducción de los códigos del Módulo 9 a los nuestros está en un solo lugar
+  (`academico.mapper.ts`). Hoy es identidad; un código que no reconoce, o un cuerpo que no se
+  entiende, es `INSCRIPCION_RECHAZADA`.
+- Historial: ordena por la fecha de inscripción, de la más reciente a la más antigua (los ids
+  de período son opacos y no se ordenan); `enCurso` es `INSCRIPTO` o `CURSANDO`.
 
 ## Lo más urgente
 
