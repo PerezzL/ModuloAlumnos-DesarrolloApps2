@@ -1,7 +1,7 @@
 # Plan de construcción
 
-Estado al 4 de octubre de 2026: **bloques A a D mergeados; bloque E terminado** (rama
-`bloque/modulo-2`, PR sin mergear). Este archivo se actualiza a medida que se cierran decisiones
+Estado al 5 de octubre de 2026: **bloques A a E mergeados** (PRs #1 a #6). Sigue la
+preparación de la segunda entrega (rama `bloque/entrega-2`; guion en `demo-guide.md`). Este archivo se actualiza a medida que se cierran decisiones
 y pasos. El porqué de cada decisión está en `arquitectura.md`.
 
 ## Repositorio
@@ -83,6 +83,7 @@ confirme el campo, se revisa si el caso sigue haciendo falta.
 | C · Features firmes | Header/Home (`GET /me`), Calendario, Saldo, Centro de notificaciones |
 | D · Features provisionales | Inscripción, Historial, Compras |
 | E · Módulo 2 | Detalle de cursada y detalle de nota, contra la suposición del contrato |
+| Entrega 2 | Guion de demo (E01) y ajustes que surjan al ensayarla |
 
 Criterio: primero lo que tiene contrato firme y lo que deja armado un patrón reutilizable.
 Calendario es el primer feature del BFF porque obliga a resolver una sola vez las llamadas en
