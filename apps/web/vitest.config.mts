@@ -15,6 +15,8 @@ export default defineConfig({
     env: {
       VITE_GATEWAY_URL: 'http://gateway.test',
       VITE_NOTIFICATIONS_URL: 'http://gateway.test/notifications',
+      VITE_BIBLIOTECA_URL: 'https://biblioteca.test',
+      VITE_EVENTOS_URL: 'https://eventos.test',
     },
   },
 });

@@ -64,6 +64,18 @@ Lo que no figura en `CORE_INTEGRACION.md` y suponemos en el CORE falso (fixtures
 | Respuesta de la carga aprobada | La misma forma que un movimiento, con `concept: TOP_UP` |
 | `actionUrl` de `EXAM_RESULT_PUBLISHED` | `/teacher/courses/{courseId}/exams/{examId}` (pendiente con el Módulo 2) |
 | `actionUrl` de `LIBRARY_PENALTY_APPLIED` | `/library/{loanId}/penalty` (pendiente con el Módulo 3) |
+| `actionUrl` de `EVENT_REMINDER` | `/events/{eventoId}`, relativa (ejemplo de la sección 8.1) |
+
+Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/destino.ts`, el
+único lugar que conoce su formato):
+
+- `EXAM_RESULT_PUBLISHED` → pantalla propia `/cursadas/{cursoId}/notas/{notaId}`. Suponemos que
+  el `examId` del `actionUrl` es el `notaId` de nuestro contrato (pendiente con el Módulo 2).
+- `LIBRARY_PENALTY_APPLIED` y `EVENT_REMINDER` → portal de Biblioteca o de Eventos, con la URL
+  base de `VITE_BIBLIOTECA_URL` y `VITE_EVENTOS_URL`. La de Biblioteca es un valor de ejemplo
+  hasta que el Módulo 3 confirme la suya.
+- Se acepta un `actionUrl` relativo o absoluto hacia el origen del portal configurado; otro
+  origen, otro formato o un tipo desconocido no navega (solo marca la notificación como leída).
 
 ## Módulo 2 — Docente
 
@@ -145,6 +157,11 @@ numéricos; en nuestro contrato son strings opacos, el adaptador los convierte.
 Fixture: `dining/reservations-me.provisional.json`. Para `slot` y `campus` suponemos
 `{ id, date, campus }` y `{ id, name }`.
 
+Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/comedor/`): como Comedor
+devuelve todas las reservas, el BFF las recorta al rango pedido. Cada reserva es un ítem de
+todo el día; el lugar sale de `campus.name` (o de `slot.campus.name`). Una respuesta vacía
+está en `dining/reservations-me-vacio.provisional.json`.
+
 ## Módulo 5 — Tienda
 
 | Tema | Estado |
@@ -186,6 +203,11 @@ Listado:
   `creadoPor`.
 - Si `hasta` no resulta inclusivo, pedir hasta el primer día del mes siguiente.
 
+Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/eventos/`): pide desde las
+00:00 del primer día hasta las 00:00 del día siguiente al último (hora de Argentina), así el
+último día entra sea `hasta` inclusivo o no, y después recorta por solapamiento. Se queda con
+los eventos con `yaInscripto` y convierte las fechas a `-03:00`.
+
 Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `titulo`,
 `fechaInicio`, `locacion` (texto ya armado, por ejemplo "Aula Magna — Monserrat") y `url`.
 
@@ -198,6 +220,13 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 | Si incluye `planId` | Pendiente |
 
 Sin `planId` no se puede filtrar la oferta de RF2.
+
+Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/`):
+
+- El id y el mail salen del token de CORE; de Backoffice solo se toman nombre, apellido,
+  legajo, carrera y `planId`. Todos opcionales: si no vienen, el perfil sale sin ellos.
+- Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale solo con id y mail.
+  Suposición nuestra, sin confirmar con el Módulo 8.
 
 Fixture: `backoffice/users.provisional.json` con `id`, `email`, `nombre`, `apellido`,
 `legajo`, `carrera`, `planId` y `status`, todos supuestos.
@@ -232,7 +261,9 @@ Fixtures (`academic/*.provisional.json`): aunque varios endpoints están impleme
 tenemos sus respuestas, así que todas son provisionales. Suposiciones:
 
 - Períodos: `id`, `nombre`, `fechaInicio`, `fechaFin`, `inscripcionDesde`, `inscripcionHasta`.
-- Turnos de examen: los campos informados más un `id`; fechas sin hora.
+- Turnos de examen: los campos informados más un `id`; fechas sin hora. No suponemos que
+  acepte filtros de fecha: el BFF pide todos y se queda con los que se solapan con el rango
+  (adaptador en `apps/bff/src/modulos/academico/`).
 - Cursos: `id`, `comision`, `periodoId`, `sede`, `cupoMaximo`, `inscriptosActivos`,
   `asignatura` anidada y `horarios` (pedido, puede faltar).
 - Correlatividades: `[{ asignaturaId, nombre, tipo }]`.

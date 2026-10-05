@@ -9,4 +9,9 @@ export const config = {
   gatewayUrl: gateway.replace(/\/$/, ''),
   bffUrl: `${gateway.replace(/\/$/, '')}/api/v1/student`,
   notificacionesUrl: import.meta.env.VITE_NOTIFICATIONS_URL,
+  /** Portales a los que se sale desde una notificación. Sin valor, no se navega. */
+  portales: {
+    biblioteca: import.meta.env.VITE_BIBLIOTECA_URL || undefined,
+    eventos: import.meta.env.VITE_EVENTOS_URL || undefined,
+  },
 };

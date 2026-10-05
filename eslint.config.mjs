@@ -48,5 +48,23 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Los tipos crudos de un módulo externo (*.origen.ts) no salen de la carpeta de su adaptador
+    files: ['apps/bff/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/*.origen', '!./*.origen'],
+              message:
+                'La forma de la respuesta de un módulo externo solo la conoce su adaptador (AGENTS.md).',
+            },
+          ],
+        },
+      ],
+    },
+  },
   prettier,
 );

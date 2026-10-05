@@ -310,6 +310,8 @@ paths:
           description: >
             Rango inválido, con `code` `RANGO_INVALIDO`: `hasta` anterior a `desde`, o rango
             mayor a 62 días (alcanza para una vista mensual con las semanas de relleno).
+            Un parámetro que falta o con formato inválido (fecha que no es `YYYY-MM-DD`,
+            categoría desconocida) responde `SOLICITUD_INVALIDA`.
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
@@ -320,7 +322,21 @@ paths:
                 code: RANGO_INVALIDO
                 detail: El rango no puede superar los 62 días.
         '401': { $ref: '#/components/responses/NoAutenticado' }
-        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '503':
+          description: >
+            Fallaron todas las fuentes consultadas (las tres, o las pedidas en `categorias`).
+            Siempre `UPSTREAM_UNAVAILABLE`, aunque alguna haya fallado por timeout (504) o
+            respuesta inválida (502): `detail` dice qué pasó con cada una. Si falla solo una
+            parte, la respuesta es 200 y la falla se informa en `fuentes`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
+              example:
+                type: about:blank
+                title: Calendario no disponible
+                status: 503
+                code: UPSTREAM_UNAVAILABLE
+                detail: 'COMEDOR: UPSTREAM_UNAVAILABLE; EVENTO: UPSTREAM_TIMEOUT; EXAMEN: UPSTREAM_INVALID'
 
   /compras:
     get:

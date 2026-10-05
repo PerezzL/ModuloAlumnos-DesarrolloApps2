@@ -7,7 +7,9 @@ const esquema = z.object({
   BFF_PORT: z.coerce.number().int().positive().default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   GATEWAY_URL: url,
-  GATEWAY_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  // Menor que los 10 s del Gateway: así el BFF responde el 504 con el módulo que tardó antes de
+  // que el Gateway corte el pedido del front (docs/arquitectura.md)
+  GATEWAY_TIMEOUT_MS: z.coerce.number().int().positive().default(8_000),
   JWKS_URL: url,
   JWT_ISSUER: z.string().min(1),
   JWT_AUDIENCE: z.string().min(1),

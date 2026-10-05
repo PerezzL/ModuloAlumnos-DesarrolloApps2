@@ -7,4 +7,6 @@ import { crearFetchConSesion } from './fetchConSesion';
 export const api = createClient<paths>({
   baseUrl: config.bffUrl,
   fetch: crearFetchConSesion(),
+  // Las listas en la query van separadas por coma (`style: form`, `explode: false` en el contrato)
+  querySerializer: { array: { style: 'form', explode: false } },
 });

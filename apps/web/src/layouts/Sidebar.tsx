@@ -38,7 +38,7 @@ function iniciales(nombre?: string, apellido?: string, email?: string) {
 
 function DatosAlumno() {
   const { estado } = useSesion();
-  const { data: perfil } = usePerfil();
+  const { data: perfil, isError } = usePerfil();
   const email = estado.tipo === 'autenticado' ? estado.usuario.email : undefined;
   // Los datos de Backoffice son provisionales: si no llegan, se muestra el mail
   const nombre = [perfil?.nombre, perfil?.apellido].filter(Boolean).join(' ') || email;
@@ -51,6 +51,11 @@ function DatosAlumno() {
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-white">{nombre}</p>
         {perfil?.carrera && <p className="truncate text-[11px] text-white/50">{perfil.carrera}</p>}
+        {isError && (
+          <p role="status" className="truncate text-[11px] text-white/50">
+            No pudimos cargar tus datos
+          </p>
+        )}
         {perfil?.legajo && (
           <p className="pt-1 text-[10px]">
             <span className="font-medium uppercase tracking-[0.25px] text-white/30">Legajo</span>{' '}
@@ -62,7 +67,19 @@ function DatosAlumno() {
   );
 }
 
-export function Sidebar() {
+/**
+ * Navegación principal. En pantallas grandes está fija; en chicas es un panel que se abre
+ * desde la barra superior (cerrado queda `invisible`: fuera del orden de tabulación).
+ */
+export function Sidebar({
+  id,
+  abierto = false,
+  cerrar = () => undefined,
+}: {
+  id?: string;
+  abierto?: boolean;
+  cerrar?: () => void;
+}) {
   const { sesion } = useSesion();
   const navigate = useNavigate();
 
@@ -72,7 +89,15 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col bg-uade-navy">
+    <aside
+      id={id}
+      aria-label="Menú"
+      data-abierto={abierto}
+      className={cn(
+        'fixed inset-y-0 left-0 z-40 flex h-screen w-60 shrink-0 flex-col bg-uade-navy transition-transform lg:visible lg:static lg:translate-x-0',
+        abierto ? 'visible translate-x-0' : 'invisible -translate-x-full',
+      )}
+    >
       <div className="border-b border-white/10 p-5">
         <div className="flex w-[135px] items-center justify-center rounded-campo bg-white/95 px-3 py-2 shadow-[0_2px_12px_rgb(0_0_0/0.25)]">
           <img src={logo} alt="UADE" className="h-7 w-20 object-contain" />
@@ -93,9 +118,10 @@ export function Sidebar() {
             key={ruta}
             to={ruta}
             end={ruta === '/'}
+            onClick={cerrar}
             className={({ isActive }) =>
               cn(
-                'flex h-10 items-center gap-3 rounded-item px-3 text-sm font-medium transition-colors',
+                'flex h-10 items-center gap-3 rounded-item px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
                 isActive
                   ? 'bg-white/12 text-white'
                   : 'text-white/60 hover:bg-white/6 hover:text-white',
@@ -112,7 +138,7 @@ export function Sidebar() {
         <button
           type="button"
           onClick={cerrarSesion}
-          className="flex h-10 w-full items-center gap-3 rounded-item px-3 text-sm font-medium text-white/50 transition-colors hover:bg-white/6 hover:text-white"
+          className="flex h-10 w-full items-center gap-3 rounded-item px-3 text-sm font-medium text-white/50 transition-colors hover:bg-white/6 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
         >
           <LogOut className="size-4" aria-hidden />
           Cerrar Sesión

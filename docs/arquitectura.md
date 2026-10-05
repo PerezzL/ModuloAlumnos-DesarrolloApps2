@@ -101,6 +101,9 @@ Comportamiento:
 
 - No transforma la respuesta: path, query, body y status pasan tal cual.
 - Timeout de 10 s por defecto.
+  El BFF corta antes sus llamadas a los módulos (`GATEWAY_TIMEOUT_MS`, 8 s por defecto): si
+  esperara los mismos 10 s, el Gateway cortaría primero el pedido del front al BFF y el 504
+  llegaría sin decir qué módulo tardó.
 - No reintenta POST, PATCH ni DELETE.
 - Módulo caído: 503 `UPSTREAM_UNAVAILABLE`. Respuesta inválida: 502. Timeout: 504.
 - Inyecta en cada request autenticado: `X-User-Id`, `X-User-Roles`, `X-User-Permissions`,
