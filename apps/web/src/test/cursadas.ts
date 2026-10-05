@@ -40,4 +40,18 @@ export const cursadasBase = (): CursadaResumen[] => [
 export const cursadaDetalleBase = (): CursadaDetalle => ({
   ...cursadasBase()[0]!,
   comision: 'A - Noche',
+  asistencia: {
+    clasesDictadas: 3,
+    presentes: 2,
+    ausentes: 1,
+    porcentaje: 66.67,
+    limiteInasistencias: 4,
+    inasistenciasRestantes: 3,
+    clases: [
+      { fecha: '2026-08-12', presente: true },
+      { fecha: '2026-08-19', presente: false },
+      { fecha: '2026-08-26', presente: true },
+    ],
+  },
+  fuentesConError: [],
 });

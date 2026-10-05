@@ -5,6 +5,7 @@ import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { useCursada } from '@/cursadas/consultas';
+import { SeccionAsistencia } from '@/cursadas/SeccionAsistencia';
 import { SITUACION } from '@/cursadas/situacion';
 
 const Volver = () => (
@@ -70,6 +71,7 @@ export function CursadaDetalle() {
           {SITUACION[data.estado]}
         </p>
       </section>
+      {data.asistencia && <SeccionAsistencia asistencia={data.asistencia} />}
     </div>
   );
 }

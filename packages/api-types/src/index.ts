@@ -15,6 +15,7 @@ export type OfertaInscripcion = Schemas['OfertaInscripcion'];
 export type Inscripcion = Schemas['Inscripcion'];
 export type CursadaResumen = Schemas['CursadaResumen'];
 export type CursadaDetalle = Schemas['CursadaDetalle'];
+export type Asistencia = Schemas['Asistencia'];
 export type NotaDetalle = Schemas['NotaDetalle'];
 export type PaginaCompras = Schemas['PaginaCompras'];
 export type CompraDetalle = Schemas['CompraDetalle'];

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cursadaDetalleBase } from '@/test/cursadas';
@@ -47,5 +47,50 @@ describe('detalle de cursada: encabezado (H16)', () => {
     renderApp('/alumnos/cursos/curso-desa1');
     expect(await screen.findByRole('alert')).toHaveTextContent(/Gestión Académica/);
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+});
+
+describe('detalle de cursada: asistencia (H17)', () => {
+  beforeEach(() => reiniciarCore(true));
+
+  it('clases dictadas, presentes, ausentes y porcentaje, con las clases por fecha', async () => {
+    renderApp('/alumnos/cursos/curso-desa1');
+    const seccion = await screen.findByRole('region', { name: 'Asistencia' });
+    const dato = (titulo: string) => within(seccion).getByText(titulo).nextSibling;
+    expect(dato('Clases dictadas')).toHaveTextContent('3');
+    expect(dato('Presentes')).toHaveTextContent('2');
+    expect(dato('Ausentes')).toHaveTextContent('1');
+    expect(dato('Porcentaje')).toHaveTextContent('66,7 %');
+    const clases = within(within(seccion).getByRole('list', { name: 'Clases' })).getAllByRole(
+      'listitem',
+    );
+    expect(clases.map((c) => c.textContent)).toEqual([
+      '12 de agosto de 2026Presente',
+      '19 de agosto de 2026Ausente',
+      '26 de agosto de 2026Presente',
+    ]);
+  });
+
+  it('sin clases dictadas, estado vacío y no un 0 %', async () => {
+    servidor.use(
+      http.get(`${BFF}/cursadas/:cursoId`, () =>
+        HttpResponse.json({
+          ...cursadaDetalleBase(),
+          asistencia: {
+            clasesDictadas: 0,
+            presentes: 0,
+            ausentes: 0,
+            porcentaje: 0,
+            limiteInasistencias: null,
+            inasistenciasRestantes: null,
+            clases: [],
+          },
+        }),
+      ),
+    );
+    renderApp('/alumnos/cursos/curso-desa1');
+    const seccion = await screen.findByRole('region', { name: 'Asistencia' });
+    expect(within(seccion).getByText('Todavía no hubo clases')).toBeInTheDocument();
+    expect(within(seccion).queryByText(/0 %/)).not.toBeInTheDocument();
   });
 });

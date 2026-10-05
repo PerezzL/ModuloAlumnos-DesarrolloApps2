@@ -1,0 +1,81 @@
+import { Contrato } from '@uadenet/contrato';
+import type { CursadaDetalle } from '@uadenet/api-types';
+import { http, HttpResponse } from 'msw';
+import { describe, expect, it } from 'vitest';
+import { RUTAS_ACADEMICO } from './academico-gateway';
+import { ALUMNO, cuerpo, prepararE2E } from './app-e2e';
+import { docenteConFixtures, RUTAS_DOCENTE } from './docente-gateway';
+import { fixture } from './fixtures';
+
+const contrato = new Contrato();
+const inscripciones = fixture<object[]>('academic/inscripciones-alumno.provisional.json');
+const moduloNueve = () =>
+  http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => HttpResponse.json(inscripciones));
+
+const validar = (status: number, body: unknown) =>
+  expect(contrato.validar('get', '/cursadas/{cursoId}', status, body).errores).toEqual([]);
+
+describe('GET /cursadas/{cursoId}', () => {
+  const e2e = prepararE2E();
+
+  it('encabezado con materia, comisión, período y situación del Módulo 9', async () => {
+    e2e.server.use(moduloNueve(), ...docenteConFixtures());
+    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    expect(res.status).toBe(200);
+    validar(200, res.body);
+    expect(res.body).toMatchObject({
+      cursoId: 'curso-bd1-2026-2-a',
+      asignatura: { nombre: 'Bases de Datos I' },
+      periodo: { nombre: '2° cuatrimestre 2026' },
+      comision: 'A - Noche',
+      estado: 'CURSANDO',
+      enCurso: true,
+    });
+  });
+
+  it('asistencia del Módulo 2 para el alumno del token', async () => {
+    let pedido: Record<string, unknown> = {};
+    e2e.server.use(
+      moduloNueve(),
+      http.get(RUTAS_DOCENTE.ASISTENCIA, ({ params }) => {
+        pedido = { ...params };
+        return HttpResponse.json(
+          fixture<Record<string, object>>('teacher/asistencia.provisional.json')[
+            'curso-bd1-2026-2-a'
+          ],
+        );
+      }),
+    );
+    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    validar(200, res.body);
+    expect((res.body as CursadaDetalle).asistencia).toMatchObject({
+      clasesDictadas: 8,
+      presentes: 5,
+      ausentes: 3,
+      porcentaje: 62.5,
+    });
+    expect(pedido).toEqual({ cursoId: 'curso-bd1-2026-2-a', alumnoId: ALUMNO });
+  });
+
+  it('un curso en el que el alumno no está inscripto es 404', async () => {
+    e2e.server.use(moduloNueve(), ...docenteConFixtures());
+    const res = await e2e.get('/cursadas/curso-de-otro');
+    expect(res.status).toBe(404);
+    expect(cuerpo(res)).toMatchObject({ code: 'CURSADA_NO_ENCONTRADA' });
+    validar(404, cuerpo(res));
+  });
+
+  it('si falla el Módulo 9, falla todo el detalle', async () => {
+    e2e.server.use(
+      http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => new HttpResponse(null, { status: 503 })),
+      ...docenteConFixtures(),
+    );
+    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    expect(res.status).toBe(503);
+    expect(cuerpo(res)).toMatchObject({
+      code: 'UPSTREAM_UNAVAILABLE',
+      modulo: 'GESTION_ACADEMICA',
+    });
+    validar(503, cuerpo(res));
+  });
+});
