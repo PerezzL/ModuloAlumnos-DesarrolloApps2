@@ -39,7 +39,9 @@ describe('historial académico', () => {
 
     await userEvent.click(enlace);
     expect(router.state.location.pathname).toBe('/alumnos/cursos/curso-desa1');
-    expect(await screen.findByText(/Detalle de cursada/)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Desarrollo de Aplicaciones I' }),
+    ).toBeInTheDocument();
   });
 
   it('filtra el historial por período y lo guarda en la URL', async () => {

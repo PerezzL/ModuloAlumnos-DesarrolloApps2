@@ -4,12 +4,13 @@ import { enviarProblema } from '../problema.js';
 import { ALUMNO_DEMO } from './comun.js';
 
 interface Nota {
-  notaId: string;
+  examId: string;
 }
 
 /**
  * Módulo 2. No hay contrato: rutas y respuestas son nuestra suposición (los schemas
- * `Asistencia` y `NotaResumen`/`NotaDetalle` de openapi.yaml).
+ * `Asistencia` y `NotaResumen`/`NotaDetalle` de openapi.yaml). Cada nota se identifica por el
+ * `examId` que llega en el `actionUrl` de la notificación de examen.
  */
 export function moduloDocente() {
   const router = Router();
@@ -39,7 +40,7 @@ export function moduloDocente() {
 
   router.get(`${base}/notas/:notaId`, (req, res) => {
     const nota = delCurso<Nota[]>('teacher/notas.provisional.json', req)?.find(
-      (n) => n.notaId === req.params.notaId,
+      (n) => n.examId === req.params.notaId,
     );
     if (!nota) return enviarProblema(res, 404, 'NOT_FOUND', 'Nota inexistente');
     res.json(nota);

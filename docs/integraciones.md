@@ -70,7 +70,9 @@ Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/d
 único lugar que conoce su formato):
 
 - `EXAM_RESULT_PUBLISHED` → pantalla propia `/cursadas/{cursoId}/notas/{notaId}`. Suponemos que
-  el `examId` del `actionUrl` es el `notaId` de nuestro contrato (pendiente con el Módulo 2).
+  el `examId` del `actionUrl` es el `notaId` de nuestro contrato (pendiente con el Módulo 2): el
+  adaptador de Docente usa el `examId` de cada nota como `notaId`, así que el listado de notas y
+  la notificación llevan a la misma pantalla.
 - `LIBRARY_PENALTY_APPLIED` y `EVENT_REMINDER` → portal de Biblioteca o de Eventos, con la URL
   base de `VITE_BIBLIOTECA_URL` y `VITE_EVENTOS_URL`. La de Biblioteca es un valor de ejemplo
   hasta que el Módulo 3 confirme la suya.
@@ -97,7 +99,29 @@ Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/d
 - **Los schemas `Asistencia`, `NotaResumen` y `NotaDetalle` del `openapi.yaml` son una
   suposición nuestra.** No hay contrato del Módulo 2.
 - Las fixtures (`teacher/*.provisional.json`) y las rutas del CORE falso siguen esa
-  suposición; cada nota trae además `examId`, `docente` y `observaciones`.
+  suposición. Rutas supuestas, detrás de `PREFIJO_DOCENTE`:
+  `/cursos/{cursoId}/alumnos/{alumnoId}/asistencia`, `.../notas` y `.../notas/{examId}`.
+- Cada nota se identifica por `examId` (el único id que trae el `actionUrl`) y trae además
+  `docente` y `observaciones`, que solo van en el detalle. Mientras no tiene nota, `nota` y
+  `resultado` vienen en null.
+
+Cómo lo usa el BFF (adaptador en `apps/bff/src/modulos/docente/`, detalle en
+`apps/bff/src/cursadas/`):
+
+- Detalle de cursada: pide en paralelo las inscripciones del alumno (Módulo 9), la asistencia
+  y las notas (Módulo 2). Si el curso no está entre las inscripciones, es 404
+  `CURSADA_NO_ENCONTRADA`, responda lo que responda el Módulo 2. Si falla el Módulo 9, falla
+  todo el detalle.
+- Si falla el Módulo 2 (caído, timeout, respuesta inválida o un 404 para un curso que el
+  Módulo 9 sí tiene), la cursada sale igual con lo que no cargó en null y `DOCENTE` en
+  `fuentesConError`. Asistencia y notas son llamadas distintas: si falla una sola, solo esa
+  queda en null.
+- Límite de inasistencias y faltas restantes pasan tal como llegan. Si no vienen, quedan en
+  null y el portal no las calcula a partir de las ausencias; la pantalla no muestra el
+  indicador. La alerta de "quedan pocas" (1 o 0) es una constante del front.
+- Detalle de nota: pide en paralelo las inscripciones (materia, comisión y confirmación de que
+  el curso es del alumno) y la nota. Curso ajeno o nota inexistente: 404
+  `NOTA_NO_ENCONTRADA`. Si falla el Módulo 2, falla la pantalla.
 
 ## Módulo 3 — Biblioteca
 

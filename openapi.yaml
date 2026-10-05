@@ -248,7 +248,7 @@ paths:
                 $ref: '#/components/schemas/CursadaDetalle'
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '404':
-          description: El alumno no tiene una inscripción en ese curso
+          description: El alumno no tiene una inscripción en ese curso (`code` `CURSADA_NO_ENCONTRADA`)
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
@@ -264,15 +264,19 @@ paths:
       description: >
         Página de destino de la notificación `EXAM_RESULT_PUBLISHED` y del listado de notas
         del detalle de cursada. Los identificadores salen del `actionUrl` de la notificación.
+        Materia y comisión salen de la inscripción del alumno en el Módulo 9, que además
+        confirma que el curso es suyo.
         Pantalla: Detalle — Nota de un examen (4.7).
-      x-fuentes: [Módulo 2]
+      x-fuentes: [Módulo 9, Módulo 2]
       x-estado-fuente: pendiente (formato del actionUrl e identificadores)
       parameters:
         - $ref: '#/components/parameters/CursoId'
         - name: notaId
           in: path
           required: true
-          description: Identificador de la nota o examen según el Módulo 2
+          description: >
+            Identificador de la nota según el Módulo 2. Suponemos que es el `examId` del
+            `actionUrl` de la notificación (pendiente con el Módulo 2).
           schema: { type: string }
       responses:
         '200':
@@ -283,7 +287,9 @@ paths:
                 $ref: '#/components/schemas/NotaDetalle'
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '404':
-          description: La nota no existe o no pertenece al alumno
+          description: >
+            La nota no existe, o el curso o la nota no pertenecen al alumno
+            (`code` `NOTA_NO_ENCONTRADA`)
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
