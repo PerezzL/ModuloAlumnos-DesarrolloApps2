@@ -7,6 +7,7 @@ import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { useCursada } from '@/cursadas/consultas';
 import { IndicadorFaltas } from '@/cursadas/IndicadorFaltas';
 import { SeccionAsistencia } from '@/cursadas/SeccionAsistencia';
+import { SeccionNotas } from '@/cursadas/SeccionNotas';
 import { SITUACION } from '@/cursadas/situacion';
 
 const Volver = () => (
@@ -77,6 +78,7 @@ export function CursadaDetalle() {
           <IndicadorFaltas estado={data.estado} asistencia={data.asistencia} />
         </SeccionAsistencia>
       )}
+      {data.notas && <SeccionNotas cursoId={data.cursoId} notas={data.notas} />}
     </div>
   );
 }

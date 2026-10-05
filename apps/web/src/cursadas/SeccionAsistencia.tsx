@@ -3,6 +3,7 @@ import { CalendarClock, CircleCheck, CircleX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { fechaLarga, formatearPorcentaje } from './formato';
+import { Seccion } from './Seccion';
 
 /**
  * Asistencia en la cursada (4.5). Los datos son del Módulo 2 y su forma es una suposición
@@ -17,7 +18,7 @@ export function SeccionAsistencia({
   children?: ReactNode;
 }) {
   return (
-    <Seccion>
+    <Seccion id="titulo-asistencia" titulo="Asistencia">
       {asistencia.clasesDictadas === 0 ? (
         <EstadoVacio
           icono={CalendarClock}
@@ -56,21 +57,6 @@ export function SeccionAsistencia({
         </>
       )}
     </Seccion>
-  );
-}
-
-/** Contenedor de la sección, también para el aviso cuando no cargó */
-export function Seccion({ children }: { children: ReactNode }) {
-  return (
-    <section
-      aria-labelledby="titulo-asistencia"
-      className="flex flex-col gap-4 rounded-campo border border-borde-suave bg-white p-6"
-    >
-      <h3 id="titulo-asistencia" className="text-base font-semibold">
-        Asistencia
-      </h3>
-      {children}
-    </section>
   );
 }
 

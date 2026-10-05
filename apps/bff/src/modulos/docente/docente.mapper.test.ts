@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { aAsistencia } from './docente.mapper';
+import { aAsistencia, aNotas } from './docente.mapper';
 
 const asistencias = fixture<Record<string, Record<string, unknown>>>(
   'teacher/asistencia.provisional.json',
 );
 const bd1 = asistencias['curso-bd1-2026-2-a']!;
+const notas = fixture<Record<string, Record<string, unknown>[]>>('teacher/notas.provisional.json');
+const notasDesa1 = notas['curso-desa1-2026-2-a']!;
 
 const error502 = (fn: () => unknown) => {
   try {
@@ -80,6 +82,56 @@ describe('mapper de Docente: asistencia', () => {
     expect(error502(() => aAsistencia({ ...bd1, ...cambio }))).toMatchObject({
       status: 502,
       code: 'UPSTREAM_INVALID',
+      modulo: 'DOCENTE',
+    });
+  });
+});
+
+describe('mapper de Docente: notas', () => {
+  it('instancia, título, fecha, nota y resultado; el examId es el notaId', () => {
+    expect(aNotas(notas['curso-bd1-2026-2-a'])).toEqual([
+      {
+        notaId: 'exam-bd1-2026-2-p1',
+        instancia: 'PARCIAL',
+        titulo: '1er parcial',
+        fecha: '2026-09-21',
+        nota: 7,
+        resultado: 'APROBADO',
+      },
+    ]);
+  });
+
+  it('un examen sin nota todavía queda con nota null y sin resultado', () => {
+    const [, recuperatorio] = aNotas(notasDesa1);
+    expect(recuperatorio).toEqual({
+      notaId: 'exam-desa1-2026-2-r1',
+      instancia: 'RECUPERATORIO',
+      titulo: 'Recuperatorio 1er parcial',
+      fecha: '2026-10-28',
+      nota: null,
+    });
+  });
+
+  it('docente y observaciones no van en el listado', () => {
+    expect(aNotas(notasDesa1)[0]).not.toHaveProperty('observaciones');
+    expect(aNotas(notasDesa1)[0]).not.toHaveProperty('docente');
+  });
+
+  it('un examId numérico pasa a string sin interpretarlo', () => {
+    expect(aNotas([{ ...notasDesa1[0], examId: 42 }])[0]!.notaId).toBe('42');
+  });
+
+  it('sin notas, lista vacía', () => {
+    expect(aNotas(notas['curso-ayed-2025-2-a'])).toEqual([]);
+  });
+
+  it.each([
+    ['una instancia desconocida', { instancia: 'COLOQUIO' }],
+    ['una nota como string', { nota: '7' }],
+    ['sin examId', { examId: undefined }],
+  ])('%s es 502 de DOCENTE', (_caso, cambio) => {
+    expect(error502(() => aNotas([{ ...notasDesa1[0], ...cambio }]))).toMatchObject({
+      status: 502,
       modulo: 'DOCENTE',
     });
   });

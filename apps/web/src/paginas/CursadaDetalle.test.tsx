@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { Asistencia, EstadoCursada } from '@uadenet/api-types';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -150,5 +151,43 @@ describe('detalle de cursada: faltas restantes (H18)', () => {
     const faltas = await indicador();
     expect(faltas).toHaveTextContent('Quedaste libre en esta materia');
     expect(faltas).not.toHaveTextContent(/te quedan|disponibles/i);
+  });
+});
+
+describe('detalle de cursada: notas (H19)', () => {
+  beforeEach(() => reiniciarCore(true));
+
+  it('examen, instancia, fecha, nota y resultado; sin nota todavía, pendiente', async () => {
+    renderApp('/alumnos/cursos/curso-desa1');
+    const tabla = await screen.findByRole('table', { name: 'Notas de la cursada' });
+    const filas = within(tabla)
+      .getAllByRole('row')
+      .slice(1)
+      .map((f) =>
+        within(f)
+          .getAllByRole('cell')
+          .map((c) => c.textContent),
+      );
+    expect(filas).toEqual([
+      ['1er parcial', 'Parcial', '23 de septiembre de 2026', '4', 'Desaprobado'],
+      ['Recuperatorio 1er parcial', 'Recuperatorio', '28 de octubre de 2026', '—', 'Pendiente'],
+    ]);
+  });
+
+  it('cada nota enlaza a su detalle', async () => {
+    const { router } = renderApp('/alumnos/cursos/curso-desa1');
+    await userEvent.click(await screen.findByRole('link', { name: '1er parcial' }));
+    expect(router.state.location.pathname).toBe('/cursadas/curso-desa1/notas/exam-desa1-p1');
+  });
+
+  it('sin notas cargadas, estado vacío', async () => {
+    servidor.use(
+      http.get(`${BFF}/cursadas/:cursoId`, () =>
+        HttpResponse.json({ ...cursadaDetalleBase(), notas: [] }),
+      ),
+    );
+    renderApp('/alumnos/cursos/curso-desa1');
+    const seccion = await screen.findByRole('region', { name: 'Notas' });
+    expect(within(seccion).getByText('Todavía no tenés notas')).toBeInTheDocument();
   });
 });

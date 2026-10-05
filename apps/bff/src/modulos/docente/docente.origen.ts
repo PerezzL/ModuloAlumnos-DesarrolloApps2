@@ -21,3 +21,24 @@ export const AsistenciaAlumno = z
     clases: z.array(z.object({ fecha, presente: z.boolean() }).passthrough()).optional(),
   })
   .passthrough();
+
+/**
+ * Una nota del alumno, en `GET .../notas` y `GET .../notas/{examId}` (Módulo 2, SUPUESTO;
+ * fixture `teacher/notas.provisional.json`). El único identificador que trae el `actionUrl` de
+ * la notificación de examen es `examId`, así que es el que usamos como id de la nota.
+ */
+export const Nota = z
+  .object({
+    examId: z.union([z.string(), z.number()]),
+    instancia: z.enum(['PARCIAL', 'RECUPERATORIO', 'FINAL']),
+    titulo: z.string().optional(),
+    fecha: fecha.optional(),
+    nota: z.number().nullable().optional(),
+    // Null mientras el examen no tiene nota
+    resultado: z.enum(['APROBADO', 'DESAPROBADO', 'AUSENTE']).nullable().optional(),
+    docente: z.string().nullable().optional(),
+    observaciones: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+export const Notas = z.array(Nota);

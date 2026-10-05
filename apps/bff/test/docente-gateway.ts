@@ -7,6 +7,7 @@ const M2 = `${GW}/api/v1/teacher/cursos/:cursoId/alumnos/:alumnoId`;
 /** Rutas del Módulo 2 detrás del Gateway simulado (supuestas: no hay contrato) */
 export const RUTAS_DOCENTE = {
   ASISTENCIA: `${M2}/asistencia`,
+  NOTAS: `${M2}/notas`,
 } as const;
 
 /** Fixture del Módulo 2 por curso; un curso sin datos es 404, como en el CORE falso */
@@ -23,6 +24,9 @@ export function docenteConFixtures() {
   return [
     http.get(RUTAS_DOCENTE.ASISTENCIA, ({ params }) =>
       porCurso('teacher/asistencia.provisional.json', params.cursoId),
+    ),
+    http.get(RUTAS_DOCENTE.NOTAS, ({ params }) =>
+      porCurso('teacher/notas.provisional.json', params.cursoId),
     ),
   ];
 }

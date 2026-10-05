@@ -45,6 +45,7 @@ describe('GET /cursadas/{cursoId}', () => {
           ],
         );
       }),
+      ...docenteConFixtures(),
     );
     const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
     validar(200, res.body);
@@ -73,6 +74,23 @@ describe('GET /cursadas/{cursoId}', () => {
       });
     },
   );
+
+  it('notas del Módulo 2, cada una con su notaId', async () => {
+    e2e.server.use(moduloNueve(), ...docenteConFixtures());
+    const res = await e2e.get('/cursadas/curso-desa1-2026-2-a');
+    validar(200, res.body);
+    const { notas } = res.body as CursadaDetalle;
+    expect(notas?.map((n) => [n.notaId, n.nota, n.resultado])).toEqual([
+      ['exam-desa1-2026-2-p1', 4, 'DESAPROBADO'],
+      ['exam-desa1-2026-2-r1', null, undefined],
+    ]);
+  });
+
+  it('sin notas cargadas, lista vacía (no null)', async () => {
+    e2e.server.use(moduloNueve(), ...docenteConFixtures());
+    const res = await e2e.get('/cursadas/curso-ayed-2025-2-a');
+    expect((res.body as CursadaDetalle).notas).toEqual([]);
+  });
 
   it('un curso en el que el alumno no está inscripto es 404', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());

@@ -53,5 +53,22 @@ export const cursadaDetalleBase = (): CursadaDetalle => ({
       { fecha: '2026-08-26', presente: true },
     ],
   },
+  notas: [
+    {
+      notaId: 'exam-desa1-p1',
+      instancia: 'PARCIAL',
+      titulo: '1er parcial',
+      fecha: '2026-09-23',
+      nota: 4,
+      resultado: 'DESAPROBADO',
+    },
+    {
+      notaId: 'exam-desa1-r1',
+      instancia: 'RECUPERATORIO',
+      titulo: 'Recuperatorio 1er parcial',
+      fecha: '2026-10-28',
+      nota: null,
+    },
+  ],
   fuentesConError: [],
 });

@@ -1,6 +1,7 @@
-import type { Asistencia } from '@uadenet/api-types';
-import { parsearOrigen } from '../comun';
-import { AsistenciaAlumno } from './docente.origen';
+import type { Asistencia, NotaResumen } from '@uadenet/api-types';
+import type { z } from 'zod';
+import { idOpaco, parsearOrigen } from '../comun';
+import { AsistenciaAlumno, Notas, type Nota } from './docente.origen';
 
 /**
  * Asistencia del alumno en el curso. Límite y faltas restantes pasan tal como llegan: si el
@@ -19,4 +20,19 @@ export function aAsistencia(datos: unknown): Asistencia {
       .map((c) => ({ fecha: c.fecha, presente: c.presente }))
       .sort((x, y) => x.fecha.localeCompare(y.fecha)),
   };
+}
+
+/** El `examId` del Módulo 2 es nuestro `notaId`. Sin nota todavía, sin `resultado`. */
+const aNotaResumen = (n: z.infer<typeof Nota>): NotaResumen => ({
+  notaId: idOpaco(n.examId),
+  instancia: n.instancia,
+  ...(n.titulo !== undefined && { titulo: n.titulo }),
+  ...(n.fecha !== undefined && { fecha: n.fecha }),
+  nota: n.nota ?? null,
+  ...(n.resultado != null && { resultado: n.resultado }),
+});
+
+/** Notas del alumno en el curso, en el orden en que las da el Módulo 2 */
+export function aNotas(datos: unknown): NotaResumen[] {
+  return parsearOrigen('DOCENTE', Notas, datos).map(aNotaResumen);
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import type { Asistencia } from '@uadenet/api-types';
+import type { Asistencia, NotaResumen } from '@uadenet/api-types';
 import { GatewayClient } from '../../gateway/gateway.client';
-import { aAsistencia } from './docente.mapper';
+import { aAsistencia, aNotas } from './docente.mapper';
 
 /**
  * Módulo 2 · Docente. Único lugar que conoce la forma de sus respuestas. No tiene contrato:
@@ -16,6 +16,11 @@ export class DocenteAdapter {
     return aAsistencia(
       await this.gateway.get('DOCENTE', `${rutaAlumno(cursoId, alumnoId)}/asistencia`),
     );
+  }
+
+  /** Notas parciales y finales del alumno en el curso */
+  async notas(alumnoId: string, cursoId: string): Promise<NotaResumen[]> {
+    return aNotas(await this.gateway.get('DOCENTE', `${rutaAlumno(cursoId, alumnoId)}/notas`));
   }
 }
 

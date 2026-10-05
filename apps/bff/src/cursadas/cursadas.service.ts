@@ -6,8 +6,8 @@ import { DocenteAdapter } from '../modulos/docente/docente.adapter';
 import { aCursadaDetalle, inscripcionDelCurso } from './detalle';
 
 /**
- * Detalle de cursada (RF3, pantalla 4.5): la situación sale del Módulo 9 y la asistencia del
- * Módulo 2. Las llamadas van en paralelo; el portal no guarda nada.
+ * Detalle de cursada (RF3, pantalla 4.5): la situación sale del Módulo 9; la asistencia y
+ * las notas, del Módulo 2. Las llamadas van en paralelo; el portal no guarda nada.
  */
 @Injectable()
 export class CursadasService {
@@ -17,14 +17,15 @@ export class CursadasService {
   ) {}
 
   async detalle(alumnoId: string, cursoId: string): Promise<CursadaDetalle> {
-    const [inscripciones, asistencia] = await Promise.allSettled([
+    const [inscripciones, asistencia, notas] = await Promise.allSettled([
       this.academico.inscripciones(alumnoId),
       this.docente.asistencia(alumnoId, cursoId),
+      this.docente.notas(alumnoId, cursoId),
     ]);
     // Primero el Módulo 9: si no cursa ahí es 404, responda lo que responda el Módulo 2
     const inscripcion = inscripcionDelCurso(valor(inscripciones), cursoId);
     if (!inscripcion) throw cursadaNoEncontrada();
-    return { ...aCursadaDetalle(inscripcion), asistencia: valor(asistencia) };
+    return { ...aCursadaDetalle(inscripcion), asistencia: valor(asistencia), notas: valor(notas) };
   }
 }
 
