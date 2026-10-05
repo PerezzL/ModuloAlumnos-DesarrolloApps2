@@ -1,7 +1,7 @@
 # Plan de construcción
 
-Estado al 4 de octubre de 2026: **bloques A y B mergeados; bloques C y D terminados** (PR
-`bloque/features-firmes` y `bloque/features-provisionales`, sin mergear; el de D apunta a C). Este archivo se actualiza a medida que se cierran decisiones
+Estado al 4 de octubre de 2026: **bloques A a D mergeados; bloque E terminado** (rama
+`bloque/modulo-2`, PR sin mergear). Este archivo se actualiza a medida que se cierran decisiones
 y pasos. El porqué de cada decisión está en `arquitectura.md`.
 
 ## Repositorio
@@ -26,6 +26,7 @@ y pasos. El porqué de cada decisión está en `arquitectura.md`.
 | — | Despliegue | Proveedor sin elegir; todo configurable por variables de entorno |
 | — | Equipo | Sin reparto: el trabajo lo hace una persona con el agente. Sin revisores obligatorios ni protección de `main` |
 | 11 | Oferta sin `planId` | Si Backoffice no devuelve el `planId` (o no responde), la oferta se pide sin filtrar por plan y se informa con `filtradaPorPlan: false` (ver abajo) |
+| 12 | Módulo 2 sin contrato | El `examId` del `actionUrl` es el `notaId`; un 404 del Módulo 2 para un curso que el Módulo 9 tiene cuenta como falla de `DOCENTE`; asistencia y notas fallan por separado; alerta de faltas con 1 o 0 restantes (ver `integraciones.md`) |
 
 Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 

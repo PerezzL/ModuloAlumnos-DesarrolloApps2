@@ -224,11 +224,17 @@ Todo lo del Módulo 2 es suposición nuestra (no hay contrato).
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
-| Asistencia con límite | Bases de Datos I | 7 de 8 clases (87,5 %), le quedan 3 faltas |
-| Asistencia sin límite | Desarrollo de Aplicaciones I | 8 de 8 clases; sin límite informado |
-| Notas | Desarrollo de Aplicaciones I | 1er parcial 4 (desaprobado) y recuperatorio sin nota todavía |
-| Detalle de nota | Abrir el 1er parcial de Bases de Datos I | Nota 7, docente, sin observaciones |
-| Módulo 2 caído | Falla `teacher: caido` | El detalle sale igual, con asistencia y notas en null y `DOCENTE` en `fuentesConError` |
+| Asistencia con alerta | Bases de Datos I | 5 de 8 clases (62,5 %); alerta: le queda 1 falta (límite 4) |
+| Asistencia sin límite | Desarrollo de Aplicaciones I | 8 de 8 clases; sin indicador de faltas |
+| Alumno libre | Algoritmos y Estructuras de Datos, entrando por URL: `/alumnos/cursos/curso-ayed-2025-2-a` (desde Mis cursos solo enlazan las cursadas en curso) | "Quedaste libre" en lugar del indicador; sin notas (estado vacío) |
+| Notas | Desarrollo de Aplicaciones I | 1er parcial 4 (desaprobado) y recuperatorio pendiente |
+| Detalle de nota | Abrir el 1er parcial de Desarrollo de Aplicaciones I | Nota 4, docente y observaciones; enlace para volver a la cursada |
+| Nota desde la notificación | Tocar "Se publicó tu nota de Bases de Datos I" en la campana | Detalle del 1er parcial: nota 7, sin observaciones |
+| Curso o nota ajenos | `/alumnos/cursos/no-existe` o `/cursadas/curso-bd1-2026-2-a/notas/no-existe` | "No encontramos esa cursada" / "esa nota" |
+| Módulo 2 caído | Falla `teacher: caido` | El detalle sale con el encabezado y un aviso con reintento en asistencia y en notas (`DOCENTE` en `fuentesConError`); el detalle de nota muestra error |
+
+Sin clases dictadas (estado vacío en lugar de 0 %) no tiene caso en las fixtures: se prueba
+con los tests del front.
 
 ## 5. Fechas de los datos
 
