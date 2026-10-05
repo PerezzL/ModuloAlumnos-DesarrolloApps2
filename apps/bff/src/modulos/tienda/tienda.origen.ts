@@ -24,6 +24,7 @@ export const Orden = z
     sede: z.string().nullable().optional(),
     estado: z.string(),
     productos: z.array(Producto).optional(),
+    subtotal: monto.optional(),
     total: monto,
   })
   .passthrough();
@@ -37,3 +38,6 @@ export const PaginaOrdenes = z
     total: z.number().int(),
   })
   .passthrough();
+
+/** Respuesta de `GET /api/store/orders/:orderId` (Módulo 5, propuesto): la orden con productos. */
+export const OrdenDetalle = Orden.extend({ productos: z.array(Producto) });

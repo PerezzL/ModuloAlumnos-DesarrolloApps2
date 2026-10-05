@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import type { PaginaCompras } from '@uadenet/api-types';
+import type { CompraDetalle, PaginaCompras } from '@uadenet/api-types';
 import { api } from '@/api/cliente';
 import { datosDe } from '@/api/errores';
 
@@ -25,6 +25,15 @@ export function useCompras(page: number, filtros: FiltrosCompras, habilitada = t
       datosDe(api.GET('/compras', { params: { query: { page, limit: POR_PAGINA, ...filtros } } })),
     placeholderData: keepPreviousData,
     enabled: habilitada,
+  });
+}
+
+/** Detalle de una compra propia. Un 404 (inexistente o ajena) no se reintenta. */
+export function useCompra(orderId: string) {
+  return useQuery({
+    queryKey: ['compras', 'detalle', orderId],
+    queryFn: (): Promise<CompraDetalle> =>
+      datosDe(api.GET('/compras/{orderId}', { params: { path: { orderId } } })),
   });
 }
 

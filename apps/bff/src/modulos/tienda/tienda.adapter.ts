@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { PaginaCompras } from '@uadenet/api-types';
-import { GatewayClient } from '../../gateway/gateway.client';
-import { aPaginaCompras } from './tienda.mapper';
+import type { CompraDetalle, PaginaCompras } from '@uadenet/api-types';
+import { ProblemaError } from '../../comun/problema';
+import { GatewayClient, RespuestaModuloError } from '../../gateway/gateway.client';
+import { aCompraDetalle, aPaginaCompras } from './tienda.mapper';
 
 export interface FiltrosCompras {
   desde?: string;
@@ -29,5 +30,24 @@ export class TiendaAdapter {
     return aPaginaCompras(
       await this.gateway.get('TIENDA', '/orders/me', { query: { page, limit, ...filtros } }),
     );
+  }
+
+  /** Una compra propia. Inexistente o de otro alumno, para el portal es lo mismo: 404. */
+  async compra(orderId: string): Promise<CompraDetalle> {
+    try {
+      return aCompraDetalle(
+        await this.gateway.get('TIENDA', `/orders/${encodeURIComponent(orderId)}`),
+      );
+    } catch (error) {
+      if (
+        error instanceof RespuestaModuloError &&
+        (error.estadoOrigen === 404 || error.estadoOrigen === 403)
+      ) {
+        throw new ProblemaError(404, 'COMPRA_NO_ENCONTRADA', 'La compra no existe', {
+          modulo: 'TIENDA',
+        });
+      }
+      throw error;
+    }
   }
 }

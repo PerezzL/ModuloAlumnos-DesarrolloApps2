@@ -440,7 +440,8 @@ paths:
                 $ref: '#/components/schemas/CompraDetalle'
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '404':
-          description: La compra no existe o no pertenece al alumno
+          description: >
+            La compra no existe o no pertenece al alumno (`code` `COMPRA_NO_ENCONTRADA`)
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
@@ -912,7 +913,12 @@ components:
                       - $ref: '#/components/schemas/Monto'
                     description: Precio histórico, congelado al momento de la compra
                   subtotal: { $ref: '#/components/schemas/Monto' }
-            subtotal: { $ref: '#/components/schemas/Monto' }
+            subtotal:
+              allOf:
+                - $ref: '#/components/schemas/Monto'
+              description: >
+                Subtotal de la compra. Si la Tienda no lo informa, es la suma de los subtotales
+                de los productos.
 
     Monto:
       type: string

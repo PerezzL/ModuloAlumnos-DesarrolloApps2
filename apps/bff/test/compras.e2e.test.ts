@@ -99,3 +99,41 @@ describe('GET /compras', () => {
     expect(contrato.validar('get', '/compras', status, cuerpo(res)).errores).toEqual([]);
   });
 });
+
+describe('GET /compras/{orderId}', () => {
+  const e2e = prepararE2E();
+  const ORDEN = `${GW}/api/v1/store/orders/:orderId`;
+
+  it('devuelve el detalle según el contrato', async () => {
+    let pedido: unknown;
+    e2e.server.use(
+      http.get(ORDEN, ({ params }) => {
+        pedido = params.orderId;
+        return HttpResponse.json(ordenes[0]);
+      }),
+    );
+    const res = await e2e.get('/compras/93b28f67-e111-4a0d-b857-fdd015c4d3f1');
+    expect(res.status).toBe(200);
+    expect(contrato.validar('get', '/compras/{orderId}', 200, res.body).errores).toEqual([]);
+    expect(res.body).toMatchObject({ subtotal: '3500.00', total: '3500.00' });
+    expect(pedido).toBe('93b28f67-e111-4a0d-b857-fdd015c4d3f1');
+  });
+
+  it.each([404, 403])('si la Tienda responde %i, es 404 COMPRA_NO_ENCONTRADA', async (status) => {
+    e2e.server.use(http.get(ORDEN, () => HttpResponse.json({}, { status })));
+    const res = await e2e.get('/compras/de-otro');
+    expect(res.status).toBe(404);
+    expect(cuerpo(res)).toMatchObject({ code: 'COMPRA_NO_ENCONTRADA' });
+    expect(contrato.validar('get', '/compras/{orderId}', 404, cuerpo(res)).errores).toEqual([]);
+  });
+
+  it.each([
+    [503, 'UPSTREAM_UNAVAILABLE'],
+    [504, 'UPSTREAM_TIMEOUT'],
+  ])('Gateway %i → %s de TIENDA', async (status, code) => {
+    e2e.server.use(http.get(ORDEN, () => new HttpResponse(null, { status })));
+    const res = await e2e.get('/compras/x');
+    expect(res.status).toBe(status);
+    expect(cuerpo(res)).toMatchObject({ code, modulo: 'TIENDA' });
+  });
+});

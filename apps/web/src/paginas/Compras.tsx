@@ -1,6 +1,6 @@
 import type { CompraResumen } from '@uadenet/api-types';
 import { ChevronLeft, ChevronRight, SearchX, ShoppingBag } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import {
   ESTADOS_CONOCIDOS,
   estadoLegible,
@@ -192,7 +192,12 @@ function FilaCompra({ compra }: { compra: CompraResumen }) {
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3">
       <div className="min-w-0 flex-1">
-        <p className="font-medium">{fecha.format(new Date(compra.fecha))}</p>
+        <Link
+          to={`/compras/${encodeURIComponent(compra.orderId)}`}
+          className="font-medium text-primario-oscuro hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primario/40"
+        >
+          Compra del {fecha.format(new Date(compra.fecha))}
+        </Link>
         <p className="text-sm text-texto-suave">
           {[
             compra.sede && `Sede ${compra.sede}`,
