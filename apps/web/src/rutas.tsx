@@ -31,6 +31,12 @@ export const rutas: RouteObject[] = [
             path: 'cursadas/:cursoId/notas/:notaId',
             element: <EnConstruccion titulo="Detalle de la nota" />,
           },
+          // Detalle de cursada (4.5): se arma en el bloque E. Ya existe para el enlace desde
+          // Mis cursos y para el destino `/alumnos/cursos/{cursoId}` del contrato
+          {
+            path: 'alumnos/cursos/:cursoId',
+            element: <EnConstruccion titulo="Detalle de cursada" />,
+          },
           { path: 'perfil', element: <Perfil /> },
           { path: '*', element: <NoEncontrada /> },
         ],

@@ -10,6 +10,8 @@ import { NAVEGACION, Sidebar } from './Sidebar';
 
 function tituloDe(ruta: string) {
   if (ruta === '/') return 'Inicio';
+  // El detalle de cursada tiene la ruta del contrato, fuera de /mis-cursos
+  if (ruta.startsWith('/alumnos/cursos/')) return 'Mis Cursos';
   return NAVEGACION.find((i) => i.ruta !== '/' && ruta.startsWith(i.ruta))?.titulo ?? '';
 }
 
