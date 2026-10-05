@@ -57,6 +57,23 @@ describe('GET /cursadas/{cursoId}', () => {
     expect(pedido).toEqual({ cursoId: 'curso-bd1-2026-2-a', alumnoId: ALUMNO });
   });
 
+  it.each([
+    ['con límite', 'curso-bd1-2026-2-a', 'CURSANDO', 4, 1],
+    ['sin límite', 'curso-desa1-2026-2-a', 'CURSANDO', null, null],
+    ['alumno libre', 'curso-ayed-2025-2-a', 'LIBRE', 4, 0],
+  ])(
+    'faltas restantes %s: pasan tal como las informa el Módulo 2',
+    async (_c, cursoId, estado, limite, restantes) => {
+      e2e.server.use(moduloNueve(), ...docenteConFixtures());
+      const res = await e2e.get(`/cursadas/${cursoId}`);
+      validar(200, res.body);
+      expect(res.body).toMatchObject({
+        estado,
+        asistencia: { limiteInasistencias: limite, inasistenciasRestantes: restantes },
+      });
+    },
+  );
+
   it('un curso en el que el alumno no está inscripto es 404', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
     const res = await e2e.get('/cursadas/curso-de-otro');

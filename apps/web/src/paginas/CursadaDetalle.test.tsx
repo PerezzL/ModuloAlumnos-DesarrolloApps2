@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import type { Asistencia, EstadoCursada } from '@uadenet/api-types';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cursadaDetalleBase } from '@/test/cursadas';
@@ -92,5 +93,62 @@ describe('detalle de cursada: asistencia (H17)', () => {
     const seccion = await screen.findByRole('region', { name: 'Asistencia' });
     expect(within(seccion).getByText('Todavía no hubo clases')).toBeInTheDocument();
     expect(within(seccion).queryByText(/0 %/)).not.toBeInTheDocument();
+  });
+});
+
+describe('detalle de cursada: faltas restantes (H18)', () => {
+  beforeEach(() => reiniciarCore(true));
+
+  const conAsistencia = (cambios: Partial<Asistencia>, estado: EstadoCursada = 'CURSANDO') => {
+    const base = cursadaDetalleBase();
+    servidor.use(
+      http.get(`${BFF}/cursadas/:cursoId`, () =>
+        HttpResponse.json({ ...base, estado, asistencia: { ...base.asistencia!, ...cambios } }),
+      ),
+    );
+  };
+  const indicador = async () => {
+    await screen.findByRole('region', { name: 'Asistencia' });
+    return screen.queryByLabelText('Faltas');
+  };
+
+  it('con límite informado, cuántas faltas quedan, sin alerta', async () => {
+    conAsistencia({ limiteInasistencias: 4, inasistenciasRestantes: 3 });
+    renderApp('/alumnos/cursos/curso-desa1');
+    const faltas = await indicador();
+    expect(faltas).toHaveRole('status');
+    expect(faltas).toHaveTextContent('Te quedan 3 faltas antes de quedar libre');
+    expect(faltas).toHaveTextContent('El límite es de 4 faltas.');
+  });
+
+  it.each([
+    [1, 'Te queda 1 falta antes de quedar libre'],
+    [0, 'No te quedan faltas disponibles'],
+  ])('con %i restantes, alerta', async (restantes, texto) => {
+    conAsistencia({ limiteInasistencias: 4, inasistenciasRestantes: restantes });
+    renderApp('/alumnos/cursos/curso-desa1');
+    const faltas = await indicador();
+    expect(faltas).toHaveRole('alert');
+    expect(faltas).toHaveTextContent(texto);
+  });
+
+  it('sin límite informado, no se muestra el indicador', async () => {
+    conAsistencia({ limiteInasistencias: null, inasistenciasRestantes: null });
+    renderApp('/alumnos/cursos/curso-desa1');
+    expect(await indicador()).toBeNull();
+  });
+
+  it('con límite pero sin faltas restantes, tampoco: no se calcula', async () => {
+    conAsistencia({ limiteInasistencias: 4, inasistenciasRestantes: null });
+    renderApp('/alumnos/cursos/curso-desa1');
+    expect(await indicador()).toBeNull();
+  });
+
+  it('si ya quedó libre, se muestra ese estado en lugar del indicador', async () => {
+    conAsistencia({ limiteInasistencias: 4, inasistenciasRestantes: 0 }, 'LIBRE');
+    renderApp('/alumnos/cursos/curso-ayed');
+    const faltas = await indicador();
+    expect(faltas).toHaveTextContent('Quedaste libre en esta materia');
+    expect(faltas).not.toHaveTextContent(/te quedan|disponibles/i);
   });
 });

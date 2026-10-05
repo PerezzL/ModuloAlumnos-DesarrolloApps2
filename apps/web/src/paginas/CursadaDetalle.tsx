@@ -5,6 +5,7 @@ import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { useCursada } from '@/cursadas/consultas';
+import { IndicadorFaltas } from '@/cursadas/IndicadorFaltas';
 import { SeccionAsistencia } from '@/cursadas/SeccionAsistencia';
 import { SITUACION } from '@/cursadas/situacion';
 
@@ -71,7 +72,11 @@ export function CursadaDetalle() {
           {SITUACION[data.estado]}
         </p>
       </section>
-      {data.asistencia && <SeccionAsistencia asistencia={data.asistencia} />}
+      {data.asistencia && (
+        <SeccionAsistencia asistencia={data.asistencia}>
+          <IndicadorFaltas estado={data.estado} asistencia={data.asistencia} />
+        </SeccionAsistencia>
+      )}
     </div>
   );
 }
