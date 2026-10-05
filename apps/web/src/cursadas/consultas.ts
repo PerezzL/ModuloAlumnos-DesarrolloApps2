@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { CursadaDetalle, CursadaResumen } from '@uadenet/api-types';
+import type { CursadaDetalle, CursadaResumen, NotaDetalle } from '@uadenet/api-types';
 import { api } from '@/api/cliente';
 import { datosDe } from '@/api/errores';
 
@@ -19,5 +19,16 @@ export function useCursada(cursoId: string) {
     queryKey: [...CLAVE_CURSADAS, 'detalle', cursoId],
     queryFn: (): Promise<CursadaDetalle> =>
       datosDe(api.GET('/cursadas/{cursoId}', { params: { path: { cursoId } } })),
+  });
+}
+
+/** Detalle de una nota propia (4.7). Un 404 (inexistente o ajena) no se reintenta. */
+export function useNota(cursoId: string, notaId: string) {
+  return useQuery({
+    queryKey: [...CLAVE_CURSADAS, 'detalle', cursoId, 'notas', notaId],
+    queryFn: (): Promise<NotaDetalle> =>
+      datosDe(
+        api.GET('/cursadas/{cursoId}/notas/{notaId}', { params: { path: { cursoId, notaId } } }),
+      ),
   });
 }

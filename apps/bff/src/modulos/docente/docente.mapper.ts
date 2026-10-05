@@ -1,7 +1,8 @@
 import type { Asistencia, NotaResumen } from '@uadenet/api-types';
 import type { z } from 'zod';
 import { idOpaco, parsearOrigen } from '../comun';
-import { AsistenciaAlumno, Notas, type Nota } from './docente.origen';
+import type { NotaConDocente } from './docente.modelo';
+import { AsistenciaAlumno, Nota, Notas } from './docente.origen';
 
 /**
  * Asistencia del alumno en el curso. Límite y faltas restantes pasan tal como llegan: si el
@@ -35,4 +36,14 @@ const aNotaResumen = (n: z.infer<typeof Nota>): NotaResumen => ({
 /** Notas del alumno en el curso, en el orden en que las da el Módulo 2 */
 export function aNotas(datos: unknown): NotaResumen[] {
   return parsearOrigen('DOCENTE', Notas, datos).map(aNotaResumen);
+}
+
+/** Una nota con lo que solo va en el detalle: docente y observaciones, si el Módulo 2 las da */
+export function aNotaConDocente(datos: unknown): NotaConDocente {
+  const n = parsearOrigen('DOCENTE', Nota, datos);
+  return {
+    ...aNotaResumen(n),
+    docente: n.docente ?? null,
+    observaciones: n.observaciones ?? null,
+  };
 }

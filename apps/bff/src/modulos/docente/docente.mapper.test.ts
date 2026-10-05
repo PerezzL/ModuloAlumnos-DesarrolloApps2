@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { aAsistencia, aNotas } from './docente.mapper';
+import { aAsistencia, aNotaConDocente, aNotas } from './docente.mapper';
 
 const asistencias = fixture<Record<string, Record<string, unknown>>>(
   'teacher/asistencia.provisional.json',
@@ -134,5 +134,25 @@ describe('mapper de Docente: notas', () => {
       status: 502,
       modulo: 'DOCENTE',
     });
+  });
+});
+
+describe('mapper de Docente: detalle de una nota', () => {
+  it('la nota con docente y observaciones', () => {
+    expect(aNotaConDocente(notasDesa1[0])).toEqual({
+      notaId: 'exam-desa1-2026-2-p1',
+      instancia: 'PARCIAL',
+      titulo: '1er parcial',
+      fecha: '2026-09-23',
+      nota: 4,
+      resultado: 'DESAPROBADO',
+      docente: 'Lic. Martín Sosa',
+      observaciones: 'Revisar normalización.',
+    });
+  });
+
+  it('sin docente ni observaciones, quedan null', () => {
+    const { docente: _d, observaciones: _o, ...sinDatos } = notasDesa1[0]!;
+    expect(aNotaConDocente(sinDatos)).toMatchObject({ docente: null, observaciones: null });
   });
 });

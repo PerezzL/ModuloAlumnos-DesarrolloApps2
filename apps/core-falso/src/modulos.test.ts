@@ -92,6 +92,14 @@ describe('Módulos externos desde fixtures', () => {
     expect(res.body).toMatchObject({ total: 2, limit: 1 });
   });
 
+  it('docente: la nota se pide por el examId del actionUrl de la notificación', async () => {
+    const base = `/api/v1/teacher/cursos/curso-bd1-2026-2-a/alumnos/${DEMO}/notas`;
+    const res = await get(`${base}/exam-bd1-2026-2-p1`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ examId: 'exam-bd1-2026-2-p1', nota: 7 });
+    expect((await get(`${base}/no-existe`)).status).toBe(404);
+  });
+
   it('una ruta inexistente del módulo → 404 problem+json', async () => {
     const res = await get('/api/v1/dining/no-existe');
     expect(res.status).toBe(404);

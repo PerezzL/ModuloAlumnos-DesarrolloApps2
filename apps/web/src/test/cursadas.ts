@@ -1,4 +1,4 @@
-import type { CursadaDetalle, CursadaResumen } from '@uadenet/api-types';
+import type { CursadaDetalle, CursadaResumen, NotaDetalle } from '@uadenet/api-types';
 
 /** Historial como lo devuelve el BFF con las fixtures del CORE falso */
 export const cursadasBase = (): CursadaResumen[] => [
@@ -71,4 +71,14 @@ export const cursadaDetalleBase = (): CursadaDetalle => ({
     },
   ],
   fuentesConError: [],
+});
+
+/** Detalle del 1er parcial de Desarrollo de Aplicaciones I como lo devuelve el BFF */
+export const notaDetalleBase = (): NotaDetalle => ({
+  ...cursadaDetalleBase().notas![0]!,
+  cursoId: 'curso-desa1',
+  asignatura: { id: 'asig-desa1', nombre: 'Desarrollo de Aplicaciones I' },
+  comision: 'A - Noche',
+  docente: 'Lic. Martín Sosa',
+  observaciones: 'Revisar normalización.',
 });

@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { CursadaDetalle, ModuloExterno } from '@uadenet/api-types';
+import type { CursadaDetalle, ModuloExterno, NotaDetalle } from '@uadenet/api-types';
 import { ProblemaError } from '../comun/problema';
 import { AcademicoAdapter } from '../modulos/academico/academico.adapter';
-import { DocenteAdapter } from '../modulos/docente/docente.adapter';
+import { DocenteAdapter, notaNoEncontrada } from '../modulos/docente/docente.adapter';
 import { aCursadaDetalle, inscripcionDelCurso } from './detalle';
 
 /**
- * Detalle de cursada (RF3, pantalla 4.5): la situación sale del Módulo 9; la asistencia y
- * las notas, del Módulo 2. Las llamadas van en paralelo; el portal no guarda nada.
+ * Detalle de cursada (RF3, pantalla 4.5) y de una nota (RF4, pantalla 4.7). La situación,
+ * la materia y la comisión salen del Módulo 9; la asistencia y las notas, del Módulo 2. Las llamadas van en paralelo; el portal no guarda nada.
  */
 @Injectable()
 export class CursadasService {
@@ -49,6 +49,28 @@ export class CursadasService {
       asistencia: delDocente(asistencia, 'asistencia'),
       notas: delDocente(notas, 'notas'),
       fuentesConError: [...fuentesConError],
+    };
+  }
+
+  /**
+   * Detalle de una nota. Acá el Módulo 2 es la fuente principal: si falla, falla la pantalla.
+   * El Módulo 9 aporta materia y comisión y confirma que el curso es del alumno; si no lo es,
+   * es 404 aunque el Módulo 2 tenga la nota.
+   */
+  async nota(alumnoId: string, cursoId: string, notaId: string): Promise<NotaDetalle> {
+    const [inscripciones, nota] = await Promise.allSettled([
+      this.academico.inscripciones(alumnoId),
+      this.docente.nota(alumnoId, cursoId, notaId),
+    ]);
+    if (inscripciones.status === 'rejected') throw inscripciones.reason;
+    const inscripcion = inscripcionDelCurso(inscripciones.value, cursoId);
+    if (!inscripcion) throw notaNoEncontrada();
+    if (nota.status === 'rejected') throw nota.reason;
+    return {
+      ...nota.value,
+      cursoId: inscripcion.cursoId,
+      asignatura: inscripcion.asignatura,
+      ...(inscripcion.comision !== undefined && { comision: inscripcion.comision }),
     };
   }
 }
