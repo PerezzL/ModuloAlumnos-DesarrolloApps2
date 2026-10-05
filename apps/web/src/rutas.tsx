@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router';
 import { RutaProtegida } from '@/componentes/RutaProtegida';
 import { LayoutAutenticado } from '@/layouts/LayoutAutenticado';
 import { Calendario } from '@/paginas/Calendario';
+import { Compras } from '@/paginas/Compras';
 import { CuentaCorriente } from '@/paginas/CuentaCorriente';
 import { EnConstruccion } from '@/paginas/EnConstruccion';
 import { Historial } from '@/paginas/Historial';
@@ -25,6 +26,7 @@ export const rutas: RouteObject[] = [
           { path: 'academico', element: <Inscripcion /> },
           { path: 'calendario', element: <Calendario /> },
           { path: 'cuenta-corriente', element: <CuentaCorriente /> },
+          { path: 'compras', element: <Compras /> },
           { path: 'notificaciones', element: <Notificaciones /> },
           // Detalle de nota (4.7): se arma en el bloque E. Ya existe para el deep link (H26)
           {

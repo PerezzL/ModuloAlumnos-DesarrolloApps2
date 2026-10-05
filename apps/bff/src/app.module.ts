@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './auth/jwt.guard';
 import { CalendarioModule } from './calendario/calendario.module';
+import { ComprasModule } from './compras/compras.module';
 import { ProblemaFilter } from './comun/problema.filter';
 import { LoggerModule } from './comun/logger.module';
 import { ConfigModule } from './config/config.module';
@@ -20,6 +21,7 @@ import { PerfilModule } from './perfil/perfil.module';
     CalendarioModule,
     InscripcionModule,
     CursadasModule,
+    ComprasModule,
   ],
   controllers: [HealthController],
   providers: [

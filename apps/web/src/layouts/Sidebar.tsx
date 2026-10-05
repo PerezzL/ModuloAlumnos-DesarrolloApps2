@@ -5,6 +5,7 @@ import {
   Bell,
   House,
   LogOut,
+  ShoppingBag,
   User,
   Wallet,
   type LucideIcon,
@@ -27,6 +28,7 @@ export const NAVEGACION: ItemNavegacion[] = [
   { ruta: '/academico', titulo: 'Académico', icono: BookOpen },
   { ruta: '/calendario', titulo: 'Calendario', icono: Calendar },
   { ruta: '/cuenta-corriente', titulo: 'Cuenta Corriente', icono: Wallet },
+  { ruta: '/compras', titulo: 'Compras', icono: ShoppingBag },
   { ruta: '/notificaciones', titulo: 'Notificaciones', icono: Bell },
   { ruta: '/perfil', titulo: 'Perfil', icono: User },
 ];

@@ -405,6 +405,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginaCompras'
+        '400':
+          description: >
+            Parámetro inválido (`code` `SOLICITUD_INVALIDA`): `page` o `limit` fuera de rango,
+            o una fecha que no es `YYYY-MM-DD`.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problema' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '502': { $ref: '#/components/responses/ModuloInvalido' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }
