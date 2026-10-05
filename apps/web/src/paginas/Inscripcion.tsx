@@ -1,6 +1,6 @@
 import type { Comision, MateriaOferta } from '@uadenet/api-types';
 import { BookX, Clock, Info, Lock, MapPin } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
@@ -151,27 +151,54 @@ function Materia({
         ))}
       </ul>
       {confirmando && (
-        <div
-          role="group"
-          aria-label="Confirmar inscripción"
-          className="mt-3 flex flex-wrap items-center gap-3 rounded-item border border-primario/30 bg-primario/5 p-3"
-        >
-          <p className="min-w-0 flex-1 text-sm">
-            ¿Confirmás la inscripción en <strong>{asignatura.nombre}</strong>, comisión{' '}
-            <strong>{nombreComision(confirmando.comision)}</strong>?
-          </p>
-          <div className="flex gap-2">
-            <Button variant="fantasma" onClick={cancelar}>
-              Cancelar
-            </Button>
-            <Button disabled={enviando} onClick={() => confirmar(confirmando)}>
-              Confirmar inscripción
-            </Button>
-          </div>
-        </div>
+        <Confirmacion
+          eleccion={confirmando}
+          enviando={enviando}
+          cancelar={cancelar}
+          confirmar={confirmar}
+        />
       )}
       {resultado}
     </li>
+  );
+}
+
+/** Confirmación antes de enviar. Al abrirse toma el foco, así queda a la vista y se lee. */
+function Confirmacion({
+  eleccion,
+  enviando,
+  cancelar,
+  confirmar,
+}: {
+  eleccion: Eleccion;
+  enviando: boolean;
+  cancelar: () => void;
+  confirmar: (eleccion: Eleccion) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => ref.current?.focus(), [eleccion]);
+
+  return (
+    <div
+      ref={ref}
+      tabIndex={-1}
+      role="group"
+      aria-label="Confirmar inscripción"
+      className="mt-3 flex scroll-mb-4 flex-wrap items-center gap-3 rounded-item border border-primario/30 bg-primario/5 p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primario/40"
+    >
+      <p className="min-w-0 flex-1 text-sm">
+        ¿Confirmás la inscripción en <strong>{eleccion.materia.asignatura.nombre}</strong>, comisión{' '}
+        <strong>{nombreComision(eleccion.comision)}</strong>?
+      </p>
+      <div className="flex gap-2">
+        <Button variant="fantasma" onClick={cancelar}>
+          Cancelar
+        </Button>
+        <Button disabled={enviando} onClick={() => confirmar(eleccion)}>
+          Confirmar inscripción
+        </Button>
+      </div>
+    </div>
   );
 }
 

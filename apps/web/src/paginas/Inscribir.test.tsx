@@ -36,6 +36,7 @@ describe('inscripción: inscribirse en una comisión', () => {
     expect(confirmacion).toHaveTextContent(
       '¿Confirmás la inscripción en Sistemas Operativos, comisión A - Noche?',
     );
+    expect(confirmacion).toHaveFocus();
     expect(pedidos).toEqual([]);
 
     await userEvent.click(
