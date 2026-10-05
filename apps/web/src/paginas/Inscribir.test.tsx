@@ -129,3 +129,55 @@ describe('inscripción: inscribirse en una comisión', () => {
     expect(screen.queryByRole('button', { name: /Inscribirme/ })).not.toBeInTheDocument();
   });
 });
+
+describe('inscripción: rechazos', () => {
+  beforeEach(() => reiniciarCore(true));
+
+  const rechazar = (code: string, extra: object = {}) =>
+    registrarPosts(() =>
+      HttpResponse.json(
+        {
+          title: 'Inscripción rechazada',
+          status: 409,
+          code,
+          modulo: 'GESTION_ACADEMICA',
+          ...extra,
+        },
+        { status: 409, headers: { 'Content-Type': 'application/problem+json' } },
+      ),
+    );
+
+  const intentar = async () => {
+    await userEvent.click(await screen.findByRole('button', { name: SO }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar inscripción' }));
+    return screen.findByRole('alert');
+  };
+
+  it('explica el motivo y no ofrece reintentar', async () => {
+    rechazar('SIN_CUPO');
+    renderApp('/academico');
+    const alerta = await intentar();
+    expect(alerta).toHaveTextContent('La comisión se quedó sin cupo');
+    expect(within(alerta).queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+  });
+
+  it('con CORRELATIVIDAD_FALTANTE lista las correlativas que faltan', async () => {
+    rechazar('CORRELATIVIDAD_FALTANTE', {
+      correlativasFaltantes: [
+        { asignaturaId: 'asig-prog2', nombre: 'Programación II', tipo: 'REGULAR' },
+      ],
+    });
+    renderApp('/academico');
+    const alerta = await intentar();
+    expect(within(alerta).getByRole('list', { name: 'Correlativas que faltan' })).toHaveTextContent(
+      'Programación II (regularizar)',
+    );
+  });
+
+  it('un código desconocido muestra un mensaje genérico', async () => {
+    rechazar('ALGO_NUEVO');
+    renderApp('/academico');
+    expect(await intentar()).toHaveTextContent('No pudimos inscribirte');
+    expect(screen.getByRole('heading', { name: /Oferta del/ })).toBeInTheDocument();
+  });
+});

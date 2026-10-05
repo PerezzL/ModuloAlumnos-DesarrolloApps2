@@ -8,6 +8,7 @@ import { Button } from '@/componentes/ui/button';
 import { useAvisar } from '@/componentes/Avisos';
 import { useInscribir, useOferta } from '@/inscripcion/consultas';
 import { EstadoComision } from '@/inscripcion/EstadoComision';
+import { QUE_FALTA } from '@/inscripcion/rechazos';
 import { ResultadoInscripcion } from '@/inscripcion/ResultadoInscripcion';
 import { VentanaInscripcion } from '@/inscripcion/VentanaInscripcion';
 
@@ -218,8 +219,6 @@ function ComisionFila({ comision, accion }: { comision: Comision; accion: React.
     </li>
   );
 }
-
-const QUE_FALTA = { APROBADA: 'aprobar', REGULAR: 'regularizar' } as const;
 
 function CorrelativasFaltantes({ materia }: { materia: MateriaOferta }) {
   const faltantes = materia.correlativasFaltantes ?? [];

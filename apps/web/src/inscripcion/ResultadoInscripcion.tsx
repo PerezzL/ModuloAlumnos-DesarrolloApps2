@@ -1,8 +1,9 @@
-import { CircleCheck, RefreshCw, WifiOff } from 'lucide-react';
+import { CircleCheck, CircleX, RefreshCw, WifiOff } from 'lucide-react';
 import { ErrorRed } from '@/api/errores';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { Button } from '@/componentes/ui/button';
 import type { useInscribir } from './consultas';
+import { describirRechazo, QUE_FALTA } from './rechazos';
 
 /**
  * Resultado del último intento de inscripción. Nada se reintenta solo: ante un error de red
@@ -31,6 +32,31 @@ export function ResultadoInscripcion({
         <CircleCheck className="size-4" aria-hidden />
         Inscripción registrada.
       </p>
+    );
+  }
+  const rechazo = describirRechazo(inscribir.error);
+  if (rechazo) {
+    // Un rechazo de negocio no cambia reintentando: no se ofrece reintentar
+    return (
+      <div
+        role="alert"
+        className="mt-3 flex gap-2 rounded-item border border-peligro/20 bg-peligro-fondo p-3 text-sm"
+      >
+        <CircleX className="mt-0.5 size-4 shrink-0 text-peligro-texto" aria-hidden />
+        <div>
+          <p className="font-semibold text-peligro-texto">{rechazo.titulo}</p>
+          <p className="text-etiqueta">{rechazo.mensaje}</p>
+          {rechazo.correlativasFaltantes.length > 0 && (
+            <ul aria-label="Correlativas que faltan" className="list-disc pl-4 text-etiqueta">
+              {rechazo.correlativasFaltantes.map((c) => (
+                <li key={c.asignaturaId}>
+                  {c.nombre} ({QUE_FALTA[c.tipo]})
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     );
   }
   if (inscribir.error instanceof ErrorRed) {

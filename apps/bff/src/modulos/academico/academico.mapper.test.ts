@@ -7,6 +7,7 @@ import {
   aInscripcion,
   aInscripciones,
   aPeriodos,
+  aRechazoInscripcion,
   turnosAItems,
 } from './academico.mapper';
 
@@ -177,5 +178,51 @@ describe('mapper de Gestión Académica: inscripción creada', () => {
       cursoId: '5',
       estado: 'INSCRIPTO',
     });
+  });
+});
+
+describe('mapper de Gestión Académica: rechazos de la inscripción', () => {
+  const rechazos = fixture<Record<string, unknown>>(
+    'academic/inscripcion-rechazos.provisional.json',
+  );
+  const problema = (motivo: string) => aRechazoInscripcion(rechazos[motivo]).aProblema();
+
+  it.each(['YA_INSCRIPTO', 'SIN_CUPO', 'SIN_REGULARIDAD', 'FUERA_DE_FECHA'])(
+    '%s → 409 con el mismo code',
+    (motivo) => {
+      expect(problema(motivo)).toMatchObject({
+        status: 409,
+        code: motivo,
+        modulo: 'GESTION_ACADEMICA',
+      });
+      expect(problema(motivo)).not.toHaveProperty('correlativasFaltantes');
+    },
+  );
+
+  it('CORRELATIVIDAD_FALTANTE trae las correlativas que faltan', () => {
+    expect(problema('CORRELATIVIDAD_FALTANTE')).toMatchObject({
+      status: 409,
+      code: 'CORRELATIVIDAD_FALTANTE',
+      correlativasFaltantes: [
+        { asignaturaId: 'asig-desa1', nombre: 'Desarrollo de Aplicaciones I', tipo: 'REGULAR' },
+      ],
+    });
+  });
+
+  it('un motivo desconocido es INSCRIPCION_RECHAZADA, con el detalle del módulo', () => {
+    expect(problema('DESCONOCIDO')).toMatchObject({
+      status: 409,
+      code: 'INSCRIPCION_RECHAZADA',
+      detail: 'El alumno registra deuda',
+    });
+  });
+
+  it('un cuerpo que no se entiende también es INSCRIPCION_RECHAZADA', () => {
+    for (const cuerpo of ['texto plano', null, { code: 42 }]) {
+      expect(aRechazoInscripcion(cuerpo).aProblema()).toMatchObject({
+        status: 409,
+        code: 'INSCRIPCION_RECHAZADA',
+      });
+    }
   });
 });

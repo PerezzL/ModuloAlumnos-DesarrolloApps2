@@ -161,8 +161,8 @@ paths:
         '409':
           description: >
             La inscripción fue rechazada por una regla de negocio. `code` indica el motivo:
-            `YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE`, `SIN_REGULARIDAD` o
-            `FUERA_DE_FECHA`.
+            `YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE`, `SIN_REGULARIDAD`,
+            `FUERA_DE_FECHA` o, si el motivo no se reconoce, `INSCRIPCION_RECHAZADA`.
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/ProblemaInscripcion' }
@@ -508,7 +508,16 @@ components:
           properties:
             code:
               type: string
-              enum: [YA_INSCRIPTO, SIN_CUPO, CORRELATIVIDAD_FALTANTE, SIN_REGULARIDAD, FUERA_DE_FECHA]
+              enum:
+                - YA_INSCRIPTO
+                - SIN_CUPO
+                - CORRELATIVIDAD_FALTANTE
+                - SIN_REGULARIDAD
+                - FUERA_DE_FECHA
+                - INSCRIPCION_RECHAZADA
+              description: >
+                `INSCRIPCION_RECHAZADA` es el rechazo del Módulo 9 con un motivo que el BFF no
+                reconoce; el frontend muestra un mensaje genérico.
               x-provisional: true
             correlativasFaltantes:
               type: array

@@ -16,6 +16,7 @@ import {
   aInscripcion,
   aInscripciones,
   aPeriodos,
+  aRechazoInscripcion,
   turnosAItems,
 } from './academico.mapper';
 
@@ -96,6 +97,9 @@ export class AcademicoAdapter {
         throw new ProblemaError(404, 'CURSO_NO_ENCONTRADO', 'La comisión no existe', {
           modulo: 'GESTION_ACADEMICA',
         });
+      }
+      if (error instanceof RespuestaModuloError && error.estadoOrigen === 409) {
+        throw aRechazoInscripcion(error.cuerpoOrigen);
       }
       throw error;
     }

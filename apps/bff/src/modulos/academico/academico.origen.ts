@@ -127,3 +127,16 @@ export const InscripcionCreada = z
     fecha: instante.optional(),
   })
   .passthrough();
+
+/**
+ * Cuerpo del 409 del POST de inscripción. Los códigos de error del Módulo 9 están PENDIENTES:
+ * suponemos problem+json con un `code` igual a los nuestros (fixture
+ * `academic/inscripcion-rechazos.provisional.json`).
+ */
+export const RechazoInscripcion = z
+  .object({
+    code: z.string().optional(),
+    detail: z.string().optional(),
+    correlativasFaltantes: Correlatividades.optional(),
+  })
+  .passthrough();

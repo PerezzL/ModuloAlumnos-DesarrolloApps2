@@ -7,6 +7,7 @@ import { fixture } from './fixtures';
 
 const contrato = new Contrato();
 const creada = fixture<object>('academic/inscripcion-creada.provisional.json');
+const rechazos = fixture<Record<string, object>>('academic/inscripcion-rechazos.provisional.json');
 
 describe('POST /inscripciones', () => {
   const e2e = prepararE2E();
@@ -56,6 +57,24 @@ describe('POST /inscripciones', () => {
     expect(cuerpo(res)).toMatchObject({ code: 'SOLICITUD_INVALIDA' });
     expect(contrato.validar('post', '/inscripciones', 400, cuerpo(res)).errores).toEqual([]);
   });
+
+  it.each(Object.keys(rechazos))(
+    '409 del Módulo 9 (%s) → 409 según el contrato',
+    async (motivo) => {
+      e2e.server.use(
+        http.post(RUTAS_ACADEMICO.INSCRIBIR, () =>
+          HttpResponse.json(rechazos[motivo], { status: 409 }),
+        ),
+      );
+      const res = await e2e.post('/inscripciones', { cursoId: 'c' });
+      expect(res.status).toBe(409);
+      expect(res.type).toBe('application/problem+json');
+      expect(cuerpo(res)).toMatchObject({
+        code: motivo === 'DESCONOCIDO' ? 'INSCRIPCION_RECHAZADA' : motivo,
+      });
+      expect(contrato.validar('post', '/inscripciones', 409, cuerpo(res)).errores).toEqual([]);
+    },
+  );
 
   it('una comisión inexistente es 404 CURSO_NO_ENCONTRADO', async () => {
     e2e.server.use(
