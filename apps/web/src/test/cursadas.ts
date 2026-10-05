@@ -1,4 +1,4 @@
-import type { CursadaResumen } from '@uadenet/api-types';
+import type { CursadaDetalle, CursadaResumen } from '@uadenet/api-types';
 
 /** Historial como lo devuelve el BFF con las fixtures del CORE falso */
 export const cursadasBase = (): CursadaResumen[] => [
@@ -35,3 +35,9 @@ export const cursadasBase = (): CursadaResumen[] => [
     enCurso: false,
   },
 ];
+
+/** Detalle de Desarrollo de Aplicaciones I como lo devuelve el BFF */
+export const cursadaDetalleBase = (): CursadaDetalle => ({
+  ...cursadasBase()[0]!,
+  comision: 'A - Noche',
+});

@@ -33,6 +33,7 @@ export type Correlativa = CorrelativaFaltante;
 
 export interface InscripcionAlumno {
   cursoId: string;
+  comision?: string;
   asignatura: Asignatura;
   periodo: Periodo;
   notaFinal: number | null;

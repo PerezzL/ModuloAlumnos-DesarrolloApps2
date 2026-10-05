@@ -5,6 +5,7 @@ import { Calendario } from '@/paginas/Calendario';
 import { CompraDetalle } from '@/paginas/CompraDetalle';
 import { Compras } from '@/paginas/Compras';
 import { CuentaCorriente } from '@/paginas/CuentaCorriente';
+import { CursadaDetalle } from '@/paginas/CursadaDetalle';
 import { EnConstruccion } from '@/paginas/EnConstruccion';
 import { Historial } from '@/paginas/Historial';
 import { Inscripcion } from '@/paginas/Inscripcion';
@@ -35,12 +36,8 @@ export const rutas: RouteObject[] = [
             path: 'cursadas/:cursoId/notas/:notaId',
             element: <EnConstruccion titulo="Detalle de la nota" />,
           },
-          // Detalle de cursada (4.5): se arma en el bloque E. Ya existe para el enlace desde
-          // Mis cursos y para el destino `/alumnos/cursos/{cursoId}` del contrato
-          {
-            path: 'alumnos/cursos/:cursoId',
-            element: <EnConstruccion titulo="Detalle de cursada" />,
-          },
+          // Detalle de cursada (4.5), con la ruta del contrato `/alumnos/cursos/{cursoId}`
+          { path: 'alumnos/cursos/:cursoId', element: <CursadaDetalle /> },
           { path: 'perfil', element: <Perfil /> },
           { path: '*', element: <NoEncontrada /> },
         ],

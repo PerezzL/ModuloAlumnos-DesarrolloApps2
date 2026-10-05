@@ -70,3 +70,42 @@ describe('GET /cursadas', () => {
     expect(contrato.validar('get', '/cursadas', status, cuerpo(res)).errores).toEqual([]);
   });
 });
+
+describe('GET /cursadas/{cursoId}', () => {
+  const e2e = prepararE2E();
+
+  it('encabezado con materia, comisión, período y situación del Módulo 9', async () => {
+    e2e.server.use(http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => HttpResponse.json(inscripciones)));
+    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    expect(res.status).toBe(200);
+    expect(contrato.validar('get', '/cursadas/{cursoId}', 200, res.body).errores).toEqual([]);
+    expect(res.body).toMatchObject({
+      cursoId: 'curso-bd1-2026-2-a',
+      asignatura: { nombre: 'Bases de Datos I' },
+      periodo: { nombre: '2° cuatrimestre 2026' },
+      comision: 'A - Noche',
+      estado: 'CURSANDO',
+      enCurso: true,
+    });
+  });
+
+  it('un curso en el que el alumno no está inscripto es 404', async () => {
+    e2e.server.use(http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => HttpResponse.json(inscripciones)));
+    const res = await e2e.get('/cursadas/curso-de-otro');
+    expect(res.status).toBe(404);
+    expect(cuerpo(res)).toMatchObject({ code: 'CURSADA_NO_ENCONTRADA' });
+    expect(contrato.validar('get', '/cursadas/{cursoId}', 404, cuerpo(res)).errores).toEqual([]);
+  });
+
+  it('si falla el Módulo 9, falla todo el detalle', async () => {
+    e2e.server.use(
+      http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => new HttpResponse(null, { status: 503 })),
+    );
+    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    expect(res.status).toBe(503);
+    expect(cuerpo(res)).toMatchObject({
+      code: 'UPSTREAM_UNAVAILABLE',
+      modulo: 'GESTION_ACADEMICA',
+    });
+  });
+});

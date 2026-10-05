@@ -146,6 +146,7 @@ describe('mapper de Gestión Académica: datos para la inscripción', () => {
     const inscripciones = aInscripciones(fixture('academic/inscripciones-alumno.provisional.json'));
     expect(inscripciones[0]).toEqual({
       cursoId: 'curso-prog1-2025-2-a',
+      comision: 'A - Noche',
       asignatura: { id: 'asig-prog1', codigo: '3.4.069', nombre: 'Programación I' },
       periodo: { id: '2025-2', nombre: '2° cuatrimestre 2025' },
       notaFinal: 8,

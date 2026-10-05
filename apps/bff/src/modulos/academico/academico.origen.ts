@@ -89,6 +89,7 @@ export const InscripcionesAlumno = z.array(
   z
     .object({
       cursoId: id,
+      comision: z.string().optional(),
       asignatura: Asignatura,
       periodo: z.object({ id, nombre: z.string() }).passthrough(),
       notaFinal: z.number().nullable().optional(),

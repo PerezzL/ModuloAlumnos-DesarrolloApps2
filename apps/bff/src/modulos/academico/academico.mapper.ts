@@ -85,6 +85,7 @@ export function aCorrelativas(datos: unknown): Correlativa[] {
 export function aInscripciones(datos: unknown): InscripcionAlumno[] {
   return parsearOrigen('GESTION_ACADEMICA', InscripcionesAlumno, datos).map((i) => ({
     cursoId: idOpaco(i.cursoId),
+    ...(i.comision !== undefined && { comision: i.comision }),
     asignatura: asignatura(i.asignatura),
     periodo: { id: idOpaco(i.periodo.id), nombre: i.periodo.nombre },
     notaFinal: i.notaFinal ?? null,

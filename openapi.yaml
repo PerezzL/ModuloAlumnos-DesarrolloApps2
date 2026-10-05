@@ -248,7 +248,7 @@ paths:
                 $ref: '#/components/schemas/CursadaDetalle'
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '404':
-          description: El alumno no tiene una inscripción en ese curso
+          description: El alumno no tiene una inscripción en ese curso (`code` `CURSADA_NO_ENCONTRADA`)
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
