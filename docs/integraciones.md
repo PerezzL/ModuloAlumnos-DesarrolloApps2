@@ -2,6 +2,7 @@
 
 Extraído del documento técnico v4.1 (1 de octubre de 2026).
 **Este archivo se actualiza primero cada vez que un módulo confirma o cambia algo.**
+Qué tocar después (fixtures, adaptador, contrato, decisiones), módulo por módulo: `integracion-real.md`.
 Las respuestas de ejemplo de cada módulo están en `packages/fixtures/`; su `README.md`
 explica qué son y cuándo dejan de ser provisionales.
 

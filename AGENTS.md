@@ -17,6 +17,7 @@ agrega información de otros módulos a través del Gateway de CORE.
 | `docs/instalacion.md` | Instalación desde cero, Node vs. Docker, Prism. |
 | `docs/arquitectura.md` | Capas, Gateway, fuentes de verdad, auth, decisiones tomadas. |
 | `docs/integraciones.md` | Qué expone cada módulo externo y qué está confirmado o pendiente. |
+| `docs/integracion-real.md` | Qué tocar cuando un módulo confirma su contrato y cómo conectar al CORE real. |
 | `docs/pruebas.md` | Cómo probar en local: usuarios, fallas simuladas y casos preparados por pantalla. |
 | `packages/fixtures/README.md` | Qué son las fixtures, para qué sirven y por qué casi todas son provisionales. |
 | `docs/plan.md` | Decisiones tomadas, pasos de armado y pendientes. |
@@ -179,4 +180,5 @@ Límites:
   (`cursada`, `inscripcion`, `comision`). No traducirlos.
 - Cuando un módulo externo confirma o cambia algo: actualizar `docs/integraciones.md`,
   el fixture, el adaptador y, si corresponde, quitar `x-provisional` del contrato.
+  Qué archivos y decisiones toca cada módulo: `docs/integracion-real.md`.
 - Cuando el agente se equivoque en algo repetible, agregar la regla acá.
