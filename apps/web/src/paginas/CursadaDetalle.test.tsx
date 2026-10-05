@@ -191,3 +191,60 @@ describe('detalle de cursada: notas (H19)', () => {
     expect(within(seccion).getByText('Todavía no tenés notas')).toBeInTheDocument();
   });
 });
+
+describe('detalle de cursada sin el Módulo 2 (H20)', () => {
+  beforeEach(() => reiniciarCore(true));
+
+  const sinDocente = {
+    ...cursadaDetalleBase(),
+    asistencia: null,
+    notas: null,
+    fuentesConError: ['DOCENTE'],
+  };
+
+  it('muestra el encabezado y un aviso en asistencia y en notas', async () => {
+    servidor.use(http.get(`${BFF}/cursadas/:cursoId`, () => HttpResponse.json(sinDocente)));
+    renderApp('/alumnos/cursos/curso-desa1');
+    expect(
+      await screen.findByRole('heading', { name: 'Desarrollo de Aplicaciones I' }),
+    ).toBeInTheDocument();
+    const asistencia = screen.getByRole('region', { name: 'Asistencia' });
+    const notas = screen.getByRole('region', { name: 'Notas' });
+    expect(within(asistencia).getByRole('alert')).toHaveTextContent(
+      'No pudimos cargar tu asistencia',
+    );
+    expect(within(notas).getByRole('alert')).toHaveTextContent('No pudimos cargar tus notas');
+  });
+
+  it('si falla solo una parte, la otra se muestra', async () => {
+    servidor.use(
+      http.get(`${BFF}/cursadas/:cursoId`, () =>
+        HttpResponse.json({ ...cursadaDetalleBase(), notas: null, fuentesConError: ['DOCENTE'] }),
+      ),
+    );
+    renderApp('/alumnos/cursos/curso-desa1');
+    const asistencia = await screen.findByRole('region', { name: 'Asistencia' });
+    expect(within(asistencia).queryByRole('alert', { name: /no pudimos/i })).toBeNull();
+    expect(within(asistencia).getByText('Clases dictadas')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Notas' })).getByRole('alert'),
+    ).toHaveTextContent('No pudimos cargar tus notas');
+  });
+
+  it('reintentar vuelve a pedir el detalle y muestra lo que cargó', async () => {
+    let pedidos = 0;
+    servidor.use(
+      http.get(`${BFF}/cursadas/:cursoId`, () =>
+        HttpResponse.json(++pedidos === 1 ? sinDocente : cursadaDetalleBase()),
+      ),
+    );
+    renderApp('/alumnos/cursos/curso-desa1');
+    const asistencia = await screen.findByRole('region', { name: 'Asistencia' });
+    await userEvent.click(within(asistencia).getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByRole('table', { name: 'Notas de la cursada' })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('region', { name: 'Asistencia' })).getByText('Clases dictadas'),
+    ).toBeInTheDocument();
+    expect(pedidos).toBe(2);
+  });
+});

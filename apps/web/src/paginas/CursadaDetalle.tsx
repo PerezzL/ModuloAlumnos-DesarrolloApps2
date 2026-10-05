@@ -5,7 +5,9 @@ import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { useCursada } from '@/cursadas/consultas';
+import { AvisoSeccion } from '@/cursadas/AvisoSeccion';
 import { IndicadorFaltas } from '@/cursadas/IndicadorFaltas';
+import { Seccion } from '@/cursadas/Seccion';
 import { SeccionAsistencia } from '@/cursadas/SeccionAsistencia';
 import { SeccionNotas } from '@/cursadas/SeccionNotas';
 import { SITUACION } from '@/cursadas/situacion';
@@ -22,11 +24,14 @@ const Volver = () => (
 
 /**
  * Detalle de cursada (4.5), en la ruta `/alumnos/cursos/{cursoId}` del contrato. La situación
- * es la del Módulo 9: el portal no la calcula.
+ * es la del Módulo 9: el portal no la calcula. Si el Módulo 2 no respondió, el encabezado se
+ * muestra igual y cada sección que no cargó tiene su aviso.
  */
 export function CursadaDetalle() {
   const { cursoId = '' } = useParams();
-  const { data, error, isPending, refetch } = useCursada(cursoId);
+  const { data, error, isPending, isFetching, refetch } = useCursada(cursoId);
+
+  const reintentar = () => void refetch();
 
   if (isPending) return <Cargando texto="Cargando la cursada…" />;
   if (error instanceof ErrorApi && error.status === 404) {
@@ -46,7 +51,7 @@ export function CursadaDetalle() {
     return (
       <div className="flex max-w-4xl flex-col gap-4">
         <Volver />
-        <ErrorCarga error={error} fuente="La cursada" reintentar={() => void refetch()} />
+        <ErrorCarga error={error} fuente="La cursada" reintentar={reintentar} />
       </div>
     );
   }
@@ -73,12 +78,22 @@ export function CursadaDetalle() {
           {SITUACION[data.estado]}
         </p>
       </section>
-      {data.asistencia && (
+      {data.asistencia ? (
         <SeccionAsistencia asistencia={data.asistencia}>
           <IndicadorFaltas estado={data.estado} asistencia={data.asistencia} />
         </SeccionAsistencia>
+      ) : (
+        <Seccion id="titulo-asistencia" titulo="Asistencia">
+          <AvisoSeccion que="tu asistencia" reintentar={reintentar} reintentando={isFetching} />
+        </Seccion>
       )}
-      {data.notas && <SeccionNotas cursoId={data.cursoId} notas={data.notas} />}
+      {data.notas ? (
+        <SeccionNotas cursoId={data.cursoId} notas={data.notas} />
+      ) : (
+        <Seccion id="titulo-notas" titulo="Notas">
+          <AvisoSeccion que="tus notas" reintentar={reintentar} reintentando={isFetching} />
+        </Seccion>
+      )}
     </div>
   );
 }
