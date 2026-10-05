@@ -169,8 +169,9 @@ Datos de octubre de 2026:
 
 ### Inscripción (bloque D)
 
-La oferta es del 1° cuatrimestre de 2027, con la inscripción abierta del 28/09 al 19/12/2026.
-Hoy la vista de oferta la arma el BFF cruzando cursos, correlatividades e historial.
+Pantalla **Académico** (`/academico`). La oferta es del 1° cuatrimestre de 2027, con la
+inscripción abierta del 28/09 al 19/12/2026. La arma el BFF cruzando cursos, correlatividades
+e historial.
 
 | Asignatura (comisión) | Qué se espera |
 | --- | --- |
@@ -182,15 +183,21 @@ Hoy la vista de oferta la arma el BFF cruzando cursos, correlatividades e histor
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
-| Inscripción correcta | Sistemas Operativos | Confirmación; el cupo pasa de 10 a 11 y aparece en el historial |
-| Ya inscripto | Inscribirse dos veces en la misma | `YA_INSCRIPTO` |
-| Sin plan | `j.perez` (`planId: null`) | Depende de la decisión pendiente del bloque D (`plan.md`) |
+| Inscripción correcta | Sistemas Operativos | Confirmación; el cupo pasa de 10 a 11 y aparece en Mis Cursos |
+| Ya inscripto | Con dos pestañas abiertas, inscribirse en las dos | La segunda muestra "Ya estás inscripto" (`YA_INSCRIPTO`) |
+| Sin cupo al enviar | Llenar la comisión desde otra pestaña antes de confirmar | "La comisión se quedó sin cupo" (`SIN_CUPO`) |
+| Sin plan | `j.perez` (`planId: null`) | Aviso de que no se pudo confirmar el plan y oferta de todos los planes (`filtradaPorPlan: false`) |
+| Inscripción cerrada | `GET /inscripcion/oferta?periodoId=2026-2` | `inscripcionAbierta: false`; en pantalla, aviso y sin botones |
 | Módulo 9 caído | Falla `academic: caido` | Error de servicio no disponible; el POST no se reintenta solo |
 
 El CORE falso no simula `SIN_REGULARIDAD` ni `FUERA_DE_FECHA`. Después de probar, hacé
 `POST /__falso/reset` para deshacer las inscripciones.
 
 ### Historial de cursadas (bloque D)
+
+Pantalla **Mis Cursos** (`/mis-cursos`): arriba las cursadas en curso, con enlace al detalle
+(`/alumnos/cursos/{cursoId}`, en construcción hasta el bloque E); abajo el resto del historial,
+con filtro por período.
 
 | Asignatura | Período | Estado |
 | --- | --- | --- |

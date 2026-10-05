@@ -1,7 +1,7 @@
 # Plan de construcción
 
-Estado al 4 de octubre de 2026: **bloques A y B mergeados; bloque C terminado** (PR
-`bloque/features-firmes`, sin mergear). Este archivo se actualiza a medida que se cierran decisiones
+Estado al 4 de octubre de 2026: **bloques A y B mergeados; bloques C y D terminados** (PR
+`bloque/features-firmes` y `bloque/features-provisionales`, sin mergear; el de D apunta a C). Este archivo se actualiza a medida que se cierran decisiones
 y pasos. El porqué de cada decisión está en `arquitectura.md`.
 
 ## Repositorio
@@ -25,6 +25,7 @@ y pasos. El porqué de cada decisión está en `arquitectura.md`.
 | — | Docker | Dockerfile por app y docker-compose; el desarrollo diario no depende de él |
 | — | Despliegue | Proveedor sin elegir; todo configurable por variables de entorno |
 | — | Equipo | Sin reparto: el trabajo lo hace una persona con el agente. Sin revisores obligatorios ni protección de `main` |
+| 11 | Oferta sin `planId` | Si Backoffice no devuelve el `planId` (o no responde), la oferta se pide sin filtrar por plan y se informa con `filtradaPorPlan: false` (ver abajo) |
 
 Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 
@@ -32,8 +33,15 @@ Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 
 | Bloque | Tema |
 | --- | --- |
-| D | Qué hacer si el Módulo 8 no devuelve `planId` |
 | Entrega final | Proveedor de despliegue y dominio (cookie de refresh de CORE) |
+
+## Oferta sin `planId` (decisión 11)
+
+El `planId` debería venir de Backoffice, pero el Módulo 8 todavía no lo confirmó. En lugar de
+bloquear la inscripción, el BFF pide la oferta al Módulo 9 sin el filtro de plan, registra un
+warning y devuelve `filtradaPorPlan: false`. La pantalla avisa que la oferta puede incluir
+materias de otros planes. El Módulo 9 vuelve a validar todo al inscribir. Cuando Backoffice
+confirme el campo, se revisa si el caso sigue haciendo falta.
 
 ## Testing (decisión 5)
 
