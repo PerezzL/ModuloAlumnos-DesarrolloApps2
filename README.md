@@ -21,6 +21,11 @@ Para mostrar el portal de punta a punta: [`docs/demo-guide.md`](docs/demo-guide.
 
 ## Por dónde empezar
 
+Para entender la app, en este orden: [`docs/arquitectura.md`](docs/arquitectura.md) (cómo
+funciona), [`docs/codigo.md`](docs/codigo.md) (dónde está cada cosa y cómo son los mocks),
+[`docs/instalacion.md`](docs/instalacion.md) (cómo levantarla) y [`docs/pruebas.md`](docs/pruebas.md)
+(cómo probarla). El resto se consulta cuando hace falta.
+
 | Archivo | Para qué |
 | --- | --- |
 | [`openapi.yaml`](openapi.yaml) | Contrato entre el front y el BFF (fuente de verdad de la API propia) |
@@ -29,6 +34,7 @@ Para mostrar el portal de punta a punta: [`docs/demo-guide.md`](docs/demo-guide.
 | [`docs/pruebas.md`](docs/pruebas.md) | Usuarios de prueba, fallas simuladas y casos por pantalla |
 | [`docs/demo-guide.md`](docs/demo-guide.md) | Guion para la demo de la segunda entrega |
 | [`docs/arquitectura.md`](docs/arquitectura.md) | Capas, recorrido de un pedido, auth, mocks, despliegue |
+| [`docs/codigo.md`](docs/codigo.md) | Mapa del código: qué hay en cada app y paquete, y todas las piezas de mock |
 | [`docs/requisitos.md`](docs/requisitos.md) | Los 9 requisitos funcionales |
 | [`docs/pantallas.md`](docs/pantallas.md) | Pantallas y de qué endpoint sale cada una |
 | [`docs/integraciones.md`](docs/integraciones.md) | Qué expone cada módulo y qué falta confirmar |

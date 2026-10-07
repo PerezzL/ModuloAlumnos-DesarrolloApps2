@@ -16,6 +16,7 @@ agrega información de otros módulos a través del Gateway de CORE.
 | [`openapi.yaml`](openapi.yaml) | Contrato front ↔ BFF. Es la fuente de verdad de la API propia. |
 | [`docs/instalacion.md`](docs/instalacion.md) | Instalación desde cero, Node vs. Docker, Prism. |
 | [`docs/arquitectura.md`](docs/arquitectura.md) | Capas, Gateway, fuentes de verdad, auth, decisiones tomadas. |
+| [`docs/codigo.md`](docs/codigo.md) | Mapa del código y de las piezas de mock (fixtures, CORE falso, Prism, tests). |
 | [`docs/integraciones.md`](docs/integraciones.md) | Qué expone cada módulo externo y qué está confirmado o pendiente. |
 | [`docs/integracion-real.md`](docs/integracion-real.md) | Qué tocar cuando un módulo confirma su contrato y cómo conectar al CORE real. |
 | [`docs/pruebas.md`](docs/pruebas.md) | Cómo probar en local: usuarios, fallas simuladas y casos preparados por pantalla. |

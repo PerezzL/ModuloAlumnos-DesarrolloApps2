@@ -90,25 +90,9 @@ Calendario es el primer feature del BFF porque obliga a resolver una sola vez la
 paralelo, la falla parcial y los errores del Gateway. Inscripción va después, sobre mocks,
 porque depende de `planId` (Módulo 8) y de endpoints del Módulo 9 que todavía no están.
 
-## Estructura objetivo
+## Estructura
 
-```
-uadenet-portal-estudiante/
-├── AGENTS.md · CLAUDE.md · README.md
-├── openapi.yaml
-├── docker-compose.yml
-├── package.json              ← workspaces y scripts de raíz
-├── .env.example
-├── docs/
-│   ├── plan.md · arquitectura.md · integraciones.md · requisitos.md · pantallas.md
-│   └── core/CORE_INTEGRACION.md
-├── apps/
-│   ├── web/                  ← React + Vite
-│   ├── bff/                  ← NestJS
-│   └── core-falso/           ← Gateway, auth, notificaciones, saldo y módulos de mentira
-└── packages/
-    └── api-types/            ← generado, fuera de git
-```
+El mapa actual del repo, carpeta por carpeta, está en [`codigo.md`](codigo.md).
 
 ## Pasos de armado
 
