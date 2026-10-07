@@ -98,7 +98,7 @@ npm run verify
 
 Revisa tipos, lint, el contrato y corre todos los tests. Es lo mismo que corre el CI en
 cada PR: si pasa local, pasa en GitHub. Cómo se trabaja (ramas, commits, PR) está en
-`AGENTS.md`.
+[`AGENTS.md`](../AGENTS.md).
 
 ## Node o Docker: qué cambia
 
@@ -130,7 +130,7 @@ El desarrollo diario no depende de Docker: es más rápido programar con `npm ru
 ## Qué es Prism y para qué está
 
 [Prism](https://stoplight.io/open-source/prism) es un servidor de mentira que lee
-`openapi.yaml` (el contrato entre el front y el BFF) y responde cada endpoint con los
+[`openapi.yaml`](../openapi.yaml) (el contrato entre el front y el BFF) y responde cada endpoint con los
 **ejemplos escritos en el contrato**. No tiene lógica: solo devuelve lo que dice el YAML.
 
 **Para qué sirve:** desacoplar el front del BFF. Si una pantalla necesita un endpoint que el

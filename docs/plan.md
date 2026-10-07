@@ -1,8 +1,8 @@
 # Plan de construcción
 
 Estado al 5 de octubre de 2026: **bloques A a E mergeados** (PRs #1 a #6). Sigue la
-preparación de la segunda entrega (rama `bloque/entrega-2`; guion en `demo-guide.md`). Este archivo se actualiza a medida que se cierran decisiones
-y pasos. El porqué de cada decisión está en `arquitectura.md`.
+preparación de la segunda entrega (rama `bloque/entrega-2`; guion en [`demo-guide.md`](demo-guide.md)). Este archivo se actualiza a medida que se cierran decisiones
+y pasos. El porqué de cada decisión está en [`arquitectura.md`](arquitectura.md).
 
 ## Repositorio
 
@@ -14,9 +14,9 @@ y pasos. El porqué de cada decisión está en `arquitectura.md`.
 | --- | --- | --- |
 | 1 | BFF | Node.js con TypeScript y NestJS |
 | 2 | Frontend | React con Vite y TypeScript; Tailwind CSS + shadcn/ui |
-| 3 | Repo | Monorepo con npm workspaces; tipos generados desde `openapi.yaml` |
+| 3 | Repo | Monorepo con npm workspaces; tipos generados desde [`openapi.yaml`](../openapi.yaml) |
 | 4 | Mocks | CORE falso que hace de Gateway + Prism para el contrato del BFF |
-| 5 | Testing | Vitest en todo el monorepo; fixtures compartidas; respuestas validadas contra `openapi.yaml`; `npm run verify` (ver abajo) |
+| 5 | Testing | Vitest en todo el monorepo; fixtures compartidas; respuestas validadas contra [`openapi.yaml`](../openapi.yaml); `npm run verify` (ver abajo) |
 | 6 | Forma de trabajo | Bloques grandes: una rama y un PR por bloque, un commit por tarjeta; CI con `verify`; Trello como reflejo (ver abajo) |
 | 7 | Orden de features | Home → Calendario → Saldo y Notificaciones → Inscripción → Historial → Compras → Módulo 2 (ver abajo) |
 | 8 | Librerías del front | React Router + TanStack Query |
@@ -26,7 +26,7 @@ y pasos. El porqué de cada decisión está en `arquitectura.md`.
 | — | Despliegue | Proveedor sin elegir; todo configurable por variables de entorno |
 | — | Equipo | Sin reparto: el trabajo lo hace una persona con el agente. Sin revisores obligatorios ni protección de `main` |
 | 11 | Oferta sin `planId` | Si Backoffice no devuelve el `planId` (o no responde), la oferta se pide sin filtrar por plan y se informa con `filtradaPorPlan: false` (ver abajo) |
-| 12 | Módulo 2 sin contrato | El `examId` del `actionUrl` es el `notaId`; un 404 del Módulo 2 para un curso que el Módulo 9 tiene cuenta como falla de `DOCENTE`; asistencia y notas fallan por separado; alerta de faltas con 1 o 0 restantes (ver `integraciones.md`) |
+| 12 | Módulo 2 sin contrato | El `examId` del `actionUrl` es el `notaId`; un 404 del Módulo 2 para un curso que el Módulo 9 tiene cuenta como falla de `DOCENTE`; asistencia y notas fallan por separado; alerta de faltas con 1 o 0 restantes (ver [`integraciones.md`](integraciones.md)) |
 
 Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 
@@ -70,7 +70,7 @@ confirme el campo, se revisa si el caso sigue haciendo falta.
   código en el título (`T07: guard JWT`). Se mergea sin squash para conservar esos commits.
 - CI: GitHub Actions corre `npm run verify` en cada PR. Sin revisores obligatorios: el PR
   queda como registro del bloque. El build de Docker se suma con el paso 9.
-- Plantilla de PR: tarjetas incluidas y checklist (contrato, `integraciones.md`, `verify`).
+- Plantilla de PR: tarjetas incluidas y checklist (contrato, [`integraciones.md`](integraciones.md), `verify`).
 - Trello se sincroniza al cerrar cada bloque. No dirige el trabajo; sirve para mostrar la
   organización y para ver qué falta.
 
@@ -114,8 +114,8 @@ uadenet-portal-estudiante/
 
 Cada paso termina con algo que se puede correr y verificar.
 
-1. **Repo base.** Ya están copiados `AGENTS.md`, `CLAUDE.md`, `README.md`, `.gitignore`,
-   `openapi.yaml` y `docs/`. Falta: `git init`, conectar el remoto, `package.json` con
+1. **Repo base.** Ya están copiados [`AGENTS.md`](../AGENTS.md), [`CLAUDE.md`](../CLAUDE.md), [`README.md`](../README.md), `.gitignore`,
+   [`openapi.yaml`](../openapi.yaml) y `docs/`. Falta: `git init`, conectar el remoto, `package.json` con
    workspaces y `.env.example`.
 2. **Tipos.** `packages/api-types` con el script `npm run gen` (openapi-typescript).
    Verificación: el paquete compila.
@@ -129,7 +129,7 @@ Cada paso termina con algo que se puede correr y verificar.
    token en memoria, refresh serializado, ruta protegida y header.
 7. **Prism.** Mock del contrato del BFF para que las pantallas avancen sin esperar endpoints.
 8. **Comando de verificación.** Un único script de raíz: tipos + lint + tests + validación del contrato
-   (ver Testing). Agregarlo a la sección "Comandos" de `AGENTS.md`.
+   (ver Testing). Agregarlo a la sección "Comandos" de [`AGENTS.md`](../AGENTS.md).
 9. **docker-compose.** web, BFF, core-falso y Prism con un comando. README con los pasos.
 10. **CORE falso, parte 2.** Módulos externos desde fixtures, fallas simuladas,
     notificaciones por socket.io y saldo.
@@ -149,4 +149,4 @@ traducción de `actionUrl` a ruta propia se aísla en un solo lugar.
   ambiente de pruebas, credenciales de servicio si hicieran falta.
 - **Módulo 2:** endpoints y respuesta de asistencia y notas; formato del `actionUrl`.
 - **Módulo 8:** campos del endpoint de usuarios y si incluye `planId`.
-- Resto: ver `integraciones.md`.
+- Resto: ver [`integraciones.md`](integraciones.md).

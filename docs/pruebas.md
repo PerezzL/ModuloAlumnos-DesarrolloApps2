@@ -3,8 +3,8 @@
 Cómo probar el portal sin ningún módulo real: qué usuarios hay, qué datos tiene cada uno,
 cómo simular fallas y qué casos están preparados para cada pantalla.
 
-Para levantar todo, ver `instalacion.md`. Para entender de dónde salen los datos (las
-fixtures) y por qué casi todos son provisionales, ver `packages/fixtures/README.md`.
+Para levantar todo, ver [`instalacion.md`](instalacion.md). Para entender de dónde salen los datos (las
+fixtures) y por qué casi todos son provisionales, ver [`packages/fixtures/README.md`](../packages/fixtures/README.md).
 
 ## 1. Las piezas de prueba
 
@@ -12,7 +12,7 @@ fixtures) y por qué casi todos son provisionales, ver `packages/fixtures/README
 | --- | --- | --- |
 | **CORE falso** (`:4000`) | CORE (login, Gateway, notificaciones, saldo) y los módulos 2, 4, 5, 6, 8 y 9 | Siempre. Es lo que abre el navegador |
 | **Fixtures** (`packages/fixtures/`) | Las respuestas de cada módulo externo | No se levantan: el CORE falso las sirve |
-| **Prism** (`:4010`) | Nuestro BFF, a partir de `openapi.yaml` | Para avanzar una pantalla antes de que exista su endpoint en el BFF |
+| **Prism** (`:4010`) | Nuestro BFF, a partir de [`openapi.yaml`](../openapi.yaml) | Para avanzar una pantalla antes de que exista su endpoint en el BFF |
 
 Con el CORE falso, el camino es el real: front → Gateway → BFF → Gateway → módulo falso.
 Con Prism, el BFF no interviene y los datos son los ejemplos del contrato (el alumno pasa a
@@ -94,13 +94,13 @@ TOKEN=$(curl -s localhost:4000/api/v1/auth/login -H 'content-type: application/j
 curl -s localhost:4000/api/v1/dining/reservations/me -H "Authorization: Bearer $TOKEN"
 ```
 
-Las rutas de cada módulo están en `packages/fixtures/README.md` (anteponiendo el prefijo del
+Las rutas de cada módulo están en [`packages/fixtures/README.md`](../packages/fixtures/README.md) (anteponiendo el prefijo del
 Gateway, por ejemplo `/api/v1/academic/planificacion/cursos`). Las de nuestro BFF son
-`/api/v1/student/...`, según `openapi.yaml`.
+`/api/v1/student/...`, según [`openapi.yaml`](../openapi.yaml).
 
 ## 4. Casos por pantalla
 
-Las pantallas llegan por bloques (ver `plan.md`): C (Home, Calendario, Saldo,
+Las pantallas llegan por bloques (ver [`plan.md`](plan.md)): C (Home, Calendario, Saldo,
 Notificaciones), D (Inscripción, Historial, Compras) y E (detalle de cursada y de nota).
 Los datos ya están para todas. Salvo que se diga otro usuario, los casos son con `v.moreno`.
 

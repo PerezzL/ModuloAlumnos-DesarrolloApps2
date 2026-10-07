@@ -13,17 +13,17 @@ agrega información de otros módulos a través del Gateway de CORE.
 
 | Archivo | Para qué |
 | --- | --- |
-| `openapi.yaml` | Contrato front ↔ BFF. Es la fuente de verdad de la API propia. |
-| `docs/instalacion.md` | Instalación desde cero, Node vs. Docker, Prism. |
-| `docs/arquitectura.md` | Capas, Gateway, fuentes de verdad, auth, decisiones tomadas. |
-| `docs/integraciones.md` | Qué expone cada módulo externo y qué está confirmado o pendiente. |
-| `docs/integracion-real.md` | Qué tocar cuando un módulo confirma su contrato y cómo conectar al CORE real. |
-| `docs/pruebas.md` | Cómo probar en local: usuarios, fallas simuladas y casos preparados por pantalla. |
-| `packages/fixtures/README.md` | Qué son las fixtures, para qué sirven y por qué casi todas son provisionales. |
-| `docs/plan.md` | Decisiones tomadas, pasos de armado y pendientes. |
-| `docs/requisitos.md` | Los 9 requisitos funcionales (RF1–RF9). |
-| `docs/pantallas.md` | Pantallas, qué muestran y de qué endpoint salen. |
-| `docs/core/CORE_INTEGRACION.md` | Contrato de integración de CORE (auth, notificaciones, saldo, Gateway). |
+| [`openapi.yaml`](openapi.yaml) | Contrato front ↔ BFF. Es la fuente de verdad de la API propia. |
+| [`docs/instalacion.md`](docs/instalacion.md) | Instalación desde cero, Node vs. Docker, Prism. |
+| [`docs/arquitectura.md`](docs/arquitectura.md) | Capas, Gateway, fuentes de verdad, auth, decisiones tomadas. |
+| [`docs/integraciones.md`](docs/integraciones.md) | Qué expone cada módulo externo y qué está confirmado o pendiente. |
+| [`docs/integracion-real.md`](docs/integracion-real.md) | Qué tocar cuando un módulo confirma su contrato y cómo conectar al CORE real. |
+| [`docs/pruebas.md`](docs/pruebas.md) | Cómo probar en local: usuarios, fallas simuladas y casos preparados por pantalla. |
+| [`packages/fixtures/README.md`](packages/fixtures/README.md) | Qué son las fixtures, para qué sirven y por qué casi todas son provisionales. |
+| [`docs/plan.md`](docs/plan.md) | Decisiones tomadas, pasos de armado y pendientes. |
+| [`docs/requisitos.md`](docs/requisitos.md) | Los 9 requisitos funcionales (RF1–RF9). |
+| [`docs/pantallas.md`](docs/pantallas.md) | Pantallas, qué muestran y de qué endpoint salen. |
+| [`docs/core/CORE_INTEGRACION.md`](docs/core/CORE_INTEGRACION.md) | Contrato de integración de CORE (auth, notificaciones, saldo, Gateway). |
 
 ## Stack y estructura
 
@@ -31,23 +31,23 @@ agrega información de otros módulos a través del Gateway de CORE.
 - **BFF:** Node.js con TypeScript y NestJS, en `apps/bff`. Un módulo de Nest por cada módulo externo.
 - **CORE falso:** `apps/core-falso`. Hace de Gateway, auth, notificaciones, saldo y módulos
   externos en local. Es solo para desarrollo y demo.
-- **Tipos:** `packages/api-types`, generados desde `openapi.yaml` con `openapi-typescript`.
+- **Tipos:** `packages/api-types`, generados desde [`openapi.yaml`](openapi.yaml) con `openapi-typescript`.
   No se suben a git. El front los consume con `openapi-fetch`.
 - Front: React Router y TanStack Query. BFF: `fetch` nativo, `nestjs-pino`, config validada con zod.
 - Monorepo con npm workspaces. Un `Dockerfile` por app y `docker-compose.yml` en la raíz.
 - No usar los decoradores de `@nestjs/swagger` como fuente del contrato: el YAML manda.
-- El porqué de cada elección está en `docs/arquitectura.md`; los pasos de armado, en `docs/plan.md`.
+- El porqué de cada elección está en [`docs/arquitectura.md`](docs/arquitectura.md); los pasos de armado, en [`docs/plan.md`](docs/plan.md).
 
 ## Comandos
 
 | Comando | Qué hace |
 | --- | --- |
 | `npm install` | Instala todo el monorepo (Node 24, ver `.nvmrc`) |
-| `npm run gen` | Regenera `packages/api-types` desde `openapi.yaml` |
+| `npm run gen` | Regenera `packages/api-types` desde [`openapi.yaml`](openapi.yaml) |
 | `npm run verify` | `gen` → typecheck → ESLint → `redocly lint` → Vitest. **Correrlo antes de cada commit.** El CI corre lo mismo |
 | `npm test` | Solo los tests (Vitest, todos los proyectos) |
 | `npm run format` | Prettier |
-| `npm run mock` | Prism en :4010 con los ejemplos de `openapi.yaml`. Para usarlo: `STUDENT_SERVICE_URL=http://localhost:4010` |
+| `npm run mock` | Prism en :4010 con los ejemplos de [`openapi.yaml`](openapi.yaml). Para usarlo: `STUDENT_SERVICE_URL=http://localhost:4010` |
 | `npm run postman` | Exporta la colección Postman del contrato a `postman/` (fuera de git) |
 
 Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
@@ -62,7 +62,7 @@ Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
   no parsearlos, no ordenarlos numéricamente.
 
 **Contrato primero**
-- Todo cambio de API empieza en `openapi.yaml`. Después se regeneran los tipos.
+- Todo cambio de API empieza en [`openapi.yaml`](openapi.yaml). Después se regeneran los tipos.
 - Los archivos generados no se editan a mano.
 - Los campos con `x-provisional: true` dependen de un contrato externo no confirmado:
   la UI debe tolerar que vengan vacíos o null, y ninguna lógica fuera del adaptador
@@ -70,14 +70,14 @@ Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
 
 **Adaptadores**
 - Un adaptador por módulo externo. Es el único lugar que conoce la forma de la respuesta
-  de ese módulo; el resto del BFF y el frontend solo ven los modelos del `openapi.yaml`.
+  de ese módulo; el resto del BFF y el frontend solo ven los modelos del [`openapi.yaml`](openapi.yaml).
 - El BFF habla con los demás módulos únicamente por el Gateway de CORE. La URL del Gateway
   y los prefijos de ruta son configuración, no constantes en el código.
 - Cada adaptador tiene tests con fixtures: JSON de ejemplo del módulo externo → modelo propio.
   Las fixtures viven en `packages/fixtures/<modulo>/` y el CORE falso sirve las mismas;
   las que dependen de un contrato no confirmado se nombran `*.provisional.json`.
 - Si no se conoce el contrato de un módulo, no inventar nombres de campos en el código:
-  van en un fixture marcado como provisional y se registra en `docs/integraciones.md`.
+  van en un fixture marcado como provisional y se registra en [`docs/integraciones.md`](docs/integraciones.md).
 
 **Persistencia**
 - El portal no persiste inscripciones, historial, calendario ni compras. Siempre consulta en vivo.
@@ -106,7 +106,7 @@ Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
 
 **Requisitos de CORE para el BFF**
 - Exponer `GET /health/live` y `GET /health/ready`.
-- Publicar el OpenAPI actualizado (Swagger UI servido desde `openapi.yaml`).
+- Publicar el OpenAPI actualizado (Swagger UI servido desde [`openapi.yaml`](openapi.yaml)).
 - Propagar `X-Correlation-Id` en logs y en toda llamada saliente.
 - Toda URL externa (Gateway, JWKS, issuer, audience, WebSocket) es variable de entorno.
 - El BFF no guarda estado entre requests.
@@ -148,7 +148,7 @@ verde firme, amarillo provisional, rojo supuesto.
 - **Al cerrar un bloque:** mover sus tarjetas a "En revisión (PR abierto)", comentar el link
   del PR y lo que haya surgido, y crear en "Backlog" las tarjetas de trabajo nuevo.
 - **Si un módulo externo confirma o cambia algo:** comentarlo en su tarjeta de
-  "Esperando a otros módulos" además de actualizar `docs/integraciones.md`.
+  "Esperando a otros módulos" además de actualizar [`docs/integraciones.md`](docs/integraciones.md).
 
 Si tenés acceso a Trello desde tu herramienta, hacé la sincronización. Si no, avisale a la
 persona para que la haga a mano; no la des por hecha.
@@ -164,7 +164,7 @@ Límites:
 
 ## Forma de trabajo
 
-- Se trabaja por bloques grandes (ver `docs/plan.md`). Un plan por bloque, revisado con la
+- Se trabaja por bloques grandes (ver [`docs/plan.md`](docs/plan.md)). Un plan por bloque, revisado con la
   persona antes de arrancar; después se avanza sin frenar entre tarjetas.
 - Una rama `bloque/<nombre>` y un PR por bloque. Adentro, un commit por tarjeta con su código
   en el título (`T07: guard JWT`). Se mergea sin squash.
@@ -178,7 +178,7 @@ Límites:
   frenar y preguntar en lugar de asumir.
 - Los términos del dominio van en español, tal como figuran en el contrato
   (`cursada`, `inscripcion`, `comision`). No traducirlos.
-- Cuando un módulo externo confirma o cambia algo: actualizar `docs/integraciones.md`,
+- Cuando un módulo externo confirma o cambia algo: actualizar [`docs/integraciones.md`](docs/integraciones.md),
   el fixture, el adaptador y, si corresponde, quitar `x-provisional` del contrato.
-  Qué archivos y decisiones toca cada módulo: `docs/integracion-real.md`.
+  Qué archivos y decisiones toca cada módulo: [`docs/integracion-real.md`](docs/integracion-real.md).
 - Cuando el agente se equivoque en algo repetible, agregar la regla acá.
