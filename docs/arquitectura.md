@@ -62,7 +62,7 @@ Calendario, inscripción, historial y compras. Ejemplo con el calendario:
 4. El Gateway reenvía cada pedido al módulo según el prefijo.
 5. Cada módulo responde con su formato; el Gateway no transforma la respuesta.
 6. Cada adaptador traduce su respuesta al modelo propio; se unen y se marca qué fuente falló.
-7. El BFF responde un único JSON con la forma del `openapi.yaml`; el Gateway lo pasa tal cual.
+7. El BFF responde un único JSON con la forma del [`openapi.yaml`](../openapi.yaml); el Gateway lo pasa tal cual.
 8. React lo muestra.
 
 El Gateway aparece dos veces: como puerta de entrada hacia el BFF y como puerta de salida
@@ -114,7 +114,7 @@ Comportamiento:
 `/api/academica/...`) son las de cada servicio. Falta confirmar cómo quedan publicadas
 detrás del prefijo del Gateway. Mientras tanto suponemos **prefijo + recurso** (por ejemplo
 `/api/v1/store/orders/me` o `/api/v1/academic/planificacion/cursos`); la tabla completa está
-en `integraciones.md`. Backoffice sale de la sección 6 de `CORE_INTEGRACION.md`.
+en [`integraciones.md`](integraciones.md). Backoffice sale de la sección 6 de [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
 
 **El JWT sí llega al BFF.** Según el contrato de CORE, `Authorization: Bearer <jwt>` viaja
 siempre (salvo login, refresh, health y JWKS) y los headers `X-User-*` se suman a ese token,
@@ -130,7 +130,7 @@ no lo reemplazan. Por eso el BFF puede validar la firma y reenviar el token al M
 | Ruteo y datos (front) | React Router + TanStack Query |
 | HTTP, logs y config (BFF) | `fetch` nativo, `nestjs-pino`, zod |
 | Tiempo real | `socket.io-client` contra CORE |
-| Contrato | OpenAPI 3.0 (`openapi.yaml`) + Swagger UI |
+| Contrato | OpenAPI 3.0 ([`openapi.yaml`](../openapi.yaml)) + Swagger UI |
 | Contenedores | Docker + docker-compose |
 
 Base de datos (PostgreSQL) y caché (Redis) figuran en el documento como propuesta, pero
@@ -142,7 +142,7 @@ copia descartable de datos ajenos, ningún request depende de que esté, y perde
 una llamada más al módulo de origen. Redis se evalúa si aparecen varias instancias y la
 latencia lo justifica.
 
-El criterio común es un solo lenguaje (TypeScript) y un solo contrato (`openapi.yaml`) de
+El criterio común es un solo lenguaje (TypeScript) y un solo contrato ([`openapi.yaml`](../openapi.yaml)) de
 punta a punta. Las alternativas también servían; se eligió por ajuste al problema: un BFF
 sin datos propios y una SPA autenticada.
 
@@ -256,7 +256,7 @@ Responsabilidad de CORE. El portal solo es la interfaz:
 
 ## API del BFF
 
-Definida en `openapi.yaml`. Rutas relativas a `/api/v1/student` en el Gateway.
+Definida en [`openapi.yaml`](../openapi.yaml). Rutas relativas a `/api/v1/student` en el Gateway.
 
 | Endpoint | Pantalla | Se nutre de |
 | --- | --- | --- |
@@ -332,7 +332,7 @@ que hace de Gateway:
   `mock-pending` (202) para la carga pendiente, que es solo del CORE falso.
 
 Mientras un endpoint del BFF no existe, `STUDENT_SERVICE_URL` puede apuntar a **Prism**, que
-levanta un mock directo desde `openapi.yaml`. Pasar a la integración real es cambiar la URL
+levanta un mock directo desde [`openapi.yaml`](../openapi.yaml). Pasar a la integración real es cambiar la URL
 del Gateway, sin tocar código.
 
 ## Docker

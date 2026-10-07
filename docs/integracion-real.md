@@ -5,7 +5,7 @@ Qué hacer cuando el portal deja de depender del CORE falso. Tiene dos partes:
 1. **Conectar el portal al CORE real**: qué cambiar el día que CORE tenga un ambiente.
 2. **Cuando un módulo confirma su contrato**: qué tocar, módulo por módulo.
 
-El estado de cada contrato (qué está confirmado y qué no) vive en `integraciones.md`; este
+El estado de cada contrato (qué está confirmado y qué no) vive en [`integraciones.md`](integraciones.md); este
 archivo dice **qué hacer** con cada novedad. Si una confirmación cambia algo de acá, se
 actualizan los dos.
 
@@ -24,7 +24,7 @@ Todo esto está pendiente (tarjeta "[CORE] Dominio de los portales…" en Trello
 | Dominio bajo el que se sirven los portales (por la cookie de refresh) | _pendiente_ |
 | Si el Gateway espera una URL pública del BFF o una red compartida | _pendiente_ |
 | Usuarios de prueba en su ambiente | _pendiente_ |
-| Prefijo y rutas de cada módulo detrás del Gateway | _pendiente_ (hoy usamos la suposición de `integraciones.md`) |
+| Prefijo y rutas de cada módulo detrás del Gateway | _pendiente_ (hoy usamos la suposición de [`integraciones.md`](integraciones.md)) |
 
 ### Variables que cambian
 
@@ -64,7 +64,7 @@ con las variables de la tabla anterior.
   de hosting que apagan el servicio por inactividad.
 - **Cookie de refresh:** es `SameSite=Lax` y la define CORE. Si el front no queda bajo el
   mismo sitio que CORE, la sesión se pierde al recargar. Plan B: una regla de reescritura en
-  el hosting del front para login, refresh y logout (ver `arquitectura.md`, "Despliegue").
+  el hosting del front para login, refresh y logout (ver [`arquitectura.md`](arquitectura.md), "Despliegue").
 
 ### Lo que deja de existir
 
@@ -78,7 +78,7 @@ con las variables de la tabla anterior.
 ### Cómo verificar
 
 Recorrer la tarjeta "[Integración] CORE" de Trello y la sección 14 de
-`core/CORE_INTEGRACION.md`. Como mínimo:
+[`core/CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md). Como mínimo:
 
 - [ ] `GET /health/live` y `GET /health/ready` del BFF responden.
 - [ ] Login con un usuario de CORE y entrada al Home.
@@ -107,22 +107,22 @@ módulo confía en los headers `X-User-*` del Gateway.
 
 ### Pasos comunes
 
-1. **Registrar:** actualizar `integraciones.md` (estado y detalle) y comentar en la tarjeta
+1. **Registrar:** actualizar [`integraciones.md`](integraciones.md) (estado y detalle) y comentar en la tarjeta
    del módulo en "Esperando a otros módulos".
 2. **Rama:** una rama y un PR por integración, con la misma forma de trabajo de los bloques
-   (`AGENTS.md`).
+   ([`AGENTS.md`](../AGENTS.md)).
 3. **Fixture primero:** corregirla con la respuesta real y quitarle `.provisional` del
    nombre. Actualizar las referencias en el CORE falso y en los tests
    (`grep -r "<nombre-de-la-fixture>"`).
 4. **Tipo de origen:** ajustar el `*.origen.ts` del adaptador (el schema zod de lo que manda
    el módulo).
 5. **Mapper:** ajustar el `*.mapper.ts` hasta que pase su `*.mapper.test.ts`.
-6. **Contrato:** si se confirma un campo marcado `x-provisional` en `openapi.yaml`, quitarle
+6. **Contrato:** si se confirma un campo marcado `x-provisional` en [`openapi.yaml`](../openapi.yaml), quitarle
    la marca y correr `npm run gen`. Si nuestro modelo tiene que cambiar, el cambio empieza
-   en `openapi.yaml`.
-7. **Decisiones:** revisar las decisiones de `plan.md` que dependían de la suposición (ver
+   en [`openapi.yaml`](../openapi.yaml).
+7. **Decisiones:** revisar las decisiones de [`plan.md`](plan.md) que dependían de la suposición (ver
    cada ficha).
-8. **Casos de prueba:** si cambian datos, actualizar `pruebas.md` y `demo-guide.md`.
+8. **Casos de prueba:** si cambian datos, actualizar [`pruebas.md`](pruebas.md) y [`demo-guide.md`](demo-guide.md).
 9. `npm run verify` y probar contra el CORE falso; si el módulo ya está disponible, también
    con el modo intermedio.
 10. **Trello:** al cerrar, la tarjeta de "Integración real" del módulo pasa a revisión.
@@ -141,8 +141,8 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | Falta confirmar | Su `contracts/openapi.yaml`: forma de `GET /api/v1/wallets/me`, del ítem de notificación, los `code` de idempotencia y del 502; rutas detrás del Gateway |
 | Fixtures | `packages/fixtures/core/` (`wallet-me`, `transacciones`, `notificaciones`, todas provisionales) |
 | Código | Front: `apps/web/src/core/` (`saldo.ts`, `notificaciones.ts`, `cargaSaldo.ts`). Errores del Gateway: `apps/bff/src/gateway/gateway.client.ts`, `apps/bff/src/modulos/comun.ts` y `apps/web/src/api/errores.ts` (`UPSTREAM_INVALID` es supuesto). CORE falso: `saldo.ts`, `notificaciones.ts`, `gateway.ts` |
-| Contrato | No toca `openapi.yaml`: el front consume a CORE directo |
-| Si cambian las rutas | Actualizar la tabla "Rutas detrás del Gateway" de `integraciones.md`, los `PREFIJO_*` (`.env.example`, `docker-compose.yml`) y el CORE falso |
+| Contrato | No toca [`openapi.yaml`](../openapi.yaml): el front consume a CORE directo |
+| Si cambian las rutas | Actualizar la tabla "Rutas detrás del Gateway" de [`integraciones.md`](integraciones.md), los `PREFIJO_*` (`.env.example`, `docker-compose.yml`) y el CORE falso |
 | Trello | "[CORE] Pedir contracts/openapi.yaml…" (Backlog) e "[Integración] CORE" |
 
 #### Módulo 2 — Docente
@@ -155,7 +155,7 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | Front | `apps/web/src/notificaciones/destino.ts` (único lugar que conoce el `actionUrl`); `apps/web/src/cursadas/IndicadorFaltas.tsx` (umbral de la alerta) |
 | Contrato | `Asistencia`, `NotaResumen`, `InstanciaExamen`, `ResultadoExamen` y `NotaDetalle`: suposición nuestra; es lo más probable que cambie |
 | Decisiones | **12**: el `examId` del `actionUrl` es el `notaId`; un 404 del Módulo 2 cuenta como falla de `DOCENTE`; asistencia y notas fallan por separado; alerta con 1 o 0 faltas restantes |
-| Pruebas y demo | `pruebas.md` "Detalle de cursada y de nota"; `demo-guide.md` pasos 6 y 7 |
+| Pruebas y demo | [`pruebas.md`](pruebas.md) "Detalle de cursada y de nota"; [`demo-guide.md`](demo-guide.md) pasos 6 y 7 |
 | Trello | "[Módulo 2 · Docente]…", "[Módulos 2 y 9] Fuente única de la nota final" e "[Integración] Módulo 2" |
 
 #### Módulo 3 — Biblioteca
@@ -174,7 +174,7 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | Falta confirmar | Hora del turno en `slot.date`, campos de `slot` y `campus`, ruta definitiva |
 | Fixtures | `packages/fixtures/dining/reservations-me.provisional.json`, `reservations-me-vacio.provisional.json` |
 | Adaptador | `apps/bff/src/modulos/comedor/`. Si llega la hora, el mapper deja de marcar los turnos con `todoElDia` |
-| Pruebas y demo | `pruebas.md` "Calendario" (hoy "todo el día"); `demo-guide.md` paso 4 |
+| Pruebas y demo | [`pruebas.md`](pruebas.md) "Calendario" (hoy "todo el día"); [`demo-guide.md`](demo-guide.md) paso 4 |
 | Trello | "[Módulo 4 · Comedor]…" e "[Integración] Módulo 4" |
 
 #### Módulo 5 — Tienda
@@ -205,7 +205,7 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | Adaptador | `apps/bff/src/modulos/backoffice/`. Lo usan `apps/bff/src/perfil/` y `apps/bff/src/inscripcion/` (para el `planId`) |
 | Contrato | `Perfil`: `nombre`, `apellido`, `legajo`, `carrera`, `planId` (`x-provisional`) |
 | Decisiones | **11**: oferta sin filtrar por plan si no hay `planId` (`filtradaPorPlan`, en `apps/bff/src/inscripcion/oferta.ts`). Si Backoffice lo trae siempre, revisar si el caso sigue haciendo falta |
-| Pruebas y demo | `pruebas.md` "Home y perfil" e "Inscripción" (caso "Sin plan" con `j.perez`); `demo-guide.md` pasos 3 y 5 |
+| Pruebas y demo | [`pruebas.md`](pruebas.md) "Home y perfil" e "Inscripción" (caso "Sin plan" con `j.perez`); [`demo-guide.md`](demo-guide.md) pasos 3 y 5 |
 | Trello | "[Módulo 8 · Backoffice]…" e "[Integración] Módulo 8" |
 
 #### Módulo 9 — Gestión Académica
@@ -218,5 +218,5 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | Contrato | `Comision.sede`, `Comision.horarios`, `ProblemaInscripcion.code` (`x-provisional`) |
 | Decisiones | **11** (filtro por plan) |
 | Pendiente propio | T16 (Backlog): simular `SIN_REGULARIDAD` y `FUERA_DE_FECHA` en el CORE falso; conviene hacerlo con los códigos reales |
-| Pruebas y demo | `pruebas.md` "Inscripción" e "Historial"; `demo-guide.md` pasos 5 y 6 |
+| Pruebas y demo | [`pruebas.md`](pruebas.md) "Inscripción" e "Historial"; [`demo-guide.md`](demo-guide.md) pasos 5 y 6 |
 | Trello | "[Módulo 9 · Gestión Académica]…", "[Módulos 2 y 9] Fuente única de la nota final" e "[Integración] Módulo 9" |

@@ -5,7 +5,7 @@ requisitos funcionales, una falla parcial y una notificación en tiempo real, to
 CORE falso. Dura unos 20 minutos; los pasos marcados como *opcional* se saltean si falta tiempo.
 
 Esta guía es un recorrido. El catálogo completo de casos, usuarios y fallas está en
-`pruebas.md`; cómo instalar, en `instalacion.md`.
+[`pruebas.md`](pruebas.md); cómo instalar, en [`instalacion.md`](instalacion.md).
 
 ## Qué se demuestra
 
@@ -30,7 +30,7 @@ Esta guía es un recorrido. El catálogo completo de casos, usuarios y fallas es
       repo y correr `docker compose up --build`. Tiene que levantar sin pasos extra.
 - [ ] Recorrer esta guía completa una vez y anotar lo que no salga como dice.
 - [ ] Revisar la fecha: los datos están armados alrededor del 4 de octubre de 2026 y la
-      inscripción al 1° cuatrimestre de 2027 cierra el 19/12/2026 (ver `pruebas.md`, sección 5).
+      inscripción al 1° cuatrimestre de 2027 cierra el 19/12/2026 (ver [`pruebas.md`](pruebas.md), sección 5).
 
 ### Diez minutos antes
 
@@ -56,7 +56,7 @@ datos iniciales (inscripciones, notificaciones, saldo y fallas), sin reiniciar n
 
 ### 1. Arquitectura en un minuto
 
-Qué contar, sin pantalla o con el diagrama de `arquitectura.md`:
+Qué contar, sin pantalla o con el diagrama de [`arquitectura.md`](arquitectura.md):
 
 - El portal **no es dueño de datos**: consulta en vivo a los módulos 2, 4, 5, 6, 8 y 9.
 - El navegador solo conoce el **Gateway de CORE**. Hay tres caminos:
@@ -206,13 +206,13 @@ no cobra dos veces. La lógica del saldo es de CORE; el portal solo la usa.
 
 Elegir según el tiempo y el público:
 
-- **Contrato primero:** `openapi.yaml` es la fuente de verdad; los tipos del front y del BFF
+- **Contrato primero:** [`openapi.yaml`](../openapi.yaml) es la fuente de verdad; los tipos del front y del BFF
   se generan desde ahí. Swagger UI del BFF en http://localhost:3000/docs.
 - **Trazabilidad:** en `docker compose logs bff`, cada pedido lleva su `X-Correlation-Id`,
   que se propaga a todas las llamadas a otros módulos.
 - **Calidad:** `npm run verify` (tipos, ESLint, lint del contrato y tests) corre en cada PR;
   las respuestas del BFF se validan contra el contrato en los tests.
-- **Integraciones:** `integraciones.md` dice qué está confirmado y qué es suposición; las
+- **Integraciones:** [`integraciones.md`](integraciones.md) dice qué está confirmado y qué es suposición; las
   fixtures `*.provisional.json` marcan lo no confirmado.
 
 Cerrar con **Cerrar sesión** y volver atrás con el navegador: pide login y no muestra datos.
@@ -224,8 +224,8 @@ Cerrar con **Cerrar sesión** y volver atrás con el navegador: pide login y no 
 | Datos en un estado raro (inscripciones, saldo, fallas que quedaron puestas) | `curl -X POST localhost:4000/__falso/reset` y recargar |
 | Una pantalla queda con error después de quitar una falla | Reintentar desde la pantalla o recargar |
 | La notificación no llega por el socket | Recargar: al conectar se piden por REST |
-| La inscripción figura cerrada | La fecha de la máquina pasó del 19/12/2026: ajustar las fixtures (`pruebas.md`, sección 5) |
-| Docker no levanta en la máquina de la demo | Plan B con Node: `npm install`, `cp .env.example .env`, `npm run dev` (ver `instalacion.md`) |
+| La inscripción figura cerrada | La fecha de la máquina pasó del 19/12/2026: ajustar las fixtures ([`pruebas.md`](pruebas.md), sección 5) |
+| Docker no levanta en la máquina de la demo | Plan B con Node: `npm install`, `cp .env.example .env`, `npm run dev` (ver [`instalacion.md`](instalacion.md)) |
 
 ## Preguntas que pueden hacer
 
@@ -233,8 +233,8 @@ Cerrar con **Cerrar sesión** y volver atrás con el navegador: pide login y no 
   (`GATEWAY_URL`, JWKS, issuer, prefijos) y, por cada módulo que confirme su contrato, se
   ajustan su fixture y su adaptador. El resto del BFF y el front no se tocan.
 - **¿Por qué un BFF?** Para agregar y traducir en un solo lugar (calendario, oferta con
-  correlatividades) y que el front solo vea modelos propios. Ver `arquitectura.md`.
+  correlatividades) y que el front solo vea modelos propios. Ver [`arquitectura.md`](arquitectura.md).
 - **¿Por qué las notificaciones y el saldo no pasan por el BFF?** Son contratos de CORE que
   el front consume directo; pasar por el BFF solo agregaría un salto.
-- **¿Qué falta?** La integración real (ver `integraciones.md`, "Lo más urgente") y el
+- **¿Qué falta?** La integración real (ver [`integraciones.md`](integraciones.md), "Lo más urgente") y el
   despliegue, que depende de que CORE defina el dominio de los portales.

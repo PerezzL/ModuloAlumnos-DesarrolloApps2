@@ -2,8 +2,8 @@
 
 Extraído del documento técnico v4.1 (1 de octubre de 2026).
 **Este archivo se actualiza primero cada vez que un módulo confirma o cambia algo.**
-Qué tocar después (fixtures, adaptador, contrato, decisiones), módulo por módulo: `integracion-real.md`.
-Las respuestas de ejemplo de cada módulo están en `packages/fixtures/`; su `README.md`
+Qué tocar después (fixtures, adaptador, contrato, decisiones), módulo por módulo: [`integracion-real.md`](integracion-real.md).
+Las respuestas de ejemplo de cada módulo están en `packages/fixtures/`; su [`README.md`](../README.md)
 explica qué son y cuándo dejan de ser provisionales.
 
 Estados: **Resuelto / Confirmado** (contrato firme) · **Implementado** (ya disponible) ·
@@ -29,7 +29,7 @@ rutas son configuración; el CORE falso y las fixtures (`packages/fixtures/`) si
 | 8 | `GET /api/v1/backoffice/users/{userId}` | `/api/v1/backoffice/users/{userId}` |
 | 9 | `/api/planificacion/...` · `/api/academica/...` | `/api/v1/academic/planificacion/...` · `/api/v1/academic/academica/...` |
 
-Backoffice usa el prefijo `/api/v1/backoffice/*` de la sección 6 de `CORE_INTEGRACION.md`.
+Backoffice usa el prefijo `/api/v1/backoffice/*` de la sección 6 de [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
 
 Códigos de error del Gateway que usa el CORE falso: 503 `UPSTREAM_UNAVAILABLE` y 504
 `UPSTREAM_TIMEOUT` (este último, suposición); para el 502 CORE no publica el `code` y usamos
@@ -37,7 +37,7 @@ Códigos de error del Gateway que usa el CORE falso: 503 `UPSTREAM_UNAVAILABLE` 
 
 ## CORE — Resuelto
 
-Contrato completo en `docs/core/CORE_INTEGRACION.md`.
+Contrato completo en [`docs/core/CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
 
 - Auth: `POST /api/v1/auth/login`, `/auth/refresh`, `/auth/logout`, `GET /api/v1/auth/me`,
   `GET /.well-known/jwks.json`.
@@ -45,12 +45,12 @@ Contrato completo en `docs/core/CORE_INTEGRACION.md`.
   `PATCH /api/v1/notifications/{id}`, `POST /api/v1/notifications/read-all`.
 - Saldo: `GET /api/v1/wallets/me`, `GET /api/v1/wallets/me/transactions`,
   `POST /api/v1/wallets/me/top-ups`.
-- Gateway: prefijos, headers inyectados y errores (ver `arquitectura.md`).
+- Gateway: prefijos, headers inyectados y errores (ver [`arquitectura.md`](arquitectura.md)).
 - Id del alumno: claim `sub`, el mismo en todos los módulos.
 - `store.purchase.completed.v1` no se enruta a los portales.
 - No expone un endpoint de calendario agregado.
 
-Lo que no figura en `CORE_INTEGRACION.md` y suponemos en el CORE falso (fixtures en
+Lo que no figura en [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md) y suponemos en el CORE falso (fixtures en
 `packages/fixtures/core/`, todas provisionales, hasta tener el `contracts/openapi.yaml` de CORE):
 
 | Tema | Suposición |
@@ -97,7 +97,7 @@ Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/d
   `EXAM_RESULT_PUBLISHED`.
 - La notificación no trae el detalle completo del examen: para la página de detalle hay que
   consultar la API del Módulo 2 con los identificadores del `actionUrl`.
-- **Los schemas `Asistencia`, `NotaResumen` y `NotaDetalle` del `openapi.yaml` son una
+- **Los schemas `Asistencia`, `NotaResumen` y `NotaDetalle` del [`openapi.yaml`](../openapi.yaml) son una
   suposición nuestra.** No hay contrato del Módulo 2.
 - Las fixtures (`teacher/*.provisional.json`) y las rutas del CORE falso siguen esa
   suposición. Rutas supuestas, detrás de `PREFIJO_DOCENTE`:
@@ -313,7 +313,7 @@ tenemos sus respuestas, así que todas son provisionales. Suposiciones:
   `notaFinal`, `estado`, `fecha`.
 - POST de inscripción: 201 `{ id, cursoId, alumnoId, estado, fecha }`
   (`academic/inscripcion-creada.provisional.json`). Los rechazos son 409 problem+json con los
-  `code` de nuestro `openapi.yaml` (`YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE` con
+  `code` de nuestro [`openapi.yaml`](../openapi.yaml) (`YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE` con
   `correlativasFaltantes`, `SIN_REGULARIDAD`, `FUERA_DE_FECHA`), uno por motivo en
   `academic/inscripcion-rechazos.provisional.json`. El CORE falso no simula
   `SIN_REGULARIDAD` ni `FUERA_DE_FECHA`.
