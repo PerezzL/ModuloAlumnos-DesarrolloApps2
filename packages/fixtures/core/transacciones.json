@@ -9,7 +9,7 @@
       "currency": "ARS",
       "balanceAfter": "13500.00",
       "externalReference": "reservation/1",
-      "description": "Reserva de comedor",
+      "originalTransactionId": null,
       "createdAt": "2026-10-01T12:30:05.000Z"
     },
     {
@@ -21,7 +21,7 @@
       "currency": "ARS",
       "balanceAfter": "16000.00",
       "externalReference": "purchase/93b28f67-e111-4a0d-b857-fdd015c4d3f1",
-      "description": "Compra en la tienda",
+      "originalTransactionId": null,
       "createdAt": "2026-09-28T16:20:10.000Z"
     },
     {
@@ -33,7 +33,7 @@
       "currency": "ARS",
       "balanceAfter": "19500.00",
       "externalReference": "penalty/4b3c2d1e-0f9a-4b8c-9d7e-6f5a4b3c2d1e",
-      "description": "Multa de biblioteca",
+      "originalTransactionId": null,
       "createdAt": "2026-09-20T12:59:00.000Z"
     },
     {
@@ -44,8 +44,8 @@
       "amount": "15000.00",
       "currency": "ARS",
       "balanceAfter": "22000.00",
-      "externalReference": null,
-      "description": "Carga de saldo",
+      "externalReference": "top-up/2e3f4a5b-6c7d-4e8f-a09b-0c1d2e3f4a5b",
+      "originalTransactionId": null,
       "createdAt": "2026-09-15T18:45:00.000Z"
     },
     {
@@ -57,7 +57,7 @@
       "currency": "ARS",
       "balanceAfter": "7000.00",
       "externalReference": "purchase/1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
-      "description": "Compra en la tienda",
+      "originalTransactionId": null,
       "createdAt": "2026-09-10T13:05:10.000Z"
     },
     {
@@ -68,8 +68,8 @@
       "amount": "5000.00",
       "currency": "ARS",
       "balanceAfter": "25000.00",
-      "externalReference": null,
-      "description": "Carga de saldo",
+      "externalReference": "top-up/1d2e3f4a-5b6c-4d7e-9f8a-9b0c1d2e3f4a",
+      "originalTransactionId": null,
       "createdAt": "2026-08-22T14:30:00.000Z"
     },
     {
@@ -80,8 +80,8 @@
       "amount": "20000.00",
       "currency": "ARS",
       "balanceAfter": "20000.00",
-      "externalReference": null,
-      "description": "Beca de ayuda económica",
+      "externalReference": "scholarship/0c1d2e3f-4a5b-4c6d-8e7f-8a9b0c1d2e3f",
+      "originalTransactionId": null,
       "createdAt": "2026-08-01T12:00:00.000Z"
     }
   ],

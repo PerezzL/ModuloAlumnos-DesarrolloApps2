@@ -10,15 +10,19 @@ Estados: **Resuelto / Confirmado** (contrato firme) · **Implementado** (ya disp
 **Comprometido** (acordado, todavía no disponible; se mockea) · **Propuesto** ·
 **Pedido** · **Pendiente**.
 
-Las rutas de los módulos 5, 8 y 9 son las de cada servicio; falta confirmar cómo
-quedan detrás del prefijo del Gateway (ver abajo la suposición que usamos).
+Las rutas de los módulos 5, 8 y 9 son las de cada servicio; falta que confirmen que las
+sirven bajo `/api/v1`, que es adonde las manda el Gateway (ver abajo).
 
-## Rutas detrás del Gateway — Suposición nuestra
+## Rutas detrás del Gateway
 
-Mientras no se confirme, usamos **prefijo del Gateway + recurso**: se quita la base propia
-del servicio (`/api`, `/api/v1`, `/api/store`) y se conserva el resto. El Gateway reescribe el
-prefijo a `/api/v1`, así que el módulo recibe `/api/v1/{recurso}`. En el BFF, prefijos y
-rutas son configuración; el CORE falso y las fixtures (`packages/fixtures/`) siguen esta tabla.
+**Confirmado por el OpenAPI de CORE:** el Gateway recibe `/api/v1/{module}/{rest}` y lo reenvía
+a `/api/v1/{rest}` del módulo, con el mismo método, query y cuerpo, y devuelve la respuesta sin
+tocarla. Los `module` registrados son `student`, `teacher`, `library`, `dining`, `store`,
+`events`, `analytics`, `backoffice` y `academic`: los mismos prefijos que usamos.
+
+**Suposición nuestra:** cada módulo quita su base propia (`/api`, `/api/store`) y sirve el resto
+bajo `/api/v1`. En el BFF, prefijos y rutas son configuración; el CORE falso y las fixtures
+(`packages/fixtures/`) siguen esta tabla.
 
 | Módulo | Ruta informada por el módulo | Ruta pública que usamos |
 | --- | --- | --- |
@@ -31,13 +35,25 @@ rutas son configuración; el CORE falso y las fixtures (`packages/fixtures/`) si
 
 Backoffice usa el prefijo `/api/v1/backoffice/*` de la sección 6 de [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
 
-Códigos de error del Gateway que usa el CORE falso: 503 `UPSTREAM_UNAVAILABLE` y 504
-`UPSTREAM_TIMEOUT` (este último, suposición); para el 502 CORE no publica el `code` y usamos
-`UPSTREAM_INVALID`, igual que el BFF.
+Errores del Gateway (OpenAPI de CORE), que el CORE falso reproduce:
+
+| Status | `code` | Cuándo |
+| --- | --- | --- |
+| 404 | `GATEWAY_ROUTE_NOT_FOUND` | `module` desconocido |
+| 502 | `GATEWAY_UPSTREAM_FAILURE` | Falló la conexión con el módulo |
+| 503 | `GATEWAY_UPSTREAM_UNCONFIGURED` · `GATEWAY_CIRCUIT_OPEN` | Módulo sin configurar, o circuito abierto (30 s después de cinco fallas seguidas) |
+| 504 | `GATEWAY_UPSTREAM_FAILURE` | El módulo tardó más de 10 s |
+
+El BFF decide por status y responde con nuestros códigos (`UPSTREAM_UNAVAILABLE`,
+`UPSTREAM_INVALID`, `UPSTREAM_TIMEOUT`) de [`openapi.yaml`](../openapi.yaml). Ojo: en el CORE real
+un módulo caído da 502 hasta que se abre el circuito, y recién ahí 503; el BFF lo informa como
+respuesta inválida. El CORE falso simula un módulo caído siempre como 503.
 
 ## CORE — Resuelto
 
-Contrato completo en [`docs/core/CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
+Contrato completo en [`docs/core/CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md) y en su OpenAPI
+publicado: <https://core-api-production-e458.up.railway.app/docs-json> (Swagger UI en `/docs`). Ese JSON manda sobre las formas de
+las respuestas; no guardamos una copia.
 
 - Auth: `POST /api/v1/auth/login`, `/auth/refresh`, `/auth/logout`, `GET /api/v1/auth/me`,
   `GET /.well-known/jwks.json`.
@@ -50,22 +66,26 @@ Contrato completo en [`docs/core/CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md)
 - `store.purchase.completed.v1` no se enruta a los portales.
 - No expone un endpoint de calendario agregado.
 
-Lo que no figura en [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md) y suponemos en el CORE falso (fixtures en
-`packages/fixtures/core/`, todas provisionales, hasta tener el `contracts/openapi.yaml` de CORE):
+Confirmado por el OpenAPI (fixtures `core/wallet-me.json` y `core/transacciones.json`):
+
+| Tema | Forma |
+| --- | --- |
+| `GET /api/v1/wallets/me` | `{ walletId, userId, balance, currency, updatedAt }` |
+| Ítem de `/wallets/me/transactions` | `transactionId, status, type, concept, amount, currency, balanceAfter, externalReference, originalTransactionId, createdAt`; sin `description` (el front muestra el nombre del `concept`) |
+| Ítem de `/notifications` (y del socket) | `id, userId, type, title, message, actionUrl, sourceModule, sourceReference, readAt, expiresAt, createdAt`. Leída es `readAt` no null; el `PATCH` recibe `{ read }` |
+| `PATCH /notifications/{id}` | Devuelve la notificación; 404 `NOTIFICATION_NOT_FOUND` si es de otro usuario |
+| Carga sin `Idempotency-Key` | 400 `IDEMPOTENCY_KEY_REQUIRED` |
+| Misma key con otro cuerpo | 409 `IDEMPOTENCY_CONFLICT` |
+| Carga | Siempre 201 con el movimiento: `mock-approved` → `POSTED`, `mock-pending` → `PENDING` (no hay 202); `mock-rejected` → 422 `WALLET_TOPUP_REJECTED` |
+
+Pendiente (la fixture `core/notificaciones.provisional.json` sigue provisional por esto):
 
 | Tema | Suposición |
 | --- | --- |
-| `GET /api/v1/wallets/me` | `{ userId, balance, currency }` |
-| Ítem de `/wallets/me/transactions` | La respuesta del débito de la sección 7.3 más `description` |
-| Ítem de `/notifications` (y del socket) | Campos del `POST /internal/v1/notifications` más `id`, `read`, `createdAt`; sin `userId` |
-| `PATCH /notifications/{id}` | Devuelve la notificación actualizada; 404 si es de otro usuario |
-| Carga sin `Idempotency-Key` | 400 `IDEMPOTENCY_KEY_REQUIRED` |
-| Misma key con otro cuerpo | 409 `IDEMPOTENCY_KEY_CONFLICT` (CORE solo dice "409 conflicto de idempotencia") |
-| Carga pendiente | Token `mock-pending` → 202 `PENDING`. Es extensión nuestra: CORE solo nombra `mock-approved` y `mock-rejected` |
-| Respuesta de la carga aprobada | La misma forma que un movimiento, con `concept: TOP_UP` |
 | `actionUrl` de `EXAM_RESULT_PUBLISHED` | `/teacher/courses/{courseId}/exams/{examId}` (pendiente con el Módulo 2) |
 | `actionUrl` de `LIBRARY_PENALTY_APPLIED` | `/library/{loanId}/penalty` (pendiente con el Módulo 3) |
 | `actionUrl` de `EVENT_REMINDER` | `/events/{eventoId}`, relativa (ejemplo de la sección 8.1) |
+| Paginación de `/notifications` | El OpenAPI solo documenta `read` y devuelve `nextCursor`; seguimos mandando `limit` y `cursor` |
 
 Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/destino.ts`, el
 único lugar que conoce su formato):

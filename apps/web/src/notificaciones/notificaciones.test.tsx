@@ -21,7 +21,7 @@ const nueva = {
   title: 'Se publicó tu nota de Física I',
   message: '2do parcial: 9 (aprobado)',
   actionUrl: '/teacher/courses/curso-fis1/exams/exam-p2',
-  read: false,
+  readAt: null as string | null,
   createdAt: '2026-10-04T15:00:00.000Z',
 };
 
@@ -56,7 +56,7 @@ describe('centro de notificaciones (H21)', () => {
       ...nueva,
       id: `n-${i}`,
       title: `Notificación ${i}`,
-      read: true,
+      readAt: '2026-10-05T10:00:00.000Z',
     }));
     renderApp('/notificaciones');
     expect(await screen.findAllByRole('listitem')).toHaveLength(10);
@@ -68,7 +68,7 @@ describe('centro de notificaciones (H21)', () => {
 describe('contador de no leídas (H22)', () => {
   it('sin no leídas no hay badge', async () => {
     reiniciarCore(true);
-    for (const n of notificaciones.items) n.read = true;
+    for (const n of notificaciones.items) n.readAt = '2026-10-05T10:00:00.000Z';
     renderApp('/');
     expect(await screen.findByRole('button', { name: /^notificaciones$/i })).toBeInTheDocument();
   });
@@ -149,14 +149,16 @@ describe('marcar como leídas (H25)', () => {
     expect(
       await screen.findByRole('button', { name: /notificaciones, 1 sin leer/i }),
     ).toBeInTheDocument();
-    expect(notificaciones.items.find((n) => n.id === 'n-sancion')?.read).toBe(true);
+    expect(notificaciones.items.find((n) => n.id === 'n-sancion')?.readAt).toEqual(
+      expect.any(String),
+    );
   });
 
   it('"marcar todas como leídas" deja el contador en cero', async () => {
     const { panel, user } = await abrirPanel();
     await user.click(within(panel).getByRole('button', { name: /marcar todas/i }));
     expect(await screen.findByRole('button', { name: /^notificaciones$/i })).toBeInTheDocument();
-    expect(notificaciones.items.every((n) => n.read)).toBe(true);
+    expect(notificaciones.items.every((n) => n.readAt != null)).toBe(true);
   });
 
   it('si CORE responde con error, se revierte y se avisa', async () => {
@@ -189,7 +191,7 @@ describe('destino al tocar una notificación (H26, H28, H29)', () => {
     notificaciones.items = [{ ...nueva, actionUrl: 'https://otro-sitio.test/x' }];
     const { router } = renderApp('/notificaciones');
     await userEvent.click(await screen.findByRole('button', { name: /física i/i }));
-    await waitFor(() => expect(notificaciones.items[0]?.read).toBe(true));
+    await waitFor(() => expect(notificaciones.items[0]?.readAt).toEqual(expect.any(String)));
     expect(router.state.location.pathname).toBe('/notificaciones');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

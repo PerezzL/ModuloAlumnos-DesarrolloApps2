@@ -96,8 +96,8 @@ Cuando un módulo confirma o cambia su respuesta:
 | `teacher/asistencia.provisional.json` | `GET /api/v1/cursos/{cursoId}/alumnos/{alumnoId}/asistencia`, por curso |
 | `teacher/notas.provisional.json` | `GET /api/v1/cursos/{cursoId}/alumnos/{alumnoId}/notas`, por curso |
 | `core/notificaciones.provisional.json` | Semilla de `GET /api/v1/notifications` |
-| `core/wallet-me.provisional.json` | `GET /api/v1/wallets/me` |
-| `core/transacciones.provisional.json` | Semilla de `GET /api/v1/wallets/me/transactions` |
+| `core/wallet-me.json` | `GET /api/v1/wallets/me` |
+| `core/transacciones.json` | Semilla de `GET /api/v1/wallets/me/transactions` |
 
 Las "semillas" son el estado inicial: el CORE falso las carga en memoria al arrancar y
 después cambian (una notificación nueva, una carga de saldo). `POST /__falso/reset` vuelve

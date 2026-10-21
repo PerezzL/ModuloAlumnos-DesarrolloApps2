@@ -45,9 +45,9 @@ curl -X PUT localhost:4000/__falso/fallas/dining -H 'content-type: application/j
 
 | `tipo` | Qué devuelve el Gateway para ese módulo |
 | --- | --- |
-| `caido` | 503 `UPSTREAM_UNAVAILABLE` |
-| `invalido` | 502 `UPSTREAM_INVALID` |
-| `lento` | 504 `UPSTREAM_TIMEOUT` a los 10 s |
+| `caido` | 503 `GATEWAY_CIRCUIT_OPEN` |
+| `invalido` | 502 `GATEWAY_UPSTREAM_FAILURE` |
+| `lento` | 504 `GATEWAY_UPSTREAM_FAILURE` a los 10 s |
 | `lento` con `"demoraMs": 3000` | Responde bien, 3 s tarde (para ver los estados de carga) |
 
 | Módulo | Qué alimenta |
@@ -81,9 +81,9 @@ El `paymentMethodToken` decide el resultado (no se aceptan números de tarjeta):
 
 | Token | Resultado |
 | --- | --- |
-| `mock-approved` | 201, acredita |
+| `mock-approved` | 201 `POSTED`, acredita |
 | `mock-rejected` | 422 `WALLET_TOPUP_REJECTED`, no acredita |
-| `mock-pending` | 202 `PENDING`, no acredita y nunca se resuelve. Existe solo en el CORE falso |
+| `mock-pending` | 201 `PENDING`, no acredita y nunca se resuelve |
 
 ### Probar sin pantallas
 

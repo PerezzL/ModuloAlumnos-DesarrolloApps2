@@ -36,9 +36,11 @@ describe('Saldo', () => {
   it('saldo y movimientos del alumno; el saldo cierra con el último movimiento', async () => {
     const wallet = (await get('/api/v1/wallets/me')).body;
     expect(wallet).toEqual({
+      walletId: '6d0f5c2e-8b3a-4f1d-9e7c-2a4b6c8d0e1f',
       userId: 'ba310c57-a684-4dbf-a4a4-905fcfbefa08',
       balance: '13500.00',
       currency: 'ARS',
+      updatedAt: '2026-10-01T12:30:05.000Z',
     });
     const { items } = (await get('/api/v1/wallets/me/transactions')).body;
     expect(items).toHaveLength(7);
@@ -87,7 +89,7 @@ describe('Saldo', () => {
     await cargar(aprobada, clave).expect(201);
     const res = await cargar({ ...aprobada, amount: '1.00' }, clave);
     expect(res.status).toBe(409);
-    expect(JSON.parse(res.text).code).toBe('IDEMPOTENCY_KEY_CONFLICT');
+    expect(JSON.parse(res.text).code).toBe('IDEMPOTENCY_CONFLICT');
   });
 
   it('la misma key de otro alumno no choca', async () => {
@@ -108,9 +110,9 @@ describe('Saldo', () => {
     expect(await saldo()).toBe('13500.00');
   });
 
-  it('pendiente → 202 PENDING, sin acreditar', async () => {
+  it('pendiente → 201 PENDING, sin acreditar', async () => {
     const res = await cargar({ ...aprobada, paymentMethodToken: 'mock-pending' });
-    expect(res.status).toBe(202);
+    expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ status: 'PENDING', amount: '5000.00' });
     expect(await saldo()).toBe('13500.00');
   });

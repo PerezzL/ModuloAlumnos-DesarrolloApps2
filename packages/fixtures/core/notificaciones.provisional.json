@@ -1,38 +1,41 @@
 [
   {
     "id": "2f6d1a3b-9c8e-4d7f-a1b2-c3d4e5f6a7b8",
+    "userId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
     "type": "EXAM_RESULT_PUBLISHED",
     "title": "Se publicó tu nota de Bases de Datos I",
     "message": "1er parcial: 7 (aprobado)",
     "actionUrl": "/teacher/courses/curso-bd1-2026-2-a/exams/exam-bd1-2026-2-p1",
     "sourceModule": "teacher",
     "sourceReference": "exam-result/exam-bd1-2026-2-p1/ba310c57-a684-4dbf-a4a4-905fcfbefa08",
-    "read": true,
     "createdAt": "2026-09-24T20:15:00.000Z",
+    "readAt": "2026-09-24T23:00:00.000Z",
     "expiresAt": null
   },
   {
     "id": "7e8f9a0b-1c2d-4e3f-8a4b-5c6d7e8f9a0b",
+    "userId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
     "type": "LIBRARY_PENALTY_APPLIED",
     "title": "Tenés una sanción de biblioteca",
     "message": "Devolviste un libro con 8 días de atraso. Multa: $ 2500,00",
     "actionUrl": "/library/4b3c2d1e-0f9a-4b8c-9d7e-6f5a4b3c2d1e/penalty",
     "sourceModule": "library",
     "sourceReference": "penalty/4b3c2d1e-0f9a-4b8c-9d7e-6f5a4b3c2d1e",
-    "read": false,
     "createdAt": "2026-09-20T13:00:00.000Z",
+    "readAt": null,
     "expiresAt": null
   },
   {
     "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+    "userId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
     "type": "EVENT_REMINDER",
     "title": "Se acerca tu evento",
     "message": "Jornada de Desarrollo de Software — 12 de octubre, 18:00",
     "actionUrl": "/events/65a783d1-d407-442d-8d09-a6d2abfe9321",
     "sourceModule": "events",
     "sourceReference": "event/65a783d1-d407-442d-8d09-a6d2abfe9321/reminder/9d",
-    "read": false,
     "createdAt": "2026-10-03T21:00:00.000Z",
+    "readAt": null,
     "expiresAt": "2026-10-12T21:00:00.000Z"
   }
 ]

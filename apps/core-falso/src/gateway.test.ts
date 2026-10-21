@@ -65,21 +65,21 @@ describe('Gateway del CORE falso', () => {
     expect(recibido).toBeUndefined();
   });
 
-  it('servicio caído → 503 UPSTREAM_UNAVAILABLE', async () => {
+  it('servicio caído → 503 GATEWAY_CIRCUIT_OPEN', async () => {
     destino = 'http://localhost:1';
     const res = await request(app)
       .get('/api/v1/student/me')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(503);
-    expect(JSON.parse(res.text).code).toBe('UPSTREAM_UNAVAILABLE');
+    expect(JSON.parse(res.text).code).toBe('GATEWAY_CIRCUIT_OPEN');
   });
 
-  it('servicio lento → 504 UPSTREAM_TIMEOUT', async () => {
+  it('servicio lento → 504 GATEWAY_UPSTREAM_FAILURE', async () => {
     demora = 400;
     const res = await request(app)
       .get('/api/v1/student/me')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(504);
-    expect(JSON.parse(res.text).code).toBe('UPSTREAM_TIMEOUT');
+    expect(JSON.parse(res.text).code).toBe('GATEWAY_UPSTREAM_FAILURE');
   });
 });
