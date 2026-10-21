@@ -138,9 +138,10 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 | | |
 | --- | --- |
-| Falta confirmar | Su `contracts/openapi.yaml`: forma de `GET /api/v1/wallets/me`, del ítem de notificación, los `code` de idempotencia y del 502; rutas detrás del Gateway |
-| Fixtures | `packages/fixtures/core/` (`wallet-me`, `transacciones`, `notificaciones`, todas provisionales) |
-| Código | Front: `apps/web/src/core/` (`saldo.ts`, `notificaciones.ts`, `cargaSaldo.ts`). Errores del Gateway: `apps/bff/src/gateway/gateway.client.ts`, `apps/bff/src/modulos/comun.ts` y `apps/web/src/api/errores.ts` (`UPSTREAM_INVALID` es supuesto). CORE falso: `saldo.ts`, `notificaciones.ts`, `gateway.ts` |
+| OpenAPI | https://core-api-production-e458.up.railway.app/docs-json (formas de auth, saldo, notificaciones y errores del Gateway: ya aplicadas) |
+| Falta confirmar | Formato del `actionUrl` de cada notificación; que cada módulo sirva sus rutas bajo `/api/v1` |
+| Fixtures | `packages/fixtures/core/` (`wallet-me.json` y `transacciones.json` confirmadas; `notificaciones.provisional.json` por el `actionUrl`) |
+| Código | Front: `apps/web/src/core/` (`saldo.ts`, `notificaciones.ts`, `cargaSaldo.ts`). Errores del Gateway: `apps/bff/src/gateway/gateway.client.ts`, `apps/bff/src/modulos/comun.ts` y `apps/web/src/api/errores.ts` (deciden por status). CORE falso: `saldo.ts`, `notificaciones.ts`, `gateway.ts` |
 | Contrato | No toca [`openapi.yaml`](../openapi.yaml): el front consume a CORE directo |
 | Si cambian las rutas | Actualizar la tabla "Rutas detrás del Gateway" de [`integraciones.md`](integraciones.md), los `PREFIJO_*` (`.env.example`, `docker-compose.yml`) y el CORE falso |
 | Trello | "[CORE] Pedir contracts/openapi.yaml…" (Backlog) e "[Integración] CORE" |
