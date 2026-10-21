@@ -2,9 +2,9 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { pedirCore } from './http';
 
 /**
- * Saldo de CORE (sección 7 de CORE_INTEGRACION.md). Único lugar del front que conoce la forma
- * de las respuestas de wallets, que es PROVISIONAL hasta tener el `contracts/openapi.yaml` de
- * CORE (docs/integraciones.md). El resto de la app usa `Saldo` y `Movimiento`.
+ * Saldo de CORE (sección 7 de CORE_INTEGRACION.md y su OpenAPI publicado). Único lugar del
+ * front que conoce la forma de las respuestas de wallets. El resto de la app usa `Saldo` y
+ * `Movimiento`.
  */
 
 export interface Saldo {
@@ -23,13 +23,13 @@ export interface Movimiento {
   pendiente: boolean;
 }
 
-/** Forma que suponemos de `GET /api/v1/wallets/me` */
+/** `GET /api/v1/wallets/me` (solo lo que usa el portal) */
 interface WalletCore {
   balance: string;
   currency: string;
 }
 
-/** Forma que suponemos de un ítem de `GET /api/v1/wallets/me/transactions` */
+/** Ítem de `GET /api/v1/wallets/me/transactions` (solo lo que usa el portal) */
 export interface TransaccionCore {
   transactionId: string;
   status: string;
@@ -37,7 +37,6 @@ export interface TransaccionCore {
   concept: string;
   amount: string;
   currency: string;
-  description?: string | null;
   createdAt: string;
 }
 
@@ -54,7 +53,7 @@ export function aMovimiento(t: TransaccionCore): Movimiento {
   return {
     id: t.transactionId,
     fecha: t.createdAt,
-    concepto: t.description || CONCEPTOS[t.concept] || t.concept,
+    concepto: CONCEPTOS[t.concept] ?? t.concept,
     // Una devolución (REVERSAL) le vuelve la plata al alumno
     tipo: t.type === 'DEBIT' ? 'EGRESO' : 'INGRESO',
     monto: t.amount,

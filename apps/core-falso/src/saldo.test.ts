@@ -36,9 +36,11 @@ describe('Saldo', () => {
   it('saldo y movimientos del alumno; el saldo cierra con el último movimiento', async () => {
     const wallet = (await get('/api/v1/wallets/me')).body;
     expect(wallet).toEqual({
+      walletId: '6d0f5c2e-8b3a-4f1d-9e7c-2a4b6c8d0e1f',
       userId: 'ba310c57-a684-4dbf-a4a4-905fcfbefa08',
       balance: '13500.00',
       currency: 'ARS',
+      updatedAt: '2026-10-01T12:30:05.000Z',
     });
     const { items } = (await get('/api/v1/wallets/me/transactions')).body;
     expect(items).toHaveLength(7);

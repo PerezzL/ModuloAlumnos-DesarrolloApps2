@@ -7,7 +7,7 @@ import { paginar, QueryInvalida } from './paginacion.js';
 import { enviarProblema } from './problema.js';
 import type { Tokens } from './tokens.js';
 
-/** Forma de un movimiento (sección 7.3 de CORE_INTEGRACION.md) */
+/** Movimiento, como en el OpenAPI de CORE */
 interface Transaccion {
   transactionId: string;
   status: 'POSTED' | 'PENDING';
@@ -15,16 +15,18 @@ interface Transaccion {
   concept: string;
   amount: string;
   currency: 'ARS';
-  balanceAfter?: string;
-  externalReference: string | null;
-  description?: string;
+  balanceAfter: string | null;
+  externalReference: string;
+  originalTransactionId: string | null;
   createdAt: string;
 }
 
 interface Wallet {
+  walletId: string;
   /** En centavos: los importes nunca pasan por float */
   saldo: bigint;
   transacciones: Transaccion[];
+  updatedAt: string;
 }
 
 interface RespuestaGuardada {
@@ -71,16 +73,27 @@ export class Saldos {
   }
 
   reiniciar() {
-    const { balance } = fixture<{ balance: string }>('core/wallet-me.provisional.json');
-    const { items } = fixture<{ items: Transaccion[] }>('core/transacciones.provisional.json');
-    this.wallets = new Map([[ALUMNO_DEMO, { saldo: aCentavos(balance), transacciones: items }]]);
+    const { walletId, balance, updatedAt } = fixture<{
+      walletId: string;
+      balance: string;
+      updatedAt: string;
+    }>('core/wallet-me.json');
+    const { items } = fixture<{ items: Transaccion[] }>('core/transacciones.json');
+    this.wallets = new Map([
+      [ALUMNO_DEMO, { walletId, saldo: aCentavos(balance), transacciones: items, updatedAt }],
+    ]);
     this.respuestas.clear();
   }
 
   wallet(userId: string) {
     let wallet = this.wallets.get(userId);
     if (!wallet) {
-      wallet = { saldo: 0n, transacciones: [] };
+      wallet = {
+        walletId: randomUUID(),
+        saldo: 0n,
+        transacciones: [],
+        updatedAt: new Date().toISOString(),
+      };
       this.wallets.set(userId, wallet);
     }
     return wallet;
@@ -97,19 +110,21 @@ export class Saldos {
   acreditar(userId: string, amount: string): Transaccion {
     const wallet = this.wallet(userId);
     wallet.saldo += aCentavos(amount);
+    const transactionId = randomUUID();
     const transaccion: Transaccion = {
-      transactionId: randomUUID(),
+      transactionId,
       status: 'POSTED',
       type: 'CREDIT',
       concept: 'TOP_UP',
       amount,
       currency: 'ARS',
       balanceAfter: aImporte(wallet.saldo),
-      externalReference: null,
-      description: 'Carga de saldo',
+      externalReference: `top-up/${transactionId}`,
+      originalTransactionId: null,
       createdAt: new Date().toISOString(),
     };
     wallet.transacciones.unshift(transaccion);
+    wallet.updatedAt = transaccion.createdAt;
     return transaccion;
   }
 }
@@ -120,7 +135,8 @@ export function routerSaldo(tokens: Tokens, saldos: Saldos) {
 
   router.get('/me', (_req, res) => {
     const userId: string = res.locals.usuarioId;
-    res.json({ userId, balance: aImporte(saldos.wallet(userId).saldo), currency: 'ARS' });
+    const { walletId, saldo, updatedAt } = saldos.wallet(userId);
+    res.json({ walletId, userId, balance: aImporte(saldo), currency: 'ARS', updatedAt });
   });
 
   router.get('/me/transactions', (req, res) => {
@@ -185,17 +201,21 @@ export function routerSaldo(tokens: Tokens, saldos: Saldos) {
     switch (paymentMethodToken) {
       case 'mock-approved':
         return responder(201, saldos.acreditar(userId, amount));
-      case 'mock-pending':
+      case 'mock-pending': {
+        const transactionId = randomUUID();
         return responder(201, {
-          transactionId: randomUUID(),
+          transactionId,
           status: 'PENDING',
           type: 'CREDIT',
           concept: 'TOP_UP',
           amount,
           currency,
-          externalReference: null,
+          balanceAfter: null,
+          externalReference: `top-up/${transactionId}`,
+          originalTransactionId: null,
           createdAt: new Date().toISOString(),
         });
+      }
       case 'mock-rejected':
         return responder(
           422,
