@@ -57,7 +57,7 @@ describe('Notificaciones por socket.io', () => {
 
     const notificacion = await recibida;
     expect(notificacion).toEqual(res.body);
-    expect(notificacion).toMatchObject({ type: 'EVENT_REMINDER', read: false });
+    expect(notificacion).toMatchObject({ type: 'EVENT_REMINDER', readAt: null });
     const listado = await get('/api/v1/notifications');
     expect(listado.body.items[0]).toEqual(notificacion);
   });
@@ -126,7 +126,7 @@ describe('Notificaciones por REST', () => {
       .patch(`/api/v1/notifications/${id}`)
       .set('Authorization', `Bearer ${demo}`)
       .send({ read: true });
-    expect(marcada.body).toMatchObject({ id, read: true });
+    expect(marcada.body).toMatchObject({ id, readAt: expect.any(String) });
     expect((await get('/api/v1/notifications/unread-count')).body).toEqual({ count: 1 });
 
     await request(app)

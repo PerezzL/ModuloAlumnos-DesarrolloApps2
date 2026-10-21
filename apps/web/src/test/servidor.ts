@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import type { NotificacionCore } from '../core/notificaciones';
 import { calendarioOctubre } from './calendario';
 import { cursadaDetalleBase, cursadasBase, notaDetalleBase } from './cursadas';
 import { ofertaBase } from './inscripcion';
@@ -160,14 +161,14 @@ export const handlersSaldo = [
 ];
 
 /** Notificaciones simuladas de CORE, de la más nueva a la más vieja */
-const notificacionesIniciales = () => [
+const notificacionesIniciales = (): NotificacionCore[] => [
   {
     id: 'n-evento',
     type: 'EVENT_REMINDER',
     title: 'Se acerca tu evento',
     message: 'Jornada de Desarrollo de Software — 12 de octubre, 18:00',
     actionUrl: '/events/ev-1',
-    read: false,
+    readAt: null,
     createdAt: '2026-10-03T21:00:00.000Z',
   },
   {
@@ -176,7 +177,7 @@ const notificacionesIniciales = () => [
     title: 'Tenés una sanción de biblioteca',
     message: 'Devolviste un libro con 8 días de atraso.',
     actionUrl: '/library/loan-1/penalty',
-    read: false,
+    readAt: null,
     createdAt: '2026-09-20T13:00:00.000Z',
   },
   {
@@ -185,7 +186,7 @@ const notificacionesIniciales = () => [
     title: 'Se publicó tu nota de Bases de Datos I',
     message: '1er parcial: 7 (aprobado)',
     actionUrl: '/teacher/courses/curso-bd1/exams/exam-p1',
-    read: true,
+    readAt: '2026-09-16T10:00:00.000Z',
     createdAt: '2026-09-15T20:15:00.000Z',
   },
 ];
@@ -219,18 +220,21 @@ export const handlersNotificaciones = [
     });
   }),
   http.get(`${GW}/api/v1/notifications/unread-count`, () =>
-    HttpResponse.json({ count: notificaciones.items.filter((n) => !n.read).length }),
+    HttpResponse.json({ count: notificaciones.items.filter((n) => n.readAt == null).length }),
   ),
   http.patch(`${GW}/api/v1/notifications/:id`, async ({ params, request }) => {
     if (notificaciones.fallarEscrituras) return noDisponible();
     const n = notificaciones.items.find((x) => x.id === params.id);
-    if (!n) return HttpResponse.json({ status: 404, code: 'NOT_FOUND' }, { status: 404 });
-    n.read = ((await request.json()) as { read: boolean }).read;
+    if (!n) {
+      return HttpResponse.json({ status: 404, code: 'NOTIFICATION_NOT_FOUND' }, { status: 404 });
+    }
+    const { read } = (await request.json()) as { read: boolean };
+    n.readAt = read ? (n.readAt ?? new Date().toISOString()) : null;
     return HttpResponse.json(n);
   }),
   http.post(`${GW}/api/v1/notifications/read-all`, () => {
     if (notificaciones.fallarEscrituras) return noDisponible();
-    for (const n of notificaciones.items) n.read = true;
+    for (const n of notificaciones.items) n.readAt ??= new Date().toISOString();
     return new HttpResponse(null, { status: 204 });
   }),
 ];

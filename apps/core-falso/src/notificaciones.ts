@@ -14,19 +14,22 @@ export const TIPOS_NOTIFICACION = [
 ] as const;
 export type TipoNotificacion = (typeof TIPOS_NOTIFICACION)[number];
 
-/** Forma de un ítem de GET /api/v1/notifications (provisional: ver integraciones.md) */
+/** Ítem de GET /api/v1/notifications, como en el OpenAPI de CORE (el actionUrl es supuesto) */
 export interface Notificacion {
   id: string;
+  userId: string;
   type: TipoNotificacion;
   title: string;
   message: string;
   actionUrl: string | null;
   sourceModule: string;
   sourceReference: string;
-  read: boolean;
+  readAt: string | null;
   createdAt: string;
   expiresAt: string | null;
 }
+
+type DatosNotificacion = Omit<Notificacion, 'id' | 'userId' | 'readAt' | 'createdAt'>;
 
 type AlCrear = (userId: string, notificacion: Notificacion) => void;
 
@@ -59,10 +62,11 @@ export class Notificaciones {
     this.oyentes.push(oyente);
   }
 
-  crear(userId: string, datos: Omit<Notificacion, 'id' | 'read' | 'createdAt'>) {
+  crear(userId: string, datos: DatosNotificacion) {
     const notificacion: Notificacion = {
       id: randomUUID(),
-      read: false,
+      userId,
+      readAt: null,
       createdAt: new Date().toISOString(),
       ...datos,
     };
@@ -75,7 +79,7 @@ export class Notificaciones {
 /** Ejemplo de cada tipo, como lo derivaría CORE del evento del módulo de origen */
 export function ejemplo(tipo: TipoNotificacion) {
   const ref = randomUUID();
-  const ejemplos: Record<TipoNotificacion, Omit<Notificacion, 'id' | 'read' | 'createdAt'>> = {
+  const ejemplos: Record<TipoNotificacion, DatosNotificacion> = {
     EXAM_RESULT_PUBLISHED: {
       type: tipo,
       title: 'Se publicó tu nota de Desarrollo de Aplicaciones I',
@@ -123,7 +127,7 @@ export function routerNotificaciones(tokens: Tokens, notificaciones: Notificacio
     }
     const filtradas = notificaciones
       .de(res.locals.usuarioId)
-      .filter((n) => read === undefined || String(n.read) === read)
+      .filter((n) => read === undefined || String(n.readAt !== null) === read)
       .filter((n) => type === undefined || n.type === type);
     try {
       res.json(paginar(filtradas, cursor, limit));
@@ -134,11 +138,14 @@ export function routerNotificaciones(tokens: Tokens, notificaciones: Notificacio
   });
 
   router.get('/unread-count', (_req, res) => {
-    res.json({ count: notificaciones.de(res.locals.usuarioId).filter((n) => !n.read).length });
+    res.json({
+      count: notificaciones.de(res.locals.usuarioId).filter((n) => n.readAt === null).length,
+    });
   });
 
   router.post('/read-all', (_req, res) => {
-    for (const n of notificaciones.de(res.locals.usuarioId)) n.read = true;
+    const ahora = new Date().toISOString();
+    for (const n of notificaciones.de(res.locals.usuarioId)) n.readAt ??= ahora;
     res.status(204).end();
   });
 
@@ -151,8 +158,10 @@ export function routerNotificaciones(tokens: Tokens, notificaciones: Notificacio
     const notificacion = notificaciones
       .de(res.locals.usuarioId)
       .find((n) => n.id === req.params.id);
-    if (!notificacion) return enviarProblema(res, 404, 'NOT_FOUND', 'Notificación inexistente');
-    notificacion.read = read;
+    if (!notificacion) {
+      return enviarProblema(res, 404, 'NOTIFICATION_NOT_FOUND', 'Notificación inexistente');
+    }
+    notificacion.readAt = read ? (notificacion.readAt ?? new Date().toISOString()) : null;
     res.json(notificacion);
   });
 

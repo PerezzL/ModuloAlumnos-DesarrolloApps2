@@ -9,9 +9,9 @@ import {
 import { pedirCore } from './http';
 
 /**
- * Notificaciones de CORE (sección 8 de CORE_INTEGRACION.md). Único lugar del front que conoce
- * la forma del ítem de CORE, que es PROVISIONAL (docs/integraciones.md). El resto de la app
- * usa `Notificacion`.
+ * Notificaciones de CORE (sección 8 de CORE_INTEGRACION.md y su OpenAPI publicado). Único lugar
+ * del front que conoce la forma del ítem de CORE. El formato del `actionUrl` sigue pendiente
+ * (docs/integraciones.md). El resto de la app usa `Notificacion`.
  */
 
 export type TipoConocido = 'EXAM_RESULT_PUBLISHED' | 'LIBRARY_PENALTY_APPLIED' | 'EVENT_REMINDER';
@@ -27,14 +27,15 @@ export interface Notificacion {
   fecha: string;
 }
 
-/** Forma que suponemos de un ítem de `GET /api/v1/notifications` y del evento del socket */
+/** Ítem de `GET /api/v1/notifications` y del evento del socket */
 export interface NotificacionCore {
   id: string;
   type: string;
   title?: string | null;
   message?: string | null;
   actionUrl?: string | null;
-  read?: boolean;
+  /** null mientras no se leyó */
+  readAt?: string | null;
   createdAt: string;
 }
 
@@ -45,7 +46,7 @@ export function aNotificacion(n: NotificacionCore): Notificacion {
     titulo: n.title ?? '',
     mensaje: n.message ?? '',
     actionUrl: n.actionUrl ?? null,
-    leida: n.read ?? false,
+    leida: n.readAt != null,
     fecha: n.createdAt,
   };
 }
