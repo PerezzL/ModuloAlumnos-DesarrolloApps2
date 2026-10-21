@@ -32,7 +32,9 @@ export interface OpcionesGateway {
  * Gateway: valida el token, borra los X-User-* que vengan de afuera, inyecta los propios y
  * reenvía al servicio. `/api/v1/{prefijo}/x` llega como `{destino}/x`, donde `destino` ya
  * incluye la base a la que se reescribe (CORE usa `/api/v1`; Prism sirve en la raíz).
- * No transforma la respuesta. Caído → 503, respuesta inválida → 502, timeout → 504.
+ * No transforma la respuesta. Caído → 503, respuesta inválida → 502, timeout → 504, con los
+ * `code` del OpenAPI de CORE. El CORE real responde 502 mientras el circuito sigue cerrado y
+ * 503 recién cuando se abre (cinco fallas seguidas); acá un módulo caído es siempre 503.
  */
 export function gateway(config: ConfigCore, tokens: Tokens, opciones: OpcionesGateway) {
   return async (req: Request, res: Response) => {
@@ -59,10 +61,15 @@ export function gateway(config: ConfigCore, tokens: Tokens, opciones: OpcionesGa
 
     const falla = opciones.fallas.de(opciones.modulo);
     if (falla?.tipo === 'caido') {
-      return enviarProblema(res, 503, 'UPSTREAM_UNAVAILABLE', 'Servicio no disponible');
+      return enviarProblema(res, 503, 'GATEWAY_CIRCUIT_OPEN', 'Servicio no disponible');
     }
     if (falla?.tipo === 'invalido') {
-      return enviarProblema(res, 502, 'UPSTREAM_INVALID', 'Respuesta inválida del servicio');
+      return enviarProblema(
+        res,
+        502,
+        'GATEWAY_UPSTREAM_FAILURE',
+        'Respuesta inválida del servicio',
+      );
     }
     if (falla?.tipo === 'lento') {
       const demora = falla.demoraMs ?? Infinity;
@@ -72,7 +79,9 @@ export function gateway(config: ConfigCore, tokens: Tokens, opciones: OpcionesGa
 
     const destino = opciones.destino();
     if (!destino) {
-      if (!opciones.local) return enviarProblema(res, 503, 'UPSTREAM_UNAVAILABLE', 'Sin destino');
+      if (!opciones.local) {
+        return enviarProblema(res, 503, 'GATEWAY_UPSTREAM_UNCONFIGURED', 'Sin destino');
+      }
       // Módulo falso: recibe lo mismo que recibiría por la red
       req.headers = headers;
       req.url = `/api/v1${ruta}`;
@@ -93,7 +102,7 @@ export function gateway(config: ConfigCore, tokens: Tokens, opciones: OpcionesGa
       });
     } catch (error) {
       if (error instanceof DOMException && error.name === 'TimeoutError') return timeout(res);
-      return enviarProblema(res, 503, 'UPSTREAM_UNAVAILABLE', 'Servicio no disponible');
+      return enviarProblema(res, 503, 'GATEWAY_CIRCUIT_OPEN', 'Servicio no disponible');
     }
 
     res.status(respuesta.status);
@@ -105,4 +114,4 @@ export function gateway(config: ConfigCore, tokens: Tokens, opciones: OpcionesGa
 }
 
 const timeout = (res: Response) =>
-  enviarProblema(res, 504, 'UPSTREAM_TIMEOUT', 'El servicio no respondió a tiempo');
+  enviarProblema(res, 504, 'GATEWAY_UPSTREAM_FAILURE', 'El servicio no respondió a tiempo');

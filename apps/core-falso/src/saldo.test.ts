@@ -87,7 +87,7 @@ describe('Saldo', () => {
     await cargar(aprobada, clave).expect(201);
     const res = await cargar({ ...aprobada, amount: '1.00' }, clave);
     expect(res.status).toBe(409);
-    expect(JSON.parse(res.text).code).toBe('IDEMPOTENCY_KEY_CONFLICT');
+    expect(JSON.parse(res.text).code).toBe('IDEMPOTENCY_CONFLICT');
   });
 
   it('la misma key de otro alumno no choca', async () => {

@@ -160,7 +160,7 @@ export function routerSaldo(tokens: Tokens, saldos: Saldos) {
         return enviarProblema(
           res,
           409,
-          'IDEMPOTENCY_KEY_CONFLICT',
+          'IDEMPOTENCY_CONFLICT',
           'La Idempotency-Key ya se usó con otro pedido',
         );
       }

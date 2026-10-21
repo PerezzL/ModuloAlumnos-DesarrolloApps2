@@ -196,29 +196,29 @@ describe('Fallas simuladas', () => {
   const ponerFalla = (modulo: string, cuerpo: object) =>
     request(app).put(`/__falso/fallas/${modulo}`).send(cuerpo);
 
-  it('caido → 503 UPSTREAM_UNAVAILABLE solo en ese módulo', async () => {
+  it('caido → 503 GATEWAY_CIRCUIT_OPEN solo en ese módulo', async () => {
     await ponerFalla('dining', { tipo: 'caido' }).expect(200);
     const caido = await get('/api/v1/dining/calendar/me');
     expect(caido.status).toBe(503);
-    expect(JSON.parse(caido.text).code).toBe('UPSTREAM_UNAVAILABLE');
+    expect(JSON.parse(caido.text).code).toBe('GATEWAY_CIRCUIT_OPEN');
     expect((await get('/api/v1/events/eventos')).status).toBe(200);
 
     await request(app).delete('/__falso/fallas/dining').expect(200);
     expect((await get('/api/v1/dining/calendar/me')).status).toBe(200);
   });
 
-  it('invalido → 502 UPSTREAM_INVALID', async () => {
+  it('invalido → 502 GATEWAY_UPSTREAM_FAILURE', async () => {
     await ponerFalla('academic', { tipo: 'invalido' }).expect(200);
     const res = await get('/api/v1/academic/planificacion/periodos');
     expect(res.status).toBe(502);
-    expect(JSON.parse(res.text).code).toBe('UPSTREAM_INVALID');
+    expect(JSON.parse(res.text).code).toBe('GATEWAY_UPSTREAM_FAILURE');
   });
 
-  it('lento sin demora → 504 UPSTREAM_TIMEOUT; lento con demora menor responde', async () => {
+  it('lento sin demora → 504 GATEWAY_UPSTREAM_FAILURE; lento con demora menor responde', async () => {
     await ponerFalla('events', { tipo: 'lento' }).expect(200);
     const res = await get('/api/v1/events/eventos');
     expect(res.status).toBe(504);
-    expect(JSON.parse(res.text).code).toBe('UPSTREAM_TIMEOUT');
+    expect(JSON.parse(res.text).code).toBe('GATEWAY_UPSTREAM_FAILURE');
 
     await ponerFalla('events', { tipo: 'lento', demoraMs: 50 }).expect(200);
     expect((await get('/api/v1/events/eventos')).status).toBe(200);
