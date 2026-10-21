@@ -108,9 +108,9 @@ describe('Saldo', () => {
     expect(await saldo()).toBe('13500.00');
   });
 
-  it('pendiente → 202 PENDING, sin acreditar', async () => {
+  it('pendiente → 201 PENDING, sin acreditar', async () => {
     const res = await cargar({ ...aprobada, paymentMethodToken: 'mock-pending' });
-    expect(res.status).toBe(202);
+    expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ status: 'PENDING', amount: '5000.00' });
     expect(await saldo()).toBe('13500.00');
   });

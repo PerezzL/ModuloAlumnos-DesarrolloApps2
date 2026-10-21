@@ -58,8 +58,8 @@ const limite = (valor: unknown, finDelDia: boolean) => {
 
 /**
  * Saldo en memoria (sección 7 de CORE_INTEGRACION.md). Solo lo que usa el portal: consulta,
- * movimientos y carga con `mock-approved` (201), `mock-rejected` (422) y `mock-pending`
- * (202, extensión del CORE falso; la carga pendiente no se resuelve nunca).
+ * movimientos y carga con `mock-approved` (201 `POSTED`), `mock-rejected` (422) y `mock-pending`
+ * (201 `PENDING`; la carga pendiente no se resuelve nunca).
  */
 export class Saldos {
   private wallets = new Map<string, Wallet>();
@@ -186,7 +186,7 @@ export function routerSaldo(tokens: Tokens, saldos: Saldos) {
       case 'mock-approved':
         return responder(201, saldos.acreditar(userId, amount));
       case 'mock-pending':
-        return responder(202, {
+        return responder(201, {
           transactionId: randomUUID(),
           status: 'PENDING',
           type: 'CREDIT',

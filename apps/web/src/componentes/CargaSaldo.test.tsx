@@ -57,7 +57,7 @@ describe('carga de saldo (H41)', () => {
     servidor.use(
       http.post(`${GW}/api/v1/wallets/me/top-ups`, async () => {
         await delay(50);
-        return HttpResponse.json({}, { status: 202 });
+        return HttpResponse.json({ status: 'PENDING' }, { status: 201 });
       }),
     );
     const { form, user } = await abrir();
@@ -107,7 +107,7 @@ describe('resultado de la carga (H42)', () => {
     ).toBeInTheDocument();
   });
 
-  it('202: avisa que quedó pendiente y no cambia el saldo', async () => {
+  it('201 PENDING: avisa que quedó pendiente y no cambia el saldo', async () => {
     const { form, user } = await abrir();
     await cargar(form, user, '700', /pago diferido/i);
     expect(await within(form).findByText(/carga en proceso/i)).toBeInTheDocument();

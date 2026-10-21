@@ -3,10 +3,7 @@ import { ErrorApi } from '@/api/errores';
 import { pedirCore } from './http';
 import { aMovimiento, type Movimiento, type TransaccionCore } from './saldo';
 
-/**
- * Medios de pago simulados de CORE. `mock-pending` es una extensión del CORE falso para
- * reproducir el 202 (docs/integraciones.md); CORE solo nombra los otros dos.
- */
+/** Medios de pago simulados de CORE */
 export type MedioPago = 'mock-approved' | 'mock-rejected' | 'mock-pending';
 
 /**
@@ -29,13 +26,14 @@ export const nuevoIntento = (monto: string, medio: MedioPago): IntentoCarga => (
 });
 
 /**
- * `POST /api/v1/wallets/me/top-ups`. 201 aprobada, 202 pendiente, 422 rechazada. Cualquier
+ * `POST /api/v1/wallets/me/top-ups`. 201 con el movimiento: `POSTED` es aprobada y `PENDING`,
+ * pendiente; 422 es rechazada. Cualquier
  * otra falla se lanza: en particular, un error de red (ErrorRed) no es un rechazo, porque no
  * sabemos si CORE procesó la carga.
  */
 export async function cargarSaldo(intento: IntentoCarga): Promise<ResultadoCarga> {
   try {
-    const { status, datos } = await pedirCore<TransaccionCore>('/api/v1/wallets/me/top-ups', {
+    const { datos } = await pedirCore<TransaccionCore>('/api/v1/wallets/me/top-ups', {
       method: 'POST',
       headers: { 'Idempotency-Key': intento.clave },
       body: JSON.stringify({
@@ -44,7 +42,7 @@ export async function cargarSaldo(intento: IntentoCarga): Promise<ResultadoCarga
         paymentMethodToken: intento.medio,
       }),
     });
-    if (status === 202) return { tipo: 'PENDIENTE' };
+    if (datos.status === 'PENDING') return { tipo: 'PENDIENTE' };
     return { tipo: 'APROBADA', movimiento: aMovimiento(datos) };
   } catch (error) {
     if (error instanceof ErrorApi && error.code === 'WALLET_TOPUP_REJECTED') {

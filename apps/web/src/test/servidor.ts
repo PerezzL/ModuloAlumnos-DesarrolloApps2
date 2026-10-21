@@ -143,7 +143,7 @@ export const handlersSaldo = [
         wallet.transacciones.unshift({ ...movimiento, status: 'POSTED' });
         guardada = { status: 201, cuerpo: { ...movimiento, status: 'POSTED' } };
       } else if (paymentMethodToken === 'mock-pending') {
-        guardada = { status: 202, cuerpo: { ...movimiento, status: 'PENDING' } };
+        guardada = { status: 201, cuerpo: { ...movimiento, status: 'PENDING' } };
       } else {
         guardada = {
           status: 422,
