@@ -10,7 +10,7 @@ Estados: **Resuelto / Confirmado** (contrato firme) · **Implementado** (ya disp
 **Comprometido** (acordado, todavía no disponible; se mockea) · **Propuesto** ·
 **Pedido** · **Pendiente**.
 
-Las rutas de los módulos 4, 5, 8 y 9 son las de cada servicio; falta confirmar cómo
+Las rutas de los módulos 5, 8 y 9 son las de cada servicio; falta confirmar cómo
 quedan detrás del prefijo del Gateway (ver abajo la suposición que usamos).
 
 ## Rutas detrás del Gateway — Suposición nuestra
@@ -23,10 +23,10 @@ rutas son configuración; el CORE falso y las fixtures (`packages/fixtures/`) si
 | Módulo | Ruta informada por el módulo | Ruta pública que usamos |
 | --- | --- | --- |
 | 2 | (sin contrato) | `/api/v1/teacher/cursos/{cursoId}/alumnos/{alumnoId}/asistencia` · `/notas` · `/notas/{notaId}` |
-| 4 | `GET /reservations/me` | `/api/v1/dining/reservations/me` |
+| 4 | `GET /api/v1/dining/calendar/me` (ruta pública) | `/api/v1/dining/calendar/me` |
 | 5 | `GET /api/store/orders/me` · `/api/store/orders/:orderId` | `/api/v1/store/orders/me` · `/api/v1/store/orders/{orderId}` |
 | 6 | `GET /api/v1/eventos` · `/api/v1/eventos/{id}` | `/api/v1/events/eventos` · `/api/v1/events/eventos/{id}` |
-| 8 | `GET /api/v1/backoffice/users/{userId}` | `/api/v1/backoffice/users/{userId}` |
+| 8 | `GET /api/v1/backoffice/users/{userId}` · `/sites` | `/api/v1/backoffice/users/{userId}` · `/api/v1/backoffice/sites` |
 | 9 | `/api/planificacion/...` · `/api/academica/...` | `/api/v1/academic/planificacion/...` · `/api/v1/academic/academica/...` |
 
 Backoffice usa el prefijo `/api/v1/backoffice/*` de la sección 6 de [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
@@ -150,42 +150,55 @@ El monto lo calcula Backoffice pero llega resuelto desde Biblioteca.
 
 | Tema | Estado |
 | --- | --- |
-| `GET /reservations/me` | Confirmado |
-| Hora del turno | Pendiente; hoy `slot.date` es solo la fecha |
-| Detalle de campos de `slot` y `campus` | Pendiente |
-| Ruta definitiva | Pendiente |
+| `GET /api/v1/dining/calendar/me?from=&to=` | Confirmado |
+| Hora del turno | Resuelto: `startAt` y `endAt` en UTC |
+| Ruta definitiva | Resuelto: es la ruta pública, detrás del Gateway |
+| Que `siteId` sea el mismo id de sede de Backoffice | Suposición nuestra |
+| Que solo lleguen turnos `RESERVED` | Suposición nuestra |
 
-Respuestas:
+Devuelve los turnos del usuario del token (`Authorization: Bearer`, el mismo de CORE), listos
+para el calendario. `from` y `to` son opcionales, `YYYY-MM-DD` e inclusive. Ordena por fecha
+ascendente y no pagina: `nextCursor` siempre es null.
 
-- 200 `{ "reservations": [...] }` (array vacío si no hay reservas)
-- 401 `{ "error": "Unauthorized" }`
-- 500 `{ "error": "Internal server error" }`
-
-```jsonc
+```json
 {
-  "id": 1,                                   // id de la reserva
-  "userId": 15,                              // usuario que reservó
-  "slotId": 32,                              // turno reservado
-  "createdAt": "2026-10-01T12:30:00.000Z",
-  "slot": {
-    "...": "...",
-    "date": "2026-10-05",                    // fecha del turno (YYYY-MM-DD)
-    "campus": { "...": "..." }
-  },
-  "campus": { "...": "..." }                 // también viene directo
+  "items": [
+    {
+      "id": "b3f1c2e0-...",
+      "type": "DINING_RESERVATION",
+      "title": "Comedor - Sede Centro",
+      "siteId": "4c2e...",
+      "startAt": "2026-10-05T15:00:00.000Z",
+      "endAt": "2026-10-05T15:45:00.000Z",
+      "status": "RESERVED"
+    }
+  ],
+  "nextCursor": null
 }
 ```
 
-Se cargan todas las reservas, sin filtrar por estado. Ojo: los ids del ejemplo son
-numéricos; en nuestro contrato son strings opacos, el adaptador los convierte.
+Sin turnos en el rango: `{ "items": [], "nextCursor": null }`.
 
-Fixture: `dining/reservations-me.provisional.json`. Para `slot` y `campus` suponemos
-`{ id, date, campus }` y `{ id, name }`.
+| Status | `code` | Cuándo |
+| --- | --- | --- |
+| 401 | `AUTH_TOKEN_MISSING` | No se mandó `Authorization: Bearer` |
+| 401 | `AUTH_TOKEN_INVALID` | Token inválido, vencido o que no es de usuario |
+| 401 | `AUTH_IDENTITY_MISMATCH` | El `X-User-Id` del Gateway no coincide con el usuario del token |
+| 500 | `INTERNAL_ERROR` | Error inesperado |
 
-Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/comedor/`): como Comedor
-devuelve todas las reservas, el BFF las recorta al rango pedido. Cada reserva es un ítem de
-todo el día; el lugar sale de `campus.name` (o de `slot.campus.name`). Una respuesta vacía
-está en `dining/reservations-me-vacio.provisional.json`.
+Fixtures: `dining/calendar-me.json` y `dining/calendar-me-vacio.json`.
+
+Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/comedor/`):
+
+- Pide `from` = primer día del rango y `to` = el día siguiente al último: no está dicho en qué
+  zona compara Comedor las fechas, y un turno a la noche del último día ya es el día siguiente
+  en UTC. Después recorta por solapamiento en hora de Argentina.
+- Cada turno es un ítem con hora (`todoElDia: false`), con `inicio` y `fin` pasados a `-03:00`.
+  El título es fijo ("Turno de comedor"): el `title` de Comedor ya trae la sede, que va en `lugar`.
+- `lugar` es el nombre de la sede según Backoffice (ver Módulo 8), buscado por `siteId`. Si
+  Backoffice no responde o no conoce la sede, el turno sale igual con `lugar: null`; la
+  categoría no se marca con error.
+- No filtra por `status`.
 
 ## Módulo 5 — Tienda
 
@@ -257,6 +270,7 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 | `GET /api/v1/backoffice/users/{userId}` | Confirmado |
 | Qué campos trae (nombre, apellido, legajo, carrera) | Pendiente |
 | Si incluye `planId` | Pendiente |
+| `GET /api/v1/backoffice/sites` · `/sites/{siteId}` | Confirmado (documento de flujo de datos del Módulo 8) |
 
 Sin `planId` no se puede filtrar la oferta de RF2. Decisión del bloque D: el dato debería
 venir, pero mientras no esté confirmado, si Backoffice no lo devuelve (o no responde) el BFF
@@ -272,6 +286,19 @@ Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/`)
 
 Fixture: `backoffice/users.provisional.json` con `id`, `email`, `nombre`, `apellido`,
 `legajo`, `carrera`, `planId` y `status`, todos supuestos.
+
+Sedes: Backoffice es el dueño del catálogo de sedes, y las sedes no tienen evento: se
+consultan y se cachean. `GET /sites?status=&cursor=&limit=` devuelve
+`{ items: [{ siteId, code, name, address, city, province, country, timezone, status, updatedAt }], nextCursor }`,
+de a 100 como máximo. Fixture: `backoffice/sites.json`.
+
+Cómo lo usa el BFF (`nombresDeSedes()` en el adaptador de Backoffice, para cualquier módulo
+que mande solo un `siteId`; hoy, Comedor):
+
+- Pide el catálogo completo (sin filtrar por estado, así se resuelven también las sedes
+  inactivas), siguiendo `nextCursor`, y lo guarda en memoria una hora como `siteId → name`.
+- Si falla, no se cachea y cada llamador decide: Comedor sigue sin el nombre.
+- **Suposición nuestra:** el `siteId` es el mismo en todos los módulos.
 
 ## Módulo 9 — Gestión Académica y Planificación
 

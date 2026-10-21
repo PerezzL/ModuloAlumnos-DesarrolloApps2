@@ -4,13 +4,13 @@ import type { Calendario } from '@uadenet/api-types';
 export const calendarioOctubre: Calendario = {
   items: [
     {
-      id: 'COMEDOR:1',
+      id: 'COMEDOR:b3f1c2e0-6a4d-4e1b-9c2f-1d7e8a5b3c01',
       categoria: 'COMEDOR',
       titulo: 'Turno de comedor',
-      inicio: '2026-10-05T00:00:00-03:00',
-      fin: null,
-      todoElDia: true,
-      lugar: 'Monserrat',
+      inicio: '2026-10-05T12:00:00-03:00',
+      fin: '2026-10-05T12:45:00-03:00',
+      todoElDia: false,
+      lugar: 'Sede Monserrat',
     },
     {
       id: 'EVENTO:ev-9',

@@ -44,15 +44,24 @@ describe('calendario', () => {
     expect(within(dia5).getByText(/turno de comedor:/i)).toBeInTheDocument();
   });
 
-  it('vista semanal: los ítems de todo el día van sin hora', async () => {
+  it('vista semanal: los ítems con hora muestran inicio y fin', async () => {
     reiniciarCore(true);
     const pedidos = calendarioQueResponde();
     renderApp('/calendario?vista=semana&fecha=2026-10-07');
 
     const dia5 = await screen.findByRole('listitem', { name: /lunes, 5 de octubre/i });
-    expect(within(dia5).getByText(/todo el día/i)).toBeInTheDocument();
+    expect(within(dia5).getByText(/12:00–12:45/)).toBeInTheDocument();
     expect(pedidos[0]?.searchParams.get('desde')).toBe('2026-10-05');
     expect(pedidos[0]?.searchParams.get('hasta')).toBe('2026-10-11');
+  });
+
+  it('vista semanal: los ítems de todo el día van sin hora', async () => {
+    reiniciarCore(true);
+    calendarioQueResponde();
+    renderApp('/calendario?vista=semana&fecha=2026-10-21');
+
+    const dia19 = await screen.findByRole('listitem', { name: /lunes, 19 de octubre/i });
+    expect(within(dia19).getByText(/todo el día/i)).toBeInTheDocument();
   });
 
   it('navega al mes siguiente y pide el rango nuevo', async () => {

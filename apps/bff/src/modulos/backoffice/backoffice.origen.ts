@@ -18,3 +18,15 @@ export const UsuarioBackoffice = z
   .passthrough();
 
 export type UsuarioBackoffice = z.infer<typeof UsuarioBackoffice>;
+
+/**
+ * Respuesta de `GET /api/v1/backoffice/sites?cursor=&limit=` (Módulo 8). Confirmada por su
+ * documento de flujo de datos (fixture `backoffice/sites.json`); solo se declaran los campos
+ * que usa el portal. Este tipo no sale de la carpeta del adaptador.
+ */
+export const SedesBackoffice = z
+  .object({
+    items: z.array(z.object({ siteId: z.string(), name: z.string() }).passthrough()),
+    nextCursor: z.string().nullable().optional(),
+  })
+  .passthrough();

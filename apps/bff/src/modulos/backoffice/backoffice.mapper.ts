@@ -1,7 +1,7 @@
 import type { Perfil } from '@uadenet/api-types';
 import type { Alumno } from '../../auth/alumno.decorator';
 import { idOpaco, parsearOrigen, respuestaInvalida } from '../comun';
-import { UsuarioBackoffice } from './backoffice.origen';
+import { SedesBackoffice, UsuarioBackoffice } from './backoffice.origen';
 
 /**
  * Identidad de CORE (token) + datos personales de Backoffice → Perfil. El id sale siempre
@@ -29,4 +29,13 @@ export function aPerfil(alumno: Alumno, datos: unknown): Perfil {
 export function perfilSoloIdentidad(alumno: Alumno): Perfil {
   if (!alumno.email) throw respuestaInvalida('BACKOFFICE', 'El usuario no existe en Backoffice');
   return { id: alumno.id, email: alumno.email };
+}
+
+/** Una página del catálogo de sedes → siteId → nombre, y el cursor de la siguiente. */
+export function aSedes(datos: unknown) {
+  const pagina = parsearOrigen('BACKOFFICE', SedesBackoffice, datos);
+  return {
+    nombres: new Map(pagina.items.map((s) => [s.siteId, s.name])),
+    nextCursor: pagina.nextCursor ?? null,
+  };
 }

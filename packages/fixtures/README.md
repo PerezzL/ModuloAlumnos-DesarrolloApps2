@@ -4,8 +4,8 @@
 
 Una fixture es un archivo JSON con una **respuesta de ejemplo de un módulo externo**,
 escrita a mano con la forma en que ese módulo responde (o en que creemos que responde).
-Por ejemplo, `dining/reservations-me.provisional.json` es lo que devolvería el Comedor si
-`v.moreno` le pide sus reservas.
+Por ejemplo, `dining/calendar-me.json` es lo que devolvería el Comedor si
+`v.moreno` le pide sus turnos.
 
 No es código ni configuración: son datos de prueba. Cambiar una fixture cambia lo que ve el
 portal en local y lo que prueban los tests, nada más.
@@ -83,10 +83,11 @@ Cuando un módulo confirma o cambia su respuesta:
 
 | Archivo | Ruta del módulo (ya reescrita por el Gateway) |
 | --- | --- |
-| `dining/reservations-me.provisional.json` | `GET /api/v1/reservations/me` |
+| `dining/calendar-me.json` | `GET /api/v1/calendar/me?from=&to=` |
 | `events/eventos.json` | `GET /api/v1/eventos` (y cada ítem, `GET /api/v1/eventos/{id}`) |
 | `store/orders-me.provisional.json` | `GET /api/v1/orders/me` (y cada ítem, `GET /api/v1/orders/{orderId}`) |
 | `backoffice/users.provisional.json` | `GET /api/v1/users/{userId}`, por id |
+| `backoffice/sites.json` | `GET /api/v1/sites` (y cada ítem, `GET /api/v1/sites/{siteId}`) |
 | `academic/periodos.provisional.json` | `GET /api/v1/planificacion/periodos` |
 | `academic/turnos-examen.provisional.json` | `GET /api/v1/planificacion/turnos-examen` |
 | `academic/cursos.provisional.json` | `GET /api/v1/planificacion/cursos?periodoId=&planId=` |

@@ -130,10 +130,9 @@ Vista única con turnos de comedor, eventos y exámenes, con filtros por categor
 - Eventos: se pide el mes visible y se filtran los que tienen `yaInscripto` en true.
   El Módulo 6 filtra por solapamiento de fechas, no por fecha de inicio.
 - Exámenes: hoy son ventanas generales, sin fecha por asignatura.
-- Comedor: se cargan todas las reservas, sin filtrar por estado. Hoy solo traen la fecha.
+- Comedor: se cargan todos los turnos del rango, sin filtrar por estado, con su hora y sede.
 
-Pendiente: hora del turno de comedor, detalle de campos de `slot` y `campus`, ruta definitiva;
-si `hasta` es inclusivo en el Módulo 6 cuando se envía solo la fecha.
+Pendiente: si `hasta` es inclusivo en el Módulo 6 cuando se envía solo la fecha.
 
 ## RF8 — Historial de compras
 

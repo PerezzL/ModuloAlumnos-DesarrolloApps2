@@ -24,7 +24,7 @@ export class CalendarioService {
 
   constructor(comedor: ComedorAdapter, eventos: EventosAdapter, academico: AcademicoAdapter) {
     this.fuentes = {
-      COMEDOR: (rango) => comedor.reservas(rango),
+      COMEDOR: (rango) => comedor.turnos(rango),
       EVENTO: (rango) => eventos.inscriptos(rango),
       EXAMEN: (rango) => academico.turnosExamen(rango),
     };

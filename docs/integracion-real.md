@@ -171,10 +171,10 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 | | |
 | --- | --- |
-| Falta confirmar | Hora del turno en `slot.date`, campos de `slot` y `campus`, ruta definitiva |
-| Fixtures | `packages/fixtures/dining/reservations-me.provisional.json`, `reservations-me-vacio.provisional.json` |
-| Adaptador | `apps/bff/src/modulos/comedor/`. Si llega la hora, el mapper deja de marcar los turnos con `todoElDia` |
-| Pruebas y demo | [`pruebas.md`](pruebas.md) "Calendario" (hoy "todo el día"); [`demo-guide.md`](demo-guide.md) paso 4 |
+| Falta confirmar | Que `siteId` sea el id de sede de Backoffice y que solo lleguen turnos `RESERVED` |
+| Fixtures | `packages/fixtures/dining/calendar-me.json`, `calendar-me-vacio.json`; sedes en `backoffice/sites.json` |
+| Adaptador | `apps/bff/src/modulos/comedor/`. El nombre de la sede sale de `nombresDeSedes()` del adaptador de Backoffice |
+| Pruebas y demo | [`pruebas.md`](pruebas.md) "Calendario"; [`demo-guide.md`](demo-guide.md) paso 4 |
 | Trello | "[Módulo 4 · Comedor]…" e "[Integración] Módulo 4" |
 
 #### Módulo 5 — Tienda

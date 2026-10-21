@@ -32,10 +32,11 @@ beforeEach(async () => {
 describe('Módulos externos desde fixtures', () => {
   it('cada prefijo responde con su fixture', async () => {
     const rutas = [
-      '/api/v1/dining/reservations/me',
+      '/api/v1/dining/calendar/me',
       '/api/v1/events/eventos',
       '/api/v1/store/orders/me',
       `/api/v1/backoffice/users/${DEMO}`,
+      '/api/v1/backoffice/sites',
       '/api/v1/academic/planificacion/periodos',
       '/api/v1/academic/planificacion/turnos-examen',
       '/api/v1/academic/planificacion/cursos?periodoId=2027-1&planId=plan-2020',
@@ -52,15 +53,41 @@ describe('Módulos externos desde fixtures', () => {
   });
 
   it('sin token → 401, igual que el resto del Gateway', async () => {
-    const res = await request(app).get('/api/v1/dining/reservations/me');
+    const res = await request(app).get('/api/v1/dining/calendar/me');
     expect(res.status).toBe(401);
   });
 
   it('el alumno sin datos recibe listas vacías', async () => {
-    expect((await get('/api/v1/dining/reservations/me', perez)).body).toEqual({ reservations: [] });
+    expect((await get('/api/v1/dining/calendar/me', perez)).body).toEqual({
+      items: [],
+      nextCursor: null,
+    });
     expect((await get('/api/v1/store/orders/me', perez)).body.items).toEqual([]);
     const eventos = (await get('/api/v1/events/eventos', perez)).body as { yaInscripto: boolean }[];
     expect(eventos.every((e) => !e.yaInscripto)).toBe(true);
+  });
+
+  it('comedor: filtra por from y to, inclusive', async () => {
+    const res = await get('/api/v1/dining/calendar/me?from=2026-10-05&to=2026-10-08');
+    const inicios = (res.body as { items: { startAt: string }[] }).items.map((t) => t.startAt);
+    expect(inicios).toEqual(['2026-10-05T15:00:00.000Z', '2026-10-08T16:00:00.000Z']);
+    expect(res.body).toHaveProperty('nextCursor', null);
+    expect((await get('/api/v1/dining/calendar/me?from=5-10-2026')).status).toBe(400);
+  });
+
+  it('backoffice: sedes paginadas, filtro por estado y detalle', async () => {
+    const pagina = await get('/api/v1/backoffice/sites?limit=2');
+    expect(pagina.body.items).toHaveLength(2);
+    const resto = await get(`/api/v1/backoffice/sites?limit=2&cursor=${pagina.body.nextCursor}`);
+    expect(resto.body).toMatchObject({ nextCursor: null });
+    expect(resto.body.items).toHaveLength(1);
+    const activas = await get('/api/v1/backoffice/sites?status=ACTIVE');
+    expect((activas.body.items as { status: string }[]).every((s) => s.status === 'ACTIVE')).toBe(
+      true,
+    );
+    const sede = await get('/api/v1/backoffice/sites/3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90');
+    expect(sede.body).toMatchObject({ name: 'Sede Monserrat' });
+    expect((await get('/api/v1/backoffice/sites/no-existe')).status).toBe(404);
   });
 
   it('eventos: filtra por solapamiento y ordena por inicio', async () => {
@@ -171,13 +198,13 @@ describe('Fallas simuladas', () => {
 
   it('caido → 503 UPSTREAM_UNAVAILABLE solo en ese módulo', async () => {
     await ponerFalla('dining', { tipo: 'caido' }).expect(200);
-    const caido = await get('/api/v1/dining/reservations/me');
+    const caido = await get('/api/v1/dining/calendar/me');
     expect(caido.status).toBe(503);
     expect(JSON.parse(caido.text).code).toBe('UPSTREAM_UNAVAILABLE');
     expect((await get('/api/v1/events/eventos')).status).toBe(200);
 
     await request(app).delete('/__falso/fallas/dining').expect(200);
-    expect((await get('/api/v1/dining/reservations/me')).status).toBe(200);
+    expect((await get('/api/v1/dining/calendar/me')).status).toBe(200);
   });
 
   it('invalido → 502 UPSTREAM_INVALID', async () => {
@@ -232,7 +259,7 @@ describe('Destino real configurado', () => {
         .send({ email: 'v.moreno@uade.edu.ar', password: 'uade2026' })
     ).body.accessToken as string;
     const res = await request(otra)
-      .get('/api/v1/dining/reservations/me')
+      .get('/api/v1/dining/calendar/me')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(503);
   });
