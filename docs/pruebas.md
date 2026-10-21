@@ -57,7 +57,7 @@ curl -X PUT localhost:4000/__falso/fallas/dining -H 'content-type: application/j
 | `events` | Eventos en el calendario |
 | `academic` | Exámenes en el calendario, oferta, inscripción e historial |
 | `store` | Historial de compras |
-| `backoffice` | Datos del perfil (nombre, legajo, carrera, plan) |
+| `backoffice` | Datos del perfil (nombre, legajo, carrera, plan) y nombres de sede del calendario |
 | `student` | Nuestro BFF entero (el front recibe la falla directo del Gateway) |
 
 - `GET /__falso/fallas` muestra las activas.
@@ -91,7 +91,7 @@ Mientras una pantalla no existe, se puede ver lo que responde cada módulo con u
 
 ```bash
 TOKEN=$(curl -s localhost:4000/api/v1/auth/login -H 'content-type: application/json' -d '{"email":"v.moreno@uade.edu.ar","password":"uade2026"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).accessToken')
-curl -s localhost:4000/api/v1/dining/reservations/me -H "Authorization: Bearer $TOKEN"
+curl -s localhost:4000/api/v1/dining/calendar/me -H "Authorization: Bearer $TOKEN"
 ```
 
 Las rutas de cada módulo están en [`packages/fixtures/README.md`](../packages/fixtures/README.md) (anteponiendo el prefijo del
@@ -130,7 +130,7 @@ Datos de octubre de 2026:
 
 | Categoría | Qué hay |
 | --- | --- |
-| Comedor | Turnos el 5, 8 y 14 de octubre, todo el día (el Comedor todavía no informa la hora) |
+| Comedor | Turnos el 5 (12:00), el 8 (13:00) en Sede Monserrat y el 14 (12:30) en Sede Recoleta, de 45 minutos |
 | Eventos | Semana de la Ingeniería (30/09 al 02/10, tiene que aparecer en octubre), Jornada de Desarrollo de Software (12/10, inscripta), Taller de oratoria (21/10, no inscripta). En noviembre, el torneo de ajedrez (7/11, inscripta) |
 | Exámenes | Mesa especial del 19 al 23 de octubre; turno de diciembre del 7 al 19 |
 
@@ -140,6 +140,7 @@ Datos de octubre de 2026:
 | Falla parcial | Falla `dining: caido` (o `events`, o `academic`) | Responde 200 con las otras dos; `fuentes` marca la caída |
 | Las tres caídas | Fallas en `dining`, `events` y `academic` | Error |
 | Timeout | Falla `events: lento` | A los 10 s, el calendario sale sin eventos |
+| Sin sedes | Falla `backoffice: caido` | Los turnos de comedor salen sin lugar; `fuentes` no marca error |
 | Rango largo | Pedir más de 62 días | 400 `RANGO_INVALIDO` |
 | Sin datos | `j.perez` | Sin turnos de comedor ni eventos inscriptos. Los turnos de examen son ventanas generales, iguales para todos |
 

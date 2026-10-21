@@ -20,10 +20,10 @@ describe('GET /calendario', () => {
     const { items, fuentes } = res.body as Calendario;
     expect(items.map((i) => i.id)).toEqual([
       'EVENTO:8b0f4e2a-3c1d-4f5e-9a6b-7c8d9e0f1a2b',
-      'COMEDOR:1',
-      'COMEDOR:7',
+      'COMEDOR:b3f1c2e0-6a4d-4e1b-9c2f-1d7e8a5b3c01',
+      'COMEDOR:c7a2d4f1-8b3e-4c5a-a1d6-2e9f0b7c4d02',
       'EVENTO:65a783d1-d407-442d-8d09-a6d2abfe9321',
-      'COMEDOR:12',
+      'COMEDOR:d9e4f6a3-1c5b-4d7e-b2a8-3f0c1d9e5f03',
       'EXAMEN:turno-2026-10',
     ]);
     const inicios = items.map((i) => Date.parse(i.inicio));

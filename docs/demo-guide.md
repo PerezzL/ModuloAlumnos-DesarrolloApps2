@@ -85,7 +85,7 @@ Qué contar, sin pantalla o con el diagrama de [`arquitectura.md`](arquitectura.
 ### 4. Calendario y falla parcial (RF7)
 
 1. Ir a **Calendario**, octubre de 2026. Se ven las tres categorías: comedor (5, 8 y 14,
-   todo el día), eventos inscriptos (Jornada de Desarrollo de Software el 12) y la mesa
+   con hora y sede), eventos inscriptos (Jornada de Desarrollo de Software el 12) y la mesa
    especial de exámenes del 19 al 23. La Semana de la Ingeniería empezó en septiembre y
    aparece igual.
 2. Filtrar por una categoría y volver a todas.

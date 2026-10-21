@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { aPerfil } from './backoffice.mapper';
+import { aPerfil, aSedes } from './backoffice.mapper';
 
 const usuarios = fixture<Record<string, unknown>>('backoffice/users.provisional.json');
 const conPlan = usuarios['ba310c57-a684-4dbf-a4a4-905fcfbefa08'];
@@ -56,5 +56,34 @@ describe('mapper de Backoffice → Perfil', () => {
       code: 'UPSTREAM_INVALID',
       modulo: 'BACKOFFICE',
     });
+  });
+});
+
+const sedes = fixture('backoffice/sites.json');
+
+describe('mapper de Backoffice → sedes', () => {
+  it('arma el mapa siteId → nombre, también con las sedes inactivas', () => {
+    const { nombres, nextCursor } = aSedes(sedes);
+    expect(nombres).toEqual(
+      new Map([
+        ['3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90', 'Sede Monserrat'],
+        ['7b1d3f5a-9c2e-4a6b-8d0f-2e4a6c8b0d12', 'Sede Recoleta'],
+        ['a4c6e8f0-2b4d-4f6a-9c1e-5d7f9b1a3c24', 'Sede Costa Argentina'],
+      ]),
+    );
+    expect(nextCursor).toBeNull();
+  });
+
+  it('devuelve el cursor de la página siguiente', () => {
+    expect(aSedes({ items: [], nextCursor: 'abc' }).nextCursor).toBe('abc');
+  });
+
+  it('una respuesta sin `items` es 502 de BACKOFFICE', () => {
+    try {
+      aSedes([]);
+      expect.unreachable();
+    } catch (e) {
+      expect((e as ProblemaError).aProblema()).toMatchObject({ status: 502, modulo: 'BACKOFFICE' });
+    }
   });
 });
