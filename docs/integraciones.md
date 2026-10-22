@@ -271,8 +271,12 @@ Listado:
   02/10 aparece en octubre.
 - `yaInscripto` se calcula contra el usuario del JWT: el BFF debe reenviar el token del alumno.
 - Campos: `id`, `titulo`, `descripcion`, `locacionId`, `locacion` (nombre, sede), `cupoMaximo`,
-  `fechaInicio`, `fechaFin`, `esPago`, `precio`, `inscriptos`, `disponibles`, `yaInscripto`,
-  `creadoPor`.
+  `fechaInicio`, `fechaFin`, `esPago`, `categoriaPrecio`, `precio`, `inscriptos`, `disponibles`,
+  `yaInscripto`, `creadoPor`.
+- `categoriaPrecio` (agregado en octubre de 2026): `"general"`, `"especial"` o null; indica la
+  tarifa aplicada cuando `esPago` es true. El portal no lo usa (el calendario no muestra precios).
+- Fechas con offset de Argentina (`2026-10-15T18:00:00-03:00`). `locacionId` es UUID y
+  `creadoPor` es un id de usuario (`u-10432`); para nosotros son strings opacos.
 - Si `hasta` no resulta inclusivo, pedir hasta el primer día del mes siguiente.
 
 Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/eventos/`): pide desde las
