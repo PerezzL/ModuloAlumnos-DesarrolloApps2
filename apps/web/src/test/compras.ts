@@ -2,6 +2,12 @@ import { http, HttpResponse } from 'msw';
 import type { CompraResumen } from '@uadenet/api-types';
 import { BFF } from './servidor';
 
+/** El id de `sedesBase` de cada sede: el listado trae el nombre, el filtro manda el id */
+const ID_DE_SEDE: Record<string, string> = {
+  Monserrat: 'sede-monserrat',
+  Recoleta: 'sede-recoleta',
+};
+
 /** 12 compras, de la más reciente a la más antigua */
 export const comprasBase = (): CompraResumen[] =>
   Array.from({ length: 12 }, (_, i) => ({
@@ -23,11 +29,13 @@ export function bffCompras(compras = comprasBase(), queries: URLSearchParams[] =
     const estado = query.get('estado');
     const desde = query.get('desde');
     const hasta = query.get('hasta');
+    const sede = query.get('sede');
     const filtradas = compras.filter(
       (c) =>
         (!estado || c.estado === estado) &&
         (!desde || c.fecha.slice(0, 10) >= desde) &&
-        (!hasta || c.fecha.slice(0, 10) <= hasta),
+        (!hasta || c.fecha.slice(0, 10) <= hasta) &&
+        (!sede || ID_DE_SEDE[c.sede ?? ''] === sede),
     );
     return HttpResponse.json({
       items: filtradas.slice((page - 1) * limit, page * limit),

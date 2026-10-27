@@ -6,6 +6,7 @@ import {
   estadoLegible,
   type FiltrosCompras,
   useCompras,
+  useSedes,
 } from '@/compras/consultas';
 import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
@@ -33,17 +34,19 @@ function filtrosDeUrl(params: URLSearchParams): FiltrosCompras {
   const desde = params.get('desde');
   const hasta = params.get('hasta');
   const estado = params.get('estado');
+  const sede = params.get('sede');
   return {
     ...(esFecha(desde) && { desde }),
     ...(esFecha(hasta) && { hasta }),
     ...(estado && { estado }),
+    ...(sede && { sede }),
   };
 }
 
 /**
  * Historial de compras en la Tienda (4.10). Solo lectura. Página y filtros van en la URL; al
- * cambiar un filtro se vuelve a la primera página. El filtro por sede existe en el contrato
- * pero no se muestra hasta que la Tienda lo confirme.
+ * cambiar un filtro se vuelve a la primera página. Las sedes salen del catálogo de Backoffice;
+ * que la Tienda filtre por ese id es suposición nuestra (docs/integraciones.md).
  */
 export function Compras() {
   const [params, setParams] = useSearchParams();
@@ -99,7 +102,7 @@ export function Compras() {
         <EstadoVacio
           icono={SearchX}
           titulo="No hay compras con estos filtros"
-          mensaje="Probá con otras fechas u otro estado."
+          mensaje="Probá con otras fechas, otro estado u otra sede."
         >
           <Button variant="fantasma" onClick={limpiar}>
             Limpiar filtros
@@ -142,8 +145,11 @@ function Filtros({
   filtros: FiltrosCompras;
   filtrar: (cambio: Partial<Record<keyof FiltrosCompras, string>>) => void;
 }) {
+  const sedes = useSedes().data?.items ?? [];
+  // Una sede de la URL que no está en el catálogo (o si no cargó) se conserva como opción
+  const sedeDesconocida = !!filtros.sede && !sedes.some((s) => s.id === filtros.sede);
   return (
-    <fieldset className="grid gap-3 sm:grid-cols-3">
+    <fieldset className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <legend className="sr-only">Filtros</legend>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="filtro-desde">Desde</Label>
@@ -182,6 +188,23 @@ function Filtros({
               </option>
             ),
           )}
+        </select>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="filtro-sede">Sede</Label>
+        <select
+          id="filtro-sede"
+          value={filtros.sede ?? ''}
+          onChange={(e) => filtrar({ sede: e.target.value })}
+          className="h-10 rounded-item border border-borde bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primario/40"
+        >
+          <option value="">Todas</option>
+          {sedes.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.nombre}
+            </option>
+          ))}
+          {sedeDesconocida && <option value={filtros.sede}>Otra sede</option>}
         </select>
       </div>
     </fieldset>

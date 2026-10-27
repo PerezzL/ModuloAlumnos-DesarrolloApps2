@@ -31,3 +31,5 @@ export type Horario = Schemas['Horario'];
 export type CorrelativaFaltante = Schemas['CorrelativaFaltante'];
 export type ProblemaInscripcion = Schemas['ProblemaInscripcion'];
 export type CompraResumen = Schemas['CompraResumen'];
+export type ListaSedes = Schemas['ListaSedes'];
+export type Sede = Schemas['Sede'];

@@ -114,7 +114,8 @@ describe('Módulos externos desde fixtures', () => {
     expect(await ids('desde=2026-09-10&hasta=2026-09-28')).toBe(2);
     expect(await ids('desde=2026-09-29')).toBe(0);
     expect(await ids('estado=CANCELADA')).toBe(1);
-    expect(await ids('sede=Recoleta')).toBe(1);
+    expect(await ids('sede=7b1d3f5a-9c2e-4a6b-8d0f-2e4a6c8b0d12')).toBe(1);
+    expect(await ids('sede=Recoleta')).toBe(0);
     const res = await get('/api/v1/store/orders/me?estado=COMPLETADA&limit=1');
     expect(res.body).toMatchObject({ total: 2, limit: 1 });
   });

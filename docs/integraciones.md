@@ -227,7 +227,7 @@ Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/comedor/`):
 | `GET /api/store/orders/me?page=&limit=` | Propuesto |
 | `GET /api/store/orders/:orderId` (solo compras propias) | Propuesto |
 | Campos del listado vs. del detalle | Pendiente |
-| Filtro por sede | Pedido |
+| Filtro por sede | Pedido (que sea por `siteId` de Backoffice es suposición nuestra) |
 | Que persistan ellos mismos el historial | Pendiente |
 
 Campos: `orderId`, fecha, sede, estado, productos, cantidades, precio unitario histórico,
@@ -235,7 +235,7 @@ subtotal, total. Nombres y precios congelados al momento de la compra.
 Filtros ofrecidos: paginación, fecha, estado.
 
 Fixture: `store/orders-me.provisional.json`. Salvo `orderId`, los nombres de los campos
-(`fecha`, `sede`, `estado`, `productos[]` con `cantidad`, `precioUnitario` y `subtotal`,
+(`fecha`, `siteId`, `sede`, `estado`, `productos[]` con `cantidad`, `precioUnitario` y `subtotal`,
 `total`), los estados y la forma de la paginación (`{ items, page, limit, total }`) son
 suposición nuestra. El detalle tiene la misma forma que un ítem del listado.
 
@@ -243,8 +243,10 @@ Cómo lo usa el BFF (`GET /compras` y `GET /compras/{orderId}`, adaptador en
 `apps/bff/src/modulos/tienda/`):
 
 - Pasa la paginación y los filtros como `page`, `limit`, `desde`, `hasta` (inclusive,
-  `YYYY-MM-DD`), `estado` y `sede`. Los nombres de los filtros son suposición nuestra; `sede`
-  se manda solo si viene en el pedido y la pantalla no lo ofrece hasta que la Tienda lo confirme.
+  `YYYY-MM-DD`), `estado` y `sede`. Los nombres de los filtros son suposición nuestra.
+- `sede` es el `siteId` de Backoffice. La pantalla arma el selector con `GET /sedes` (ver
+  Módulo 8) y manda el id elegido. **Suposición nuestra:** que la Tienda filtre por `siteId`;
+  por eso la fixture trae `siteId` además del nombre en `sede`, que es lo que se muestra.
 - En el listado, `productos` es opcional: si viene, `cantidadProductos` es la suma de las
   cantidades; si no, se omite.
 - Si la orden no trae `subtotal`, el BFF lo calcula sumando los subtotales de los productos
@@ -317,11 +319,14 @@ consultan y se cachean. `GET /sites?status=&cursor=&limit=` devuelve
 de a 100 como máximo. Fixture: `backoffice/sites.json`.
 
 Cómo lo usa el BFF (`nombresDeSedes()` en el adaptador de Backoffice, para cualquier módulo
-que mande solo un `siteId`; hoy, Comedor):
+que mande solo un `siteId`; hoy, Comedor y el filtro por sede de Compras):
 
 - Pide el catálogo completo (sin filtrar por estado, así se resuelven también las sedes
   inactivas), siguiendo `nextCursor`, y lo guarda en memoria una hora como `siteId → name`.
 - Si falla, no se cachea y cada llamador decide: Comedor sigue sin el nombre.
+- `GET /sedes` del BFF devuelve ese mismo catálogo como `{ items: [{ id, nombre }] }`,
+  ordenado por nombre, para el filtro por sede de Compras. Si Backoffice falla, responde el
+  error; la pantalla deja el filtro sin opciones y el listado funciona igual.
 - **Suposición nuestra:** el `siteId` es el mismo en todos los módulos.
 
 ## Módulo 9 — Gestión Académica y Planificación

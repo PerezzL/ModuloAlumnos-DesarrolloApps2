@@ -226,6 +226,8 @@ Todo lo del Módulo 2 es suposición nuestra (no hay contrato).
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
 | Asistencia con alerta | Bases de Datos I | 5 de 8 clases (62,5 %); alerta: le queda 1 falta (límite 4) |
+| Filtro por sede | Elegir Sede Recoleta | 1 compra; el selector lista las 3 sedes de Backoffice |
+| Sin catálogo de sedes | Falla `backoffice: caido` | El filtro por sede queda sin opciones; el listado carga igual |
 | Asistencia sin límite | Desarrollo de Aplicaciones I | 8 de 8 clases; sin indicador de faltas |
 | Alumno libre | Algoritmos y Estructuras de Datos, entrando por URL: `/alumnos/cursos/curso-ayed-2025-2-a` (desde Mis cursos solo enlazan las cursadas en curso) | "Quedaste libre" en lugar del indicador; sin notas (estado vacío) |
 | Notas | Desarrollo de Aplicaciones I | 1er parcial 4 (desaprobado) y recuperatorio pendiente |

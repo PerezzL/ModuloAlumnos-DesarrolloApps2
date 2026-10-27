@@ -71,7 +71,7 @@ externos también por el Gateway y devuelve los modelos del contrato.
 | `gateway/` | `GatewayClient`: único cliente HTTP hacia los módulos. Arma la URL con el prefijo configurado, reenvía el token y el `X-Correlation-Id`, aplica el timeout y traduce 502, 503 y 504 |
 | `comun/` | Errores problem+json (`problema.ts` y su filtro), contexto por request con `AsyncLocalStorage` (`contexto.ts`), logger, caché en memoria con TTL (`cache.ts`) y validación de parámetros |
 | `modulos/` | Un adaptador por módulo externo (ver abajo) |
-| `calendario/`, `inscripcion/`, `cursadas/`, `compras/`, `perfil/` | Un módulo de Nest por feature: controller con los endpoints del contrato, service que combina adaptadores y funciones puras con la lógica (`oferta.ts`, `historial.ts`, `detalle.ts`, `rango.ts`) |
+| `calendario/`, `inscripcion/`, `cursadas/`, `compras/`, `perfil/`, `sedes/` | Un módulo de Nest por feature: controller con los endpoints del contrato, service que combina adaptadores y funciones puras con la lógica (`oferta.ts`, `historial.ts`, `detalle.ts`, `rango.ts`) |
 | `health/`, `docs/` | `GET /health/live` y `/health/ready`; Swagger UI desde `openapi.yaml` |
 
 ### Adaptadores (`src/modulos/<modulo>/`)
