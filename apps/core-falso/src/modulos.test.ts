@@ -265,3 +265,53 @@ describe('Destino real configurado', () => {
     expect(res.status).toBe(503);
   });
 });
+
+describe('Inscripción cerrada simulada', () => {
+  interface PeriodoFixture {
+    id: string;
+    inscripcionDesde: string;
+    inscripcionHasta: string;
+  }
+  const simular = (cerrada: unknown) => request(app).put('/__falso/inscripcion').send({ cerrada });
+  const abiertos = async () => {
+    const ahora = Date.now();
+    const periodos = (await get('/api/v1/academic/planificacion/periodos'))
+      .body as PeriodoFixture[];
+    return periodos
+      .filter(
+        (p) => Date.parse(p.inscripcionDesde) <= ahora && ahora < Date.parse(p.inscripcionHasta),
+      )
+      .map((p) => p.id);
+  };
+
+  it('ningún período queda con la inscripción abierta: el vigente pasa a abrir en una semana', async () => {
+    expect(await abiertos()).toHaveLength(1);
+    expect((await simular(true).expect(200)).body).toEqual({ cerrada: true });
+    expect(await abiertos()).toEqual([]);
+    const periodos = (await get('/api/v1/academic/planificacion/periodos'))
+      .body as PeriodoFixture[];
+    const desde = Date.parse(periodos.find((p) => p.id === '2027-1')!.inscripcionDesde);
+    expect(desde - Date.now()).toBeGreaterThan(6 * 24 * 60 * 60 * 1000);
+  });
+
+  it('inscribirse → 409 FUERA_DE_FECHA', async () => {
+    await simular(true).expect(200);
+    const res = await inscribir('curso-so-2027-1-a');
+    expect(res.status).toBe(409);
+    expect(JSON.parse(res.text).code).toBe('FUERA_DE_FECHA');
+  });
+
+  it('se vuelve a abrir con cerrada: false o con reset, y se consulta con GET', async () => {
+    await simular(true).expect(200);
+    expect((await request(app).get('/__falso/inscripcion')).body).toEqual({ cerrada: true });
+    await simular(false).expect(200);
+    expect(await abiertos()).toHaveLength(1);
+    await simular(true).expect(200);
+    await request(app).post('/__falso/reset').expect(204);
+    expect((await request(app).get('/__falso/inscripcion')).body).toEqual({ cerrada: false });
+  });
+
+  it('cerrada tiene que ser booleano', async () => {
+    expect((await simular('si')).status).toBe(400);
+  });
+});

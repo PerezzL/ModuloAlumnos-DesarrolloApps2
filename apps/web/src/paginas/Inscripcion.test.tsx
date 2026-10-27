@@ -1,9 +1,10 @@
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ofertaBase } from '@/test/inscripcion';
 import { renderApp } from '@/test/render';
-import { BFF, reiniciarCore, servidor } from '@/test/servidor';
+import { BFF, GW, reiniciarCore, servidor } from '@/test/servidor';
 
 const conOferta = (cambios: Partial<ReturnType<typeof ofertaBase>>) =>
   servidor.use(
@@ -64,12 +65,50 @@ describe('inscripción: oferta', () => {
     expect(screen.getByText(/hasta el 18 de diciembre de 2026/)).toBeInTheDocument();
   });
 
-  it('con la inscripción cerrada, lo avisa y muestra la oferta igual', async () => {
-    conOferta({ inscripcionAbierta: false });
+  it('con la inscripción por abrir, pantalla propia con las fechas y sin la oferta', async () => {
+    conOferta({
+      inscripcionAbierta: false,
+      inscripcionDesde: '2030-02-15T12:00:00.000Z',
+      inscripcionHasta: '2030-03-01T02:59:59.000Z',
+    });
     renderApp('/academico');
-    expect(await screen.findByText('La inscripción está cerrada')).toBeInTheDocument();
-    expect(screen.getByText(/del 28 de septiembre de 2026/)).toBeInTheDocument();
-    expect(screen.getByText('Sistemas Operativos')).toBeInTheDocument();
+    expect(
+      await screen.findByText('El período de inscripción no está abierto'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /La inscripción del 1° cuatrimestre 2027 abre el 15 de febrero de 2030.* y cierra el 28 de febrero de 2030/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Sistemas Operativos')).not.toBeInTheDocument();
+    expect(screen.queryByText('La inscripción está abierta')).not.toBeInTheDocument();
+  });
+
+  it('con la inscripción ya cerrada, dice cuándo cerró', async () => {
+    conOferta({
+      inscripcionAbierta: false,
+      inscripcionDesde: '2020-02-15T12:00:00.000Z',
+      inscripcionHasta: '2020-03-01T02:59:59.000Z',
+    });
+    renderApp('/academico');
+    expect(
+      await screen.findByText(
+        /La inscripción del 1° cuatrimestre 2027 cerró el 29 de febrero de 2020/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('cerrada y sin fechas, lo dice igual', async () => {
+    const { inscripcionDesde: _d, inscripcionHasta: _h, ...sinFechas } = ofertaBase();
+    servidor.use(
+      http.get(`${BFF}/inscripcion/oferta`, () =>
+        HttpResponse.json({ ...sinFechas, inscripcionAbierta: false }),
+      ),
+    );
+    renderApp('/academico');
+    expect(
+      await screen.findByText('Todavía no hay fechas de inscripción para el 1° cuatrimestre 2027.'),
+    ).toBeInTheDocument();
   });
 
   it('muestra día, horario, aula y sede de cada comisión; sin horarios, la comisión igual', async () => {
@@ -114,5 +153,57 @@ describe('inscripción: oferta', () => {
       /Gestión Académica no está disponible/,
     );
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+  });
+});
+
+describe('inscripción: simulación de inscripción cerrada (solo en desarrollo)', () => {
+  beforeEach(() => reiniciarCore(true));
+
+  /** CORE falso simulado: el PUT de /__falso/inscripcion cambia lo que responde la oferta */
+  function coreFalso(pedidos: unknown[], responde = 200) {
+    let cerrada = false;
+    servidor.use(
+      http.put(`${GW}/__falso/inscripcion`, async ({ request }) => {
+        const cuerpo = (await request.json()) as { cerrada: boolean };
+        pedidos.push(cuerpo);
+        if (responde !== 200) return new HttpResponse(null, { status: responde });
+        cerrada = cuerpo.cerrada;
+        return HttpResponse.json(cuerpo);
+      }),
+      http.get(`${BFF}/inscripcion/oferta`, () =>
+        HttpResponse.json({
+          ...ofertaBase(),
+          inscripcionAbierta: !cerrada,
+          ...(cerrada && { inscripcionDesde: '2030-02-15T12:00:00.000Z' }),
+        }),
+      ),
+    );
+  }
+
+  it('cierra la inscripción en el CORE falso, recarga la oferta y deja volver a abrirla', async () => {
+    const pedidos: unknown[] = [];
+    coreFalso(pedidos);
+    renderApp('/academico');
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Simular inscripción cerrada' }),
+    );
+    expect(
+      await screen.findByText('El período de inscripción no está abierto'),
+    ).toBeInTheDocument();
+    expect(pedidos).toEqual([{ cerrada: true }]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar la simulación' }));
+    expect(await screen.findByText('La inscripción está abierta')).toBeInTheDocument();
+    expect(pedidos).toEqual([{ cerrada: true }, { cerrada: false }]);
+  });
+
+  it('si el CORE falso no responde, lo avisa y la pantalla sigue igual', async () => {
+    coreFalso([], 404);
+    renderApp('/academico');
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Simular inscripción cerrada' }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(/CORE falso/);
+    expect(screen.getByText('La inscripción está abierta')).toBeInTheDocument();
   });
 });

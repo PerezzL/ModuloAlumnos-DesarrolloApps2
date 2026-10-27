@@ -38,6 +38,8 @@ Pantalla de entrada tras el login. No corresponde a un RF explícito.
   Inscripto / Con cupo / Sin cupo / Bloqueada por correlativa.
 - Acción de inscripción a una comisión, con confirmación.
 - Error: correlatividad faltante o sin condición de regularidad.
+- Inscripción cerrada: en lugar de la oferta, "El período de inscripción no está abierto"
+  con la fecha en que abre (o en que cerró). En desarrollo, un botón la simula.
 
 ## 4.4 Historial académico
 

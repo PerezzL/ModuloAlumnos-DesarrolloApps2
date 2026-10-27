@@ -109,7 +109,7 @@ notificaciones, el saldo y los módulos externos. Escucha en `:4000`. No se desp
 | `notificaciones.ts`, `socket.ts` | `GET /api/v1/notifications` y el namespace socket.io `/notifications` |
 | `saldo.ts` | Wallet, movimientos y cargas con los tokens `mock-approved`, `mock-rejected` y `mock-pending` |
 | `fallas.ts` | Fallas simuladas por módulo: `caido` (503), `invalido` (502) y `lento` (504 o demora) |
-| `falso.ts` | Endpoints de control `/__falso/*`: cambiar fallas en caliente, disparar notificaciones, reiniciar el estado |
+| `falso.ts` | Endpoints de control `/__falso/*`: cambiar fallas en caliente, disparar notificaciones, simular la inscripción cerrada, reiniciar el estado |
 | `fixtures.ts`, `paginacion.ts`, `problema.ts` | Lectura de fixtures, paginación por cursor como la de CORE y errores problem+json |
 
 ## Mocks: qué hay y dónde
