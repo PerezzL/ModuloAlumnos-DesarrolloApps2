@@ -50,7 +50,7 @@ describe('GET /compras', () => {
     const queries: URLSearchParams[] = [];
     e2e.server.use(tienda(queries));
     const res = await e2e.get(
-      '/compras?desde=2026-09-01&hasta=2026-09-30&estado=COMPLETADA&sede=Monserrat&page=2',
+      '/compras?desde=2026-09-01&hasta=2026-09-30&estado=COMPLETADA&sede=3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90&page=2',
     );
     expect(res.status).toBe(200);
     expect(Object.fromEntries(queries[0]!)).toEqual({
@@ -59,7 +59,7 @@ describe('GET /compras', () => {
       desde: '2026-09-01',
       hasta: '2026-09-30',
       estado: 'COMPLETADA',
-      sede: 'Monserrat',
+      sede: '3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90',
     });
   });
 

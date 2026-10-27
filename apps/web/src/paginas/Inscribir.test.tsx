@@ -126,7 +126,7 @@ describe('inscripción: inscribirse en una comisión', () => {
       ),
     );
     renderApp('/academico');
-    await screen.findByText('La inscripción está cerrada');
+    await screen.findByText('El período de inscripción no está abierto');
     expect(screen.queryByRole('button', { name: /Inscribirme/ })).not.toBeInTheDocument();
   });
 });

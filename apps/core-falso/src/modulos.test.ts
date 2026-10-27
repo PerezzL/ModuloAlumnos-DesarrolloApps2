@@ -114,7 +114,8 @@ describe('Módulos externos desde fixtures', () => {
     expect(await ids('desde=2026-09-10&hasta=2026-09-28')).toBe(2);
     expect(await ids('desde=2026-09-29')).toBe(0);
     expect(await ids('estado=CANCELADA')).toBe(1);
-    expect(await ids('sede=Recoleta')).toBe(1);
+    expect(await ids('sede=7b1d3f5a-9c2e-4a6b-8d0f-2e4a6c8b0d12')).toBe(1);
+    expect(await ids('sede=Recoleta')).toBe(0);
     const res = await get('/api/v1/store/orders/me?estado=COMPLETADA&limit=1');
     expect(res.body).toMatchObject({ total: 2, limit: 1 });
   });
@@ -262,5 +263,55 @@ describe('Destino real configurado', () => {
       .get('/api/v1/dining/calendar/me')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(503);
+  });
+});
+
+describe('Inscripción cerrada simulada', () => {
+  interface PeriodoFixture {
+    id: string;
+    inscripcionDesde: string;
+    inscripcionHasta: string;
+  }
+  const simular = (cerrada: unknown) => request(app).put('/__falso/inscripcion').send({ cerrada });
+  const abiertos = async () => {
+    const ahora = Date.now();
+    const periodos = (await get('/api/v1/academic/planificacion/periodos'))
+      .body as PeriodoFixture[];
+    return periodos
+      .filter(
+        (p) => Date.parse(p.inscripcionDesde) <= ahora && ahora < Date.parse(p.inscripcionHasta),
+      )
+      .map((p) => p.id);
+  };
+
+  it('ningún período queda con la inscripción abierta: el vigente pasa a abrir en una semana', async () => {
+    expect(await abiertos()).toHaveLength(1);
+    expect((await simular(true).expect(200)).body).toEqual({ cerrada: true });
+    expect(await abiertos()).toEqual([]);
+    const periodos = (await get('/api/v1/academic/planificacion/periodos'))
+      .body as PeriodoFixture[];
+    const desde = Date.parse(periodos.find((p) => p.id === '2027-1')!.inscripcionDesde);
+    expect(desde - Date.now()).toBeGreaterThan(6 * 24 * 60 * 60 * 1000);
+  });
+
+  it('inscribirse → 409 FUERA_DE_FECHA', async () => {
+    await simular(true).expect(200);
+    const res = await inscribir('curso-so-2027-1-a');
+    expect(res.status).toBe(409);
+    expect(JSON.parse(res.text).code).toBe('FUERA_DE_FECHA');
+  });
+
+  it('se vuelve a abrir con cerrada: false o con reset, y se consulta con GET', async () => {
+    await simular(true).expect(200);
+    expect((await request(app).get('/__falso/inscripcion')).body).toEqual({ cerrada: true });
+    await simular(false).expect(200);
+    expect(await abiertos()).toHaveLength(1);
+    await simular(true).expect(200);
+    await request(app).post('/__falso/reset').expect(204);
+    expect((await request(app).get('/__falso/inscripcion')).body).toEqual({ cerrada: false });
+  });
+
+  it('cerrada tiene que ser booleano', async () => {
+    expect((await simular('si')).status).toBe(400);
   });
 });

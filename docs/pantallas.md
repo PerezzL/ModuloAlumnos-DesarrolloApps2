@@ -38,6 +38,8 @@ Pantalla de entrada tras el login. No corresponde a un RF explícito.
   Inscripto / Con cupo / Sin cupo / Bloqueada por correlativa.
 - Acción de inscripción a una comisión, con confirmación.
 - Error: correlatividad faltante o sin condición de regularidad.
+- Inscripción cerrada: en lugar de la oferta, "El período de inscripción no está abierto"
+  con la fecha en que abre (o en que cerró). En desarrollo, un botón la simula.
 
 ## 4.4 Historial académico
 
@@ -89,7 +91,7 @@ Pertenece al Módulo 3. Se mockeó solo para representar el flujo de redirecció
 
 ## 4.10 Historial de compras
 
-- Listado: producto, fecha, monto, sede y estado, con paginación y filtros por fecha y estado.
+- Listado: producto, fecha, monto, sede y estado, con paginación y filtros por fecha, estado y sede (las sedes salen de `GET /sedes`).
 - Detalle: productos, cantidades, precio unitario histórico, subtotal y total.
 
 ## 4.11 Saldo / Carga de saldo

@@ -138,11 +138,12 @@ Pendiente: si `hasta` es inclusivo en el Módulo 6 cuando se envía solo la fech
 
 Vista de solo lectura de las compras del estudiante en la Tienda.
 
-- `GET /compras` (paginado, filtros por fecha y estado; sede pedida) y `GET /compras/{orderId}`.
+- `GET /compras` (paginado, filtros por fecha, estado y sede) y `GET /sedes` para las opciones del filtro y `GET /compras/{orderId}`.
 - Consulta en vivo a la Tienda, sin tabla propia ni caché.
 - Nombres y precios congelados al momento de la compra.
 
-Pendiente: qué campos van en el listado y cuáles en el detalle; filtro por sede.
+Pendiente: qué campos van en el listado y cuáles en el detalle; que la Tienda confirme el
+filtro por sede (y que sea por `siteId`).
 
 ## RF9 — Carga de saldo
 

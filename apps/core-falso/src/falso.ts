@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { esModulo } from './config.js';
+import type { EstadoAcademico } from './modulos/academico.js';
 import { validarFalla, type Fallas } from './fallas.js';
 import {
   ejemplo,
@@ -13,16 +14,17 @@ import { buscarPorEmail, buscarPorId, USUARIOS } from './usuarios.js';
 export interface OpcionesFalso {
   fallas: Fallas;
   notificaciones: Notificaciones;
+  academico: EstadoAcademico;
   /** Vuelven el estado en memoria a las fixtures */
   reinicios: (() => void)[];
 }
 
 /**
  * Endpoints de prueba, solo del CORE falso (no existen en CORE): fallas simuladas,
- * notificaciones a demanda y reset.
+ * notificaciones a demanda, inscripción cerrada y reset.
  * No piden token, para poder usarlos con curl durante una demo.
  */
-export function routerFalso({ fallas, notificaciones, reinicios }: OpcionesFalso) {
+export function routerFalso({ fallas, notificaciones, academico, reinicios }: OpcionesFalso) {
   const router = Router();
 
   router.get('/fallas', (_req, res) => {
@@ -71,6 +73,20 @@ export function routerFalso({ fallas, notificaciones, reinicios }: OpcionesFalso
           : USUARIOS[0];
     if (!usuario) return enviarProblema(res, 404, 'NOT_FOUND', 'Usuario inexistente');
     res.status(201).json(notificaciones.crear(usuario.id, ejemplo(tipo)));
+  });
+
+  /** Simula que ningún período tiene la inscripción abierta: `{ "cerrada": true }` */
+  router.get('/inscripcion', (_req, res) => {
+    res.json({ cerrada: academico.inscripcionCerrada });
+  });
+
+  router.put('/inscripcion', (req, res) => {
+    const { cerrada } = (req.body ?? {}) as { cerrada?: unknown };
+    if (typeof cerrada !== 'boolean') {
+      return enviarProblema(res, 400, 'VALIDATION_ERROR', 'cerrada debe ser true o false');
+    }
+    academico.inscripcionCerrada = cerrada;
+    res.json({ cerrada });
   });
 
   /** Estado en memoria y fallas vuelven a como arrancó el CORE falso */

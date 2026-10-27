@@ -7,6 +7,7 @@ interface Orden {
   orderId: string;
   fecha: string;
   estado: string;
+  siteId?: string | null;
   sede?: string | null;
 }
 
@@ -15,8 +16,9 @@ const DIA_MS = 24 * 60 * 60 * 1000;
 const inicioDelDia = (fecha: string) => Date.parse(`${fecha}T00:00:00-03:00`);
 
 /**
- * Filtros que la Tienda ofreció (fecha y estado) y el que le pedimos (sede). Los nombres de
- * los parámetros son una suposición nuestra: `desde` y `hasta` inclusive, en `YYYY-MM-DD`.
+ * Filtros que la Tienda ofreció (fecha y estado) y el que le pedimos (sede, por `siteId` de
+ * Backoffice). Los nombres de los parámetros y que la sede se filtre por `siteId` son una
+ * suposición nuestra: `desde` y `hasta` inclusive, en `YYYY-MM-DD`.
  */
 function filtrar(ordenes: Orden[], query: Record<string, unknown>) {
   const { desde, hasta, estado, sede } = query;
@@ -25,7 +27,7 @@ function filtrar(ordenes: Orden[], query: Record<string, unknown>) {
     if (typeof desde === 'string' && t < inicioDelDia(desde)) return false;
     if (typeof hasta === 'string' && t >= inicioDelDia(hasta) + DIA_MS) return false;
     if (typeof estado === 'string' && o.estado !== estado) return false;
-    if (typeof sede === 'string' && o.sede !== sede) return false;
+    if (typeof sede === 'string' && o.siteId !== sede) return false;
     return true;
   });
 }

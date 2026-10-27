@@ -87,6 +87,7 @@ export async function crearApp(config: ConfigCore, opciones: OpcionesApp = {}) {
     routerFalso({
       fallas,
       notificaciones,
+      academico,
       reinicios: [academico, notificaciones, saldos].map((estado) => () => estado.reiniciar()),
     }),
   );
