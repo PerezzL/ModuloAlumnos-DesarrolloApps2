@@ -9,8 +9,8 @@ interface Sede {
 }
 
 /**
- * Módulo 8. Las sedes siguen su documento de flujo de datos; qué campos trae el usuario (y
- * si trae `planId`) está pendiente de confirmar.
+ * Módulo 8. Usuario y sedes siguen su documento de flujo de datos; `careers` lo adelantaron
+ * aparte. La ruta del usuario está a confirmar.
  */
 export function moduloBackoffice() {
   const router = Router();

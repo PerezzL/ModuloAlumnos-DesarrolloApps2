@@ -1,22 +1,28 @@
 {
   "ba310c57-a684-4dbf-a4a4-905fcfbefa08": {
-    "id": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "userId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
     "email": "v.moreno@uade.edu.ar",
-    "nombre": "Valentina",
-    "apellido": "Moreno",
-    "legajo": "1123456",
-    "carrera": "Ingeniería en Informática",
-    "planId": "plan-2020",
-    "status": "ACTIVE"
+    "firstName": "Valentina",
+    "lastName": "Moreno",
+    "documentId": "40123456",
+    "fileNumber": "1123456",
+    "roles": ["STUDENT"],
+    "status": "ACTIVE",
+    "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+    "careerId": "3",
+    "careers": [{ "careerId": "3", "planId": "12" }]
   },
   "6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f": {
-    "id": "6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f",
+    "userId": "6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f",
     "email": "j.perez@uade.edu.ar",
-    "nombre": "Juan",
-    "apellido": "Pérez",
-    "legajo": "1129876",
-    "carrera": "Ingeniería en Informática",
-    "planId": null,
-    "status": "ACTIVE"
+    "firstName": "Juan",
+    "lastName": "Pérez",
+    "documentId": "41987654",
+    "fileNumber": "1129876",
+    "roles": ["STUDENT"],
+    "status": "ACTIVE",
+    "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+    "careerId": null,
+    "careers": []
   }
 }

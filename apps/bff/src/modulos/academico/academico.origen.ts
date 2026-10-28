@@ -72,6 +72,13 @@ export const Cursos = z.array(
 );
 
 /**
+ * Respuesta de `GET /api/academica/carreras` (Módulo 9). Implementado, pero sin respuesta de
+ * ejemplo: campos PROVISIONALES (fixture `academic/carreras.provisional.json`). Solo se usa
+ * para el nombre de la carrera del perfil.
+ */
+export const Carreras = z.array(z.object({ id, nombre: z.string() }).passthrough());
+
+/**
  * Respuesta de `GET /api/academica/asignaturas/{asignaturaId}/correlatividades`.
  * Implementado; forma PROVISIONAL (fixture `academic/correlatividades.provisional.json`).
  */

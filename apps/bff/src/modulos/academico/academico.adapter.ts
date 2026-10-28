@@ -11,6 +11,7 @@ import type {
   PeriodoAcademico,
 } from './academico.modelo';
 import {
+  aCarreras,
   aCorrelativas,
   aCursos,
   aInscripcion,
@@ -22,12 +23,15 @@ import {
 
 /** Las correlatividades cambian con el plan de estudios: casi nunca. */
 const TTL_CORRELATIVIDADES_MS = 60 * 60 * 1000;
+/** El catálogo de carreras cambia todavía menos. */
+const TTL_CARRERAS_MS = 60 * 60 * 1000;
 
 /** Módulo 9 · Gestión Académica. Único lugar que conoce la forma de sus respuestas. */
 @Injectable()
 export class AcademicoAdapter {
   // Las correlativas traen el nombre de cada asignatura: con esto se cachean los dos datos
   private readonly correlatividades = new CacheTtl<Correlativa[]>(TTL_CORRELATIVIDADES_MS);
+  private readonly carreras = new CacheTtl<Map<string, string>>(TTL_CARRERAS_MS);
 
   constructor(private readonly gateway: GatewayClient) {}
 
@@ -60,6 +64,14 @@ export class AcademicoAdapter {
         { query: { periodoId } },
       ),
     );
+  }
+
+  /** Nombre de una carrera, o null si el Módulo 9 no la conoce. */
+  async nombreCarrera(carreraId: string): Promise<string | null> {
+    const carreras = await this.carreras.obtener('todas', async () =>
+      aCarreras(await this.gateway.get('GESTION_ACADEMICA', '/academica/carreras')),
+    );
+    return carreras.get(carreraId) ?? null;
   }
 
   /** Correlativas de una asignatura. Si el Módulo 9 no la conoce, no tiene correlativas. */

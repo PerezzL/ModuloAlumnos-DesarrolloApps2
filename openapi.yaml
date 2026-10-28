@@ -568,7 +568,7 @@ components:
           type: string
           nullable: true
           x-provisional: true
-          description: Plan de estudios. A confirmar que Backoffice lo devuelva.
+          description: Plan de estudios (el de la primera carrera que informa Backoffice). Null si no tiene.
       example:
         id: "alumno-456"
         email: jperez@uade.edu.ar

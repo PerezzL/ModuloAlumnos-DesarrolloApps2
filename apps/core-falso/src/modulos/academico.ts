@@ -42,7 +42,7 @@ interface Correlativa {
 }
 
 /** Todos los cursos de las fixtures son del plan del alumno demo (ver backoffice/users). */
-const PLAN_DEMO = 'plan-2020';
+const PLAN_DEMO = '12';
 const ACTIVAS = new Set(['INSCRIPTO', 'CURSANDO']);
 const CUMPLE: Record<Correlativa['tipo'], Set<string>> = {
   APROBADA: new Set(['APROBADO']),
@@ -78,6 +78,10 @@ export function moduloAcademico(estado: EstadoAcademico) {
   const router = Router();
   const correlatividades = () =>
     fixture<Record<string, Correlativa[]>>('academic/correlatividades.provisional.json');
+
+  router.get('/api/v1/academica/carreras', (_req, res) => {
+    res.json(fixture('academic/carreras.provisional.json'));
+  });
 
   router.get('/api/v1/planificacion/periodos', (_req, res) => {
     res.json(fixture('academic/periodos.provisional.json'));
