@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { calendarioOctubre } from '@/test/calendario';
+import { ofertaBase } from '@/test/inscripcion';
 import { renderApp } from '@/test/render';
 import { BFF, GW, reiniciarCore, servidor } from '@/test/servidor';
 
@@ -100,6 +101,56 @@ describe('Inicio (H43)', () => {
     const proximo = await tarjeta(/próximo/i);
     expect(await within(proximo).findByText(/no pudimos cargar exámenes/i)).toBeInTheDocument();
     expect(within(proximo).getByText('Jornada de Desarrollo de Software')).toBeInTheDocument();
+  });
+
+  it('avisa que la inscripción está abierta, hasta cuándo, y lleva a inscribirse', async () => {
+    reiniciarCore(true);
+    calendarioFiltrado();
+    renderApp('/');
+    const aviso = await screen.findByRole('status', { name: /inscripción a materias/i });
+    expect(aviso).toHaveTextContent(/la inscripción del 1° cuatrimestre 2027 está abierta/i);
+    expect(aviso).toHaveTextContent(/hasta el 18 de diciembre de 2026/i);
+    expect(within(aviso).getByRole('link', { name: /inscribirme/i })).toHaveAttribute(
+      'href',
+      '/academico',
+    );
+  });
+
+  it('con la inscripción cerrada no muestra el aviso', async () => {
+    reiniciarCore(true);
+    calendarioFiltrado();
+    servidor.use(
+      http.get(`${BFF}/inscripcion/oferta`, () =>
+        HttpResponse.json({
+          ...ofertaBase(),
+          inscripcionAbierta: false,
+          inscripcionDesde: '2026-11-02T12:00:00.000Z',
+        }),
+      ),
+    );
+    renderApp('/');
+    expect(await within(await tarjeta(/sin leer/i)).findByText('2')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('status', { name: /inscripción a materias/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('si la oferta no responde, no muestra el aviso y el resto del inicio sigue', async () => {
+    reiniciarCore(true);
+    calendarioFiltrado();
+    servidor.use(
+      http.get(`${BFF}/inscripcion/oferta`, () =>
+        HttpResponse.json(
+          { title: 'x', status: 503, code: 'UPSTREAM_UNAVAILABLE' },
+          { status: 503 },
+        ),
+      ),
+    );
+    renderApp('/');
+    expect(await within(await tarjeta(/sin leer/i)).findByText('2')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('status', { name: /inscripción a materias/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('un turno de examen en curso cuenta como próximo hasta que termina', async () => {
