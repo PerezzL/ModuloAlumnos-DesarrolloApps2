@@ -109,10 +109,10 @@ Comportamiento:
 - Inyecta en cada request autenticado: `X-User-Id`, `X-User-Roles`, `X-User-Permissions`,
   `X-Correlation-Id`.
 
-**Abierto:** las rutas que informaron los módulos 5, 8 y 9 (`/api/store/orders/me`, `/api/v1/backoffice/users/{userId}`, `/api/planificacion/...`,
+**Abierto:** las rutas que informaron los módulos 8 y 9 (`/api/v1/backoffice/users/{userId}`, `/api/planificacion/...`,
 `/api/academica/...`) son las de cada servicio. Falta confirmar cómo quedan publicadas
 detrás del prefijo del Gateway. Mientras tanto suponemos **prefijo + recurso** (por ejemplo
-`/api/v1/store/orders/me` o `/api/v1/academic/planificacion/cursos`); la tabla completa está
+`/api/v1/academic/planificacion/cursos`); la tabla completa está
 en [`integraciones.md`](integraciones.md). Backoffice sale de la sección 6 de [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
 
 **El JWT sí llega al BFF.** Según el contrato de CORE, `Authorization: Bearer <jwt>` viaja

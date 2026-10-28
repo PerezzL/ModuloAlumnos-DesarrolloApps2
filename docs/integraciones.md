@@ -28,7 +28,7 @@ bajo `/api/v1`. En el BFF, prefijos y rutas son configuración; el CORE falso y 
 | --- | --- | --- |
 | 2 | (sin contrato) | `/api/v1/teacher/cursos/{cursoId}/alumnos/{alumnoId}/asistencia` · `/notas` · `/notas/{notaId}` |
 | 4 | `GET /api/v1/dining/calendar/me` (ruta pública) | `/api/v1/dining/calendar/me` |
-| 5 | `GET /api/store/orders/me` · `/api/store/orders/:orderId` | `/api/v1/store/orders/me` · `/api/v1/store/orders/{orderId}` |
+| 5 | `GET /api/v1/store/orders/me` · `/api/v1/store/orders/{id}` (ruta pública) | `/api/v1/store/orders/me` · `/api/v1/store/orders/{id}` |
 | 6 | `GET /api/v1/eventos` · `/api/v1/eventos/{id}` | `/api/v1/events/eventos` · `/api/v1/events/eventos/{id}` |
 | 8 | `GET /api/v1/backoffice/users/{userId}` · `/sites` | `/api/v1/backoffice/users/{userId}` · `/api/v1/backoffice/sites` |
 | 9 | `/api/planificacion/...` · `/api/academica/...` | `/api/v1/academic/planificacion/...` · `/api/v1/academic/academica/...` |
@@ -222,38 +222,53 @@ Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/comedor/`):
 
 ## Módulo 5 — Tienda
 
+Documento de endpoints de consulta de la Tienda y respuesta a nuestras consultas (octubre 2026).
+
 | Tema | Estado |
 | --- | --- |
-| `GET /api/store/orders/me?page=&limit=` | Propuesto |
-| `GET /api/store/orders/:orderId` (solo compras propias) | Propuesto |
-| Campos del listado vs. del detalle | Pendiente |
-| Filtro por sede | Pedido (que sea por `siteId` de Backoffice es suposición nuestra) |
-| Que persistan ellos mismos el historial | Pendiente |
+| `GET /api/v1/store/orders/me?status=&siteId=&from=&to=&limit=&cursor=` | Confirmado |
+| `GET /api/v1/store/orders/{id}` (404 si la orden es de otro usuario) | Confirmado |
+| Campos de la orden (listado y detalle traen la misma orden completa) | Confirmado |
+| Filtros por estado, sede y fecha | Confirmado |
+| Ruta definitiva | Resuelto: es la ruta pública, detrás del Gateway, con el token del usuario |
+| Que `siteId` sea el mismo id de sede de Backoffice | Suposición nuestra; falta preguntarles |
 
-Campos: `orderId`, fecha, sede, estado, productos, cantidades, precio unitario histórico,
-subtotal, total. Nombres y precios congelados al momento de la compra.
-Filtros ofrecidos: paginación, fecha, estado.
+Listado:
 
-Fixture: `store/orders-me.provisional.json`. Salvo `orderId`, los nombres de los campos
-(`fecha`, `siteId`, `sede`, `estado`, `productos[]` con `cantidad`, `precioUnitario` y `subtotal`,
-`total`), los estados y la forma de la paginación (`{ items, page, limit, total }`) son
-suposición nuestra. El detalle tiene la misma forma que un ítem del listado.
+- Paginación por cursor, como CORE: `limit` de 1 a 100 (20 por defecto) y `cursor` (el
+  `nextCursor` anterior, un uuid). Responde `{ items, nextCursor }`; `nextCursor` null es la
+  última página. No hay número de página ni total. Un cursor que no existe o que no cumple los
+  filtros es 400.
+- Filtros opcionales y combinables: `status` (`PENDING_PAYMENT`, `COMPLETED`, `COMPENSATING`,
+  `FAILED`), `siteId` (uuid), `from` y `to` (ISO 8601, inclusive, sobre `createdAt`).
+- Siempre de la orden más reciente a la más vieja (`createdAt desc, id desc`).
+- Errores en `application/problem+json`.
+
+Orden: `id`, `siteId`, `status`, `createdAt`, `completedAt` (o null), `total` y `balanceAfter`
+(string con 2 decimales, o null), `currency`, `failureCode` (o null) e `items[]`. Cada ítem:
+`productId`, `productName`, `imageUrl` (URL completa), `image` (ruta relativa al front de la
+Tienda), `quantity`, `unitPrice`, y `variantId`, `color`, `size`, `sku` (null si no es variante).
+Los ítems guardan nombre, imagen y precio del momento de la compra. No hay subtotales.
+
+Fixture: `store/orders-me.json` (con `siteId` de `backoffice/sites.json`).
 
 Cómo lo usa el BFF (`GET /compras` y `GET /compras/{orderId}`, adaptador en
 `apps/bff/src/modulos/tienda/`):
 
-- Pasa la paginación y los filtros como `page`, `limit`, `desde`, `hasta` (inclusive,
-  `YYYY-MM-DD`), `estado` y `sede`. Los nombres de los filtros son suposición nuestra.
-- `sede` es el `siteId` de Backoffice. La pantalla arma el selector con `GET /sedes` (ver
-  Módulo 8) y manda el id elegido. **Suposición nuestra:** que la Tienda filtre por `siteId`;
-  por eso la fixture trae `siteId` además del nombre en `sede`, que es lo que se muestra.
-- En el listado, `productos` es opcional: si viene, `cantidadProductos` es la suma de las
-  cantidades; si no, se omite.
-- Si la orden no trae `subtotal`, el BFF lo calcula sumando los subtotales de los productos
-  como texto decimal (sin float).
-- En el detalle, un 404 o un 403 (compra de otro alumno) son el mismo 404 `COMPRA_NO_ENCONTRADA`.
-- La pantalla ofrece filtrar por los estados de la fixture (`COMPLETADA`, `CANCELADA`); un
-  estado que la Tienda mande y no esté en esa lista se muestra igual en el listado.
+- Pasa `cursor` y `limit` tal cual. `desde` y `hasta` (`YYYY-MM-DD`) se mandan como días
+  completos en hora de Argentina: `from` a las 00:00:00.000 y `to` a las 23:59:59.999, con
+  `-03:00`. `estado` va como `status` y `sede` como `siteId`.
+- La sede se muestra con el nombre de Backoffice (`nombresDeSedes()`, ver Módulo 8), pedido en
+  paralelo. Si Backoffice falla o no conoce la sede, la compra sale igual con `sede: null`.
+  El `GET /api/v1/store/sites` de la Tienda no se usa: el dueño del catálogo es Backoffice.
+- El estado pasa tal cual; el front lo traduce a una etiqueta y muestra tal como llega uno que
+  no conoce. No se usan `failureCode`, `balanceAfter` ni `completedAt`.
+- `cantidadProductos` es la suma de las `quantity`. El subtotal de cada producto es
+  `quantity × unitPrice` y el de la compra, la suma de los productos; los dos como texto
+  decimal, sin float.
+- Imagen: `imageUrl`. La ruta relativa `image` no sirve fuera del front de la Tienda.
+- Un 400 de la Tienda en el listado es nuestro 400 `SOLICITUD_INVALIDA`. En el detalle, un 404
+  es `COMPRA_NO_ENCONTRADA`.
 
 ## Módulo 6 — Eventos Académicos
 

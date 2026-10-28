@@ -184,10 +184,10 @@ El impacto de cuando lo publique queda en su adaptador y su fixture.
 
 ### 8. Historial de compras (RF8)
 
-- Ir a **Compras**: 3 compras, dos completadas (Monserrat y Recoleta) y una cancelada.
-- Filtrar por estado.
-- Abrir una: productos, cantidades, precio unitario y total, con los precios del momento
-  de la compra.
+- Ir a **Compras**: 3 compras, dos completadas (Sede Monserrat y Sede Recoleta) y una fallida.
+- Filtrar por estado o por sede.
+- Abrir la del buzo: imagen, color y talle, cantidades, precio unitario, subtotal y total,
+  con los precios del momento de la compra.
 
 ### 9. Saldo (RF9)
 

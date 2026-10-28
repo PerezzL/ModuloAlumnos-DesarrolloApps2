@@ -182,10 +182,10 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 | | |
 | --- | --- |
-| Falta confirmar | Campos del listado y del detalle, filtro por sede, ruta definitiva |
-| Fixtures | `packages/fixtures/store/orders-me.provisional.json` |
+| Falta confirmar | Que el `siteId` de las órdenes sea el de Backoffice |
+| Fixtures | `packages/fixtures/store/orders-me.json` |
 | Adaptador | `apps/bff/src/modulos/tienda/`. Lo usa `apps/bff/src/compras/` |
-| Contrato | Parámetro de sede de `GET /compras` y `CompraResumen` (`x-provisional`). Si no suman el filtro por sede, se quita el parámetro |
+| Contrato | Parámetro `sede` de `GET /compras` (`x-provisional`): se quita la marca cuando confirmen el `siteId`. Si usaran otro id, el adaptador tendría que traducirlo con `/store/sites` |
 | Trello | "[Módulo 5 · Tienda]…" e "[Integración] Módulo 5" |
 
 #### Módulo 6 — Eventos
