@@ -1,10 +1,13 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { bffCompras } from '@/test/compras';
+import { bffCompras, comprasBase } from '@/test/compras';
 import { renderApp } from '@/test/render';
 import { BFF, reiniciarCore, servidor } from '@/test/servidor';
+
+const filas = () =>
+  within(screen.getByRole('list', { name: 'Compras' })).queryAllByRole('listitem');
 
 describe('historial de compras', () => {
   beforeEach(() => reiniciarCore(true));
@@ -19,28 +22,31 @@ describe('historial de compras', () => {
     expect(filas[0]).toHaveTextContent('Completada');
     expect(filas[0]).toHaveTextContent('$ 3.500,00');
     expect(filas[1]).toHaveTextContent('1 producto');
-    expect(filas[2]).toHaveTextContent('Cancelada');
-    expect(screen.getByText('12 compras · Página 1 de 2')).toBeInTheDocument();
+    expect(filas[2]).toHaveTextContent('Fallida');
   });
 
-  it('pagina hacia adelante y atrás, con la página en la URL', async () => {
+  it('"ver más" agrega la página siguiente con el cursor y desaparece al final', async () => {
     const queries: URLSearchParams[] = [];
     servidor.use(bffCompras(undefined, queries));
-    const { router } = renderApp('/compras');
-    await screen.findByText('12 compras · Página 1 de 2');
-    expect(screen.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
+    renderApp('/compras');
+    await screen.findByRole('list', { name: 'Compras' });
+    expect(queries[0]!.has('cursor')).toBe(false);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Página siguiente' }));
-    expect(await screen.findByText('12 compras · Página 2 de 2')).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('list', { name: 'Compras' })).getAllByRole('listitem'),
-    ).toHaveLength(2);
-    expect(router.state.location.search).toBe('?pagina=2');
-    expect(queries.at(-1)?.get('page')).toBe('2');
-    expect(screen.getByRole('button', { name: 'Página siguiente' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Ver más compras' }));
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('list', { name: 'Compras' })).getAllByRole('listitem'),
+      ).toHaveLength(12),
+    );
+    expect(queries.at(-1)?.get('cursor')).toBe('orden-10');
+    expect(screen.queryByRole('button', { name: 'Ver más compras' })).not.toBeInTheDocument();
+  });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Página anterior' }));
-    expect(await screen.findByText('12 compras · Página 1 de 2')).toBeInTheDocument();
+  it('un estado que no conocemos se muestra tal como llega', async () => {
+    servidor.use(bffCompras([{ ...comprasBase()[0]!, estado: 'REFUNDED' }]));
+    renderApp('/compras');
+    const lista = await screen.findByRole('list', { name: 'Compras' });
+    expect(within(lista).getByText('REFUNDED')).toBeInTheDocument();
   });
 
   it('sin compras, estado vacío', async () => {
@@ -66,30 +72,33 @@ describe('historial de compras', () => {
 describe('historial de compras: filtros', () => {
   beforeEach(() => reiniciarCore(true));
 
-  it('filtra por estado, manda el filtro al BFF y vuelve a la primera página', async () => {
+  it('filtra por estado, manda el filtro al BFF y arranca de cero', async () => {
     const queries: URLSearchParams[] = [];
     servidor.use(bffCompras(undefined, queries));
-    const { router } = renderApp('/compras?pagina=2');
-    await screen.findByText('12 compras · Página 2 de 2');
+    const { router } = renderApp('/compras');
+    await screen.findByRole('list', { name: 'Compras' });
+    await userEvent.click(screen.getByRole('button', { name: 'Ver más compras' }));
+    await waitFor(() => expect(queries.at(-1)?.has('cursor')).toBe(true));
 
-    await userEvent.selectOptions(screen.getByLabelText('Estado'), 'Cancelada');
-    expect(await screen.findByText('1 compra · Página 1 de 1')).toBeInTheDocument();
-    expect(Object.fromEntries(queries.at(-1)!)).toEqual({
-      page: '1',
-      limit: '10',
-      estado: 'CANCELADA',
-    });
-    expect(router.state.location.search).toBe('?estado=CANCELADA');
+    expect(
+      within(screen.getByLabelText('Estado'))
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['Todos', 'Pago pendiente', 'Completada', 'En reversión', 'Fallida']);
+    await userEvent.selectOptions(screen.getByLabelText('Estado'), 'Fallida');
+    await waitFor(() => expect(filas()).toHaveLength(1));
+    expect(Object.fromEntries(queries.at(-1)!)).toEqual({ limit: '10', estado: 'FAILED' });
+    expect(router.state.location.search).toBe('?estado=FAILED');
   });
 
   it('filtra por rango de fechas, combinable con la paginación', async () => {
     const queries: URLSearchParams[] = [];
     servidor.use(bffCompras(undefined, queries));
     renderApp('/compras');
-    await screen.findByText('12 compras · Página 1 de 2');
+    await screen.findByRole('list', { name: 'Compras' });
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-09-20' } });
     fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-09-25' } });
-    expect(await screen.findByText('6 compras · Página 1 de 1')).toBeInTheDocument();
+    await waitFor(() => expect(filas()).toHaveLength(6));
     expect(queries.at(-1)?.get('desde')).toBe('2026-09-20');
     expect(queries.at(-1)?.get('hasta')).toBe('2026-09-25');
     expect(queries.every((q) => !q.has('sede'))).toBe(true);
@@ -101,7 +110,7 @@ describe('historial de compras: filtros', () => {
     expect(await screen.findByText('No hay compras con estos filtros')).toBeInTheDocument();
     expect(screen.queryByText('Todavía no hiciste compras')).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
-    expect(await screen.findByText('12 compras · Página 1 de 2')).toBeInTheDocument();
+    await waitFor(() => expect(filas()).toHaveLength(10));
   });
 
   it('con hasta anterior a desde, avisa y no consulta', async () => {
@@ -115,8 +124,8 @@ describe('historial de compras: filtros', () => {
   it('filtra por sede: las opciones salen del catálogo y al BFF va el id', async () => {
     const queries: URLSearchParams[] = [];
     servidor.use(bffCompras(undefined, queries));
-    const { router } = renderApp('/compras?pagina=2');
-    await screen.findByText('12 compras · Página 2 de 2');
+    const { router } = renderApp('/compras');
+    await screen.findByRole('list', { name: 'Compras' });
     const sede = screen.getByLabelText('Sede');
     await within(sede).findByRole('option', { name: 'Sede Monserrat' });
     expect(
@@ -126,12 +135,12 @@ describe('historial de compras: filtros', () => {
     ).toEqual(['Todas', 'Sede Monserrat', 'Sede Recoleta']);
 
     await userEvent.selectOptions(sede, 'Sede Recoleta');
-    expect(await screen.findByText('6 compras · Página 1 de 1')).toBeInTheDocument();
+    await waitFor(() => expect(filas()).toHaveLength(6));
     expect(queries.at(-1)?.get('sede')).toBe('sede-recoleta');
     expect(router.state.location.search).toBe('?sede=sede-recoleta');
 
     await userEvent.selectOptions(sede, 'Todas');
-    expect(await screen.findByText('12 compras · Página 1 de 2')).toBeInTheDocument();
+    await waitFor(() => expect(filas()).toHaveLength(10));
     expect(queries.at(-1)?.has('sede')).toBe(false);
   });
 
@@ -146,7 +155,7 @@ describe('historial de compras: filtros', () => {
       ),
     );
     renderApp('/compras?sede=sede-recoleta');
-    expect(await screen.findByText('6 compras · Página 1 de 1')).toBeInTheDocument();
+    await waitFor(() => expect(filas()).toHaveLength(6));
     const sede = screen.getByLabelText('Sede');
     expect(sede).toHaveValue('sede-recoleta');
     expect(

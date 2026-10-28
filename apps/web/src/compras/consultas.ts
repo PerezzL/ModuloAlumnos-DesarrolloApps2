@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import type { CompraDetalle, ListaSedes, PaginaCompras } from '@uadenet/api-types';
 import { api } from '@/api/cliente';
 import { datosDe } from '@/api/errores';
@@ -6,10 +6,15 @@ import { datosDe } from '@/api/errores';
 export const POR_PAGINA = 10;
 
 /**
- * Estados que conocemos de la Tienda (los de su fixture). Provisional: la Tienda no publicó la
- * lista; un estado que no esté acá se muestra igual en el listado.
+ * Estados de la Tienda con su etiqueta. Se muestran tal cual, sin otra interpretación; un
+ * estado que no esté acá se muestra con su nombre original.
  */
-export const ESTADOS_CONOCIDOS = ['COMPLETADA', 'CANCELADA'];
+export const ESTADOS: Record<string, string> = {
+  PENDING_PAYMENT: 'Pago pendiente',
+  COMPLETED: 'Completada',
+  COMPENSATING: 'En reversión',
+  FAILED: 'Fallida',
+};
 
 export interface FiltrosCompras {
   desde?: string;
@@ -32,12 +37,21 @@ export function useSedes() {
   });
 }
 
-/** Una página del historial de compras. Mientras carga la siguiente, se ve la anterior. */
-export function useCompras(page: number, filtros: FiltrosCompras, habilitada = true) {
-  return useQuery({
-    queryKey: ['compras', { page, ...filtros }],
-    queryFn: (): Promise<PaginaCompras> =>
-      datosDe(api.GET('/compras', { params: { query: { page, limit: POR_PAGINA, ...filtros } } })),
+/**
+ * Historial de compras con la paginación por cursor de la Tienda: cada "ver más" agrega la
+ * página siguiente. Al cambiar un filtro arranca de cero; mientras carga, se ve lo anterior.
+ */
+export function useCompras(filtros: FiltrosCompras, habilitada = true) {
+  return useInfiniteQuery({
+    queryKey: ['compras', filtros],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }): Promise<PaginaCompras> =>
+      datosDe(
+        api.GET('/compras', {
+          params: { query: { limit: POR_PAGINA, ...filtros, cursor: pageParam } },
+        }),
+      ),
+    getNextPageParam: (pagina) => pagina.nextCursor ?? undefined,
     placeholderData: keepPreviousData,
     enabled: habilitada,
   });
@@ -52,6 +66,5 @@ export function useCompra(orderId: string) {
   });
 }
 
-/** "COMPLETADA" → "Completada". El estado es el de la Tienda: no se interpreta. */
-export const estadoLegible = (estado: string) =>
-  estado.charAt(0).toUpperCase() + estado.slice(1).toLowerCase().replace(/_/g, ' ');
+/** "COMPLETED" → "Completada"; un estado desconocido, tal como llega */
+export const estadoLegible = (estado: string) => ESTADOS[estado] ?? estado;

@@ -8,7 +8,7 @@ import { parsearConsultaCompras } from './parametros';
 export class ComprasController {
   constructor(private readonly tienda: TiendaAdapter) {}
 
-  /** `GET /compras?page=&limit=` */
+  /** `GET /compras?cursor=&limit=&desde=&hasta=&estado=&sede=` */
   @Get()
   listar(@Query() query: Record<string, unknown>): Promise<PaginaCompras> {
     return this.tienda.compras(parsearConsultaCompras(query));

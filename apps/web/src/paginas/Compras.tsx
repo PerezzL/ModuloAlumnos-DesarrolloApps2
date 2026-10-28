@@ -1,8 +1,8 @@
 import type { CompraResumen } from '@uadenet/api-types';
-import { ChevronLeft, ChevronRight, SearchX, ShoppingBag } from 'lucide-react';
+import { SearchX, ShoppingBag } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import {
-  ESTADOS_CONOCIDOS,
+  ESTADOS,
   estadoLegible,
   type FiltrosCompras,
   useCompras,
@@ -22,11 +22,6 @@ const fecha = new Intl.DateTimeFormat('es-AR', {
   timeZone: 'America/Argentina/Buenos_Aires',
 });
 
-function paginaDeUrl(valor: string | null) {
-  const n = Number(valor);
-  return Number.isInteger(n) && n > 0 ? n : 1;
-}
-
 const esFecha = (valor: string | null): valor is string =>
   valor !== null && /^\d{4}-\d{2}-\d{2}$/.test(valor);
 
@@ -44,22 +39,28 @@ function filtrosDeUrl(params: URLSearchParams): FiltrosCompras {
 }
 
 /**
- * Historial de compras en la Tienda (4.10). Solo lectura. Página y filtros van en la URL; al
- * cambiar un filtro se vuelve a la primera página. Las sedes salen del catálogo de Backoffice;
- * que la Tienda filtre por ese id es suposición nuestra (docs/integraciones.md).
+ * Historial de compras en la Tienda (4.10). Solo lectura. Los filtros van en la URL; la
+ * paginación es por cursor ("ver más") y al cambiar un filtro arranca de cero. Las sedes salen
+ * del catálogo de Backoffice; que la Tienda filtre por ese id es suposición nuestra
+ * (docs/integraciones.md).
  */
 export function Compras() {
   const [params, setParams] = useSearchParams();
-  const page = paginaDeUrl(params.get('pagina'));
   const filtros = filtrosDeUrl(params);
   const hayFiltros = Object.keys(filtros).length > 0;
   // YYYY-MM-DD se compara bien como texto
   const rangoInvalido = !!filtros.desde && !!filtros.hasta && filtros.hasta < filtros.desde;
-  const { data, error, isPending, isPlaceholderData, refetch } = useCompras(
-    page,
-    filtros,
-    !rangoInvalido,
-  );
+  const {
+    data,
+    error,
+    isPending,
+    isPlaceholderData,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useCompras(filtros, !rangoInvalido);
+  const compras = data?.pages.flatMap((p) => p.items) ?? [];
 
   const filtrar = (cambio: Partial<Record<keyof FiltrosCompras, string>>) =>
     setParams((actual) => {
@@ -68,18 +69,9 @@ export function Compras() {
         if (valor) nuevos.set(clave, valor);
         else nuevos.delete(clave);
       }
-      nuevos.delete('pagina');
       return nuevos;
     });
   const limpiar = () => setParams(new URLSearchParams());
-
-  const irA = (nueva: number) =>
-    setParams((actual) => {
-      const nuevos = new URLSearchParams(actual);
-      if (nueva > 1) nuevos.set('pagina', String(nueva));
-      else nuevos.delete('pagina');
-      return nuevos;
-    });
 
   return (
     <section
@@ -98,7 +90,7 @@ export function Compras() {
         <Cargando texto="Cargando tus compras…" />
       ) : error ? (
         <ErrorCarga error={error} fuente="La Tienda" reintentar={() => void refetch()} />
-      ) : data.items.length === 0 && hayFiltros ? (
+      ) : compras.length === 0 && hayFiltros ? (
         <EstadoVacio
           icono={SearchX}
           titulo="No hay compras con estos filtros"
@@ -108,7 +100,7 @@ export function Compras() {
             Limpiar filtros
           </Button>
         </EstadoVacio>
-      ) : data.items.length === 0 ? (
+      ) : compras.length === 0 ? (
         <EstadoVacio
           icono={ShoppingBag}
           titulo="Todavía no hiciste compras"
@@ -121,17 +113,20 @@ export function Compras() {
             className="divide-y divide-borde-suave"
             aria-busy={isPlaceholderData}
           >
-            {data.items.map((c) => (
+            {compras.map((c) => (
               <FilaCompra key={c.orderId} compra={c} />
             ))}
           </ul>
-          <Paginacion
-            page={data.page}
-            paginas={Math.max(1, Math.ceil(data.total / data.limit))}
-            total={data.total}
-            cargando={isPlaceholderData}
-            irA={irA}
-          />
+          {hasNextPage && (
+            <Button
+              variant="fantasma"
+              className="w-full"
+              disabled={isFetchingNextPage || isPlaceholderData}
+              onClick={() => void fetchNextPage()}
+            >
+              {isFetchingNextPage ? 'Cargando…' : 'Ver más compras'}
+            </Button>
+          )}
         </>
       )}
     </section>
@@ -181,7 +176,7 @@ function Filtros({
         >
           <option value="">Todos</option>
           {/* Un estado de la URL que no conocemos se conserva como opción */}
-          {[...new Set([...ESTADOS_CONOCIDOS, ...(filtros.estado ? [filtros.estado] : [])])].map(
+          {[...new Set([...Object.keys(ESTADOS), ...(filtros.estado ? [filtros.estado] : [])])].map(
             (e) => (
               <option key={e} value={e}>
                 {estadoLegible(e)}
@@ -223,9 +218,8 @@ function FilaCompra({ compra }: { compra: CompraResumen }) {
         </Link>
         <p className="text-sm text-texto-suave">
           {[
-            compra.sede && `Sede ${compra.sede}`,
-            compra.cantidadProductos !== undefined &&
-              `${compra.cantidadProductos} ${compra.cantidadProductos === 1 ? 'producto' : 'productos'}`,
+            compra.sede,
+            `${compra.cantidadProductos} ${compra.cantidadProductos === 1 ? 'producto' : 'productos'}`,
           ]
             .filter(Boolean)
             .join(' · ')}
@@ -236,47 +230,5 @@ function FilaCompra({ compra }: { compra: CompraResumen }) {
       </span>
       <p className="w-28 text-right font-semibold tabular-nums">{formatearMonto(compra.total)}</p>
     </li>
-  );
-}
-
-function Paginacion({
-  page,
-  paginas,
-  total,
-  cargando,
-  irA,
-}: {
-  page: number;
-  paginas: number;
-  total: number;
-  cargando: boolean;
-  irA: (page: number) => void;
-}) {
-  return (
-    <nav aria-label="Paginación" className="flex items-center justify-between gap-2 pt-2">
-      <p className="text-sm text-texto-suave">
-        {total} {total === 1 ? 'compra' : 'compras'} · Página {page} de {paginas}
-      </p>
-      <div className="flex gap-1">
-        <Button
-          variant="fantasma"
-          size="icono"
-          aria-label="Página anterior"
-          disabled={page <= 1 || cargando}
-          onClick={() => irA(page - 1)}
-        >
-          <ChevronLeft className="size-4" aria-hidden />
-        </Button>
-        <Button
-          variant="fantasma"
-          size="icono"
-          aria-label="Página siguiente"
-          disabled={page >= paginas || cargando}
-          onClick={() => irA(page + 1)}
-        >
-          <ChevronRight className="size-4" aria-hidden />
-        </Button>
-      </div>
-    </nav>
   );
 }

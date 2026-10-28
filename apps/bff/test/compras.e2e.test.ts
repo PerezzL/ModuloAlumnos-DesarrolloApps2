@@ -1,26 +1,29 @@
 import { Contrato } from '@uadenet/contrato';
-import type { PaginaCompras } from '@uadenet/api-types';
+import type { CompraDetalle, PaginaCompras } from '@uadenet/api-types';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { cuerpo, GW, prepararE2E } from './app-e2e';
+import { RUTA_SEDES } from './calendario-gateway';
 import { fixture } from './fixtures';
 
 const contrato = new Contrato();
 const ORDENES = `${GW}/api/v1/store/orders/me`;
-const ordenes = fixture<{ items: object[] }>('store/orders-me.provisional.json').items;
+const ORDEN = `${GW}/api/v1/store/orders/:id`;
+const ordenes = fixture<{ items: { id: string }[] }>('store/orders-me.json').items;
 
-/** La Tienda simulada: pagina las fixtures y registra la query que recibió */
+const sedesOk = () =>
+  http.get(RUTA_SEDES, () => HttpResponse.json(fixture('backoffice/sites.json')));
+
+/** La Tienda simulada: devuelve una página con cursor y registra la query que recibió */
 function tienda(queries: URLSearchParams[] = []) {
   return http.get(ORDENES, ({ request }) => {
     const query = new URL(request.url).searchParams;
     queries.push(query);
-    const page = Number(query.get('page'));
     const limit = Number(query.get('limit'));
+    const items = ordenes.slice(0, limit);
     return HttpResponse.json({
-      items: ordenes.slice((page - 1) * limit, page * limit),
-      page,
-      limit,
-      total: ordenes.length,
+      items,
+      nextCursor: limit < ordenes.length ? items.at(-1)!.id : null,
     });
   });
 }
@@ -28,54 +31,62 @@ function tienda(queries: URLSearchParams[] = []) {
 describe('GET /compras', () => {
   const e2e = prepararE2E();
 
-  it('devuelve la primera página según el contrato, con page 1 y limit 10 por defecto', async () => {
+  it('devuelve la primera página según el contrato, con limit 10 y sin cursor', async () => {
     const queries: URLSearchParams[] = [];
-    e2e.server.use(tienda(queries));
+    e2e.server.use(tienda(queries), sedesOk());
     const res = await e2e.get('/compras');
     expect(res.status).toBe(200);
     expect(contrato.validar('get', '/compras', 200, res.body).errores).toEqual([]);
-    expect(res.body).toMatchObject({ page: 1, limit: 10, total: 3 });
-    expect((res.body as PaginaCompras).items).toHaveLength(3);
-    expect(Object.fromEntries(queries[0]!)).toEqual({ page: '1', limit: '10' });
+    const pagina = res.body as PaginaCompras;
+    expect(pagina.nextCursor).toBeNull();
+    expect(pagina.items.map((c) => [c.sede, c.estado])).toEqual([
+      ['Sede Monserrat', 'COMPLETED'],
+      ['Sede Recoleta', 'COMPLETED'],
+      ['Sede Monserrat', 'FAILED'],
+    ]);
+    expect(Object.fromEntries(queries[0]!)).toEqual({ limit: '10' });
   });
 
-  it('pasa la paginación a la Tienda', async () => {
-    e2e.server.use(tienda());
-    const res = await e2e.get('/compras?page=2&limit=2');
-    expect(res.body).toMatchObject({ page: 2, limit: 2, total: 3 });
-    expect((res.body as PaginaCompras).items).toHaveLength(1);
-  });
-
-  it('pasa los filtros a la Tienda', async () => {
+  it('pasa el cursor a la Tienda y devuelve su nextCursor', async () => {
     const queries: URLSearchParams[] = [];
-    e2e.server.use(tienda(queries));
+    e2e.server.use(tienda(queries), sedesOk());
+    const res = await e2e.get('/compras?limit=2&cursor=abc');
+    expect((res.body as PaginaCompras).nextCursor).toBe(ordenes[1]!.id);
+    expect(Object.fromEntries(queries[0]!)).toEqual({ limit: '2', cursor: 'abc' });
+  });
+
+  it('traduce los filtros a los de la Tienda, con las fechas como días completos en Argentina', async () => {
+    const queries: URLSearchParams[] = [];
+    e2e.server.use(tienda(queries), sedesOk());
     const res = await e2e.get(
-      '/compras?desde=2026-09-01&hasta=2026-09-30&estado=COMPLETADA&sede=3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90&page=2',
+      '/compras?desde=2026-09-01&hasta=2026-09-30&estado=COMPLETED&sede=3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90',
     );
     expect(res.status).toBe(200);
     expect(Object.fromEntries(queries[0]!)).toEqual({
-      page: '2',
       limit: '10',
-      desde: '2026-09-01',
-      hasta: '2026-09-30',
-      estado: 'COMPLETADA',
-      sede: '3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90',
+      from: '2026-09-01T00:00:00.000-03:00',
+      to: '2026-09-30T23:59:59.999-03:00',
+      status: 'COMPLETED',
+      siteId: '3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90',
     });
   });
 
-  it('sin filtros, no manda parámetros de filtro', async () => {
-    const queries: URLSearchParams[] = [];
-    e2e.server.use(tienda(queries));
-    await e2e.get('/compras');
-    expect([...queries[0]!.keys()]).toEqual(['page', 'limit']);
+  it('un 400 de la Tienda (cursor que no va con los filtros) es 400 SOLICITUD_INVALIDA', async () => {
+    e2e.server.use(
+      http.get(ORDENES, () => HttpResponse.json({ code: 'VALIDATION_ERROR' }, { status: 400 })),
+      sedesOk(),
+    );
+    const res = await e2e.get('/compras?cursor=viejo&estado=FAILED');
+    expect(res.status).toBe(400);
+    expect(cuerpo(res)).toMatchObject({ code: 'SOLICITUD_INVALIDA' });
+    expect(contrato.validar('get', '/compras', 400, cuerpo(res)).errores).toEqual([]);
   });
 
   it.each([
-    'page=0',
-    'page=abc',
     'limit=51',
     'limit=0',
-    'page=1.5',
+    'limit=1.5',
+    'cursor=',
     'desde=2026-02-30',
     'hasta=30/09/2026',
     'desde=2026-09-30&hasta=2026-09-01',
@@ -92,7 +103,10 @@ describe('GET /compras', () => {
     [502, 'UPSTREAM_INVALID'],
     [504, 'UPSTREAM_TIMEOUT'],
   ])('Gateway %i → %s de TIENDA', async (status, code) => {
-    e2e.server.use(http.get(ORDENES, () => new HttpResponse(null, { status })));
+    e2e.server.use(
+      http.get(ORDENES, () => new HttpResponse(null, { status })),
+      sedesOk(),
+    );
     const res = await e2e.get('/compras');
     expect(res.status).toBe(status);
     expect(cuerpo(res)).toMatchObject({ code, modulo: 'TIENDA' });
@@ -100,27 +114,52 @@ describe('GET /compras', () => {
   });
 });
 
+// App propia: la caché de sedes de los otros casos resolvería los nombres
+describe('GET /compras con Backoffice caído', () => {
+  const e2e = prepararE2E();
+
+  it('las compras salen igual, con sede null', async () => {
+    e2e.server.use(
+      tienda(),
+      http.get(RUTA_SEDES, () => new HttpResponse(null, { status: 503 })),
+    );
+    const res = await e2e.get('/compras');
+    expect(res.status).toBe(200);
+    expect(contrato.validar('get', '/compras', 200, res.body).errores).toEqual([]);
+    expect((res.body as PaginaCompras).items.every((c) => c.sede === null)).toBe(true);
+  });
+});
+
 describe('GET /compras/{orderId}', () => {
   const e2e = prepararE2E();
-  const ORDEN = `${GW}/api/v1/store/orders/:orderId`;
 
-  it('devuelve el detalle según el contrato', async () => {
+  it('devuelve el detalle según el contrato, con subtotales calculados', async () => {
     let pedido: unknown;
     e2e.server.use(
       http.get(ORDEN, ({ params }) => {
-        pedido = params.orderId;
+        pedido = params.id;
         return HttpResponse.json(ordenes[0]);
       }),
+      sedesOk(),
     );
     const res = await e2e.get('/compras/93b28f67-e111-4a0d-b857-fdd015c4d3f1');
     expect(res.status).toBe(200);
     expect(contrato.validar('get', '/compras/{orderId}', 200, res.body).errores).toEqual([]);
-    expect(res.body).toMatchObject({ subtotal: '3500.00', total: '3500.00' });
+    const detalle = res.body as CompraDetalle;
+    expect(detalle).toMatchObject({
+      sede: 'Sede Monserrat',
+      subtotal: '3500.00',
+      total: '3500.00',
+    });
+    expect(detalle.productos.map((p) => p.subtotal)).toEqual(['2500.00', '1000.00']);
     expect(pedido).toBe('93b28f67-e111-4a0d-b857-fdd015c4d3f1');
   });
 
-  it.each([404, 403])('si la Tienda responde %i, es 404 COMPRA_NO_ENCONTRADA', async (status) => {
-    e2e.server.use(http.get(ORDEN, () => HttpResponse.json({}, { status })));
+  it('si la Tienda responde 404 (inexistente o de otro alumno), es 404 COMPRA_NO_ENCONTRADA', async () => {
+    e2e.server.use(
+      http.get(ORDEN, () => HttpResponse.json({}, { status: 404 })),
+      sedesOk(),
+    );
     const res = await e2e.get('/compras/de-otro');
     expect(res.status).toBe(404);
     expect(cuerpo(res)).toMatchObject({ code: 'COMPRA_NO_ENCONTRADA' });
@@ -131,7 +170,10 @@ describe('GET /compras/{orderId}', () => {
     [503, 'UPSTREAM_UNAVAILABLE'],
     [504, 'UPSTREAM_TIMEOUT'],
   ])('Gateway %i → %s de TIENDA', async (status, code) => {
-    e2e.server.use(http.get(ORDEN, () => new HttpResponse(null, { status })));
+    e2e.server.use(
+      http.get(ORDEN, () => new HttpResponse(null, { status })),
+      sedesOk(),
+    );
     const res = await e2e.get('/compras/x');
     expect(res.status).toBe(status);
     expect(cuerpo(res)).toMatchObject({ code, modulo: 'TIENDA' });

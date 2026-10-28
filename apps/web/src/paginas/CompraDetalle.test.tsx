@@ -9,18 +9,32 @@ import { BFF, reiniciarCore, servidor } from '@/test/servidor';
 const detalle = {
   orderId: 'orden-1',
   fecha: '2026-09-28T16:20:00.000Z',
-  sede: 'Monserrat',
-  estado: 'COMPLETADA',
+  sede: 'Sede Monserrat',
+  estado: 'COMPLETED',
   cantidadProductos: 3,
   productos: [
     {
-      productoId: 'p-cuaderno',
-      nombre: 'Cuaderno A4 UADE',
+      productoId: 'p-buzo',
+      nombre: 'Buzo UADE',
       cantidad: 2,
       precioUnitario: '1250.00',
       subtotal: '2500.00',
+      imagenUrl: 'https://tienda.uadenet.test/assets/products/buzo.png',
+      color: 'Azul institucional',
+      talle: 'M',
+      sku: 'BUZO-AZUL-M',
     },
-    { nombre: 'Lapicera azul', cantidad: 1, precioUnitario: '1000.00', subtotal: '1000.00' },
+    {
+      productoId: 'p-lapicera',
+      nombre: 'Lapicera azul',
+      cantidad: 1,
+      precioUnitario: '1000.00',
+      subtotal: '1000.00',
+      imagenUrl: null,
+      color: null,
+      talle: null,
+      sku: null,
+    },
   ],
   subtotal: '3500.00',
   total: '3500.00',
@@ -51,9 +65,13 @@ describe('detalle de una compra', () => {
           .map((c) => c.textContent),
       );
     expect(filas).toEqual([
-      ['Cuaderno A4 UADE', '2', '$ 1.250,00', '$ 2.500,00'],
+      ['Buzo UADEAzul institucional · Talle M', '2', '$ 1.250,00', '$ 2.500,00'],
       ['Lapicera azul', '1', '$ 1.000,00', '$ 1.000,00'],
     ]);
+    const imagenes = tabla.querySelectorAll('img');
+    expect(imagenes).toHaveLength(1);
+    expect(imagenes[0]).toHaveAttribute('src', detalle.productos[0]!.imagenUrl);
+    expect(screen.getByText('Completada')).toBeInTheDocument();
     expect(screen.getByText('Total').nextSibling).toHaveTextContent('$ 3.500,00');
     expect(screen.getByText('Sede Monserrat')).toBeInTheDocument();
   });
