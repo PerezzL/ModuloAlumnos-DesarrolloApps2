@@ -11,13 +11,15 @@ import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { formatearMonto } from '@/core/monto';
 import { useNoLeidas } from '@/core/notificaciones';
 import { useSaldo } from '@/core/saldo';
+import { AvisoInscripcion } from '@/inscripcion/AvisoInscripcion';
 import { useSesion } from '@/sesion/SesionProvider';
 
 /** Días hacia adelante en los que se busca el próximo evento o examen (máximo del BFF: 62) */
 const HORIZONTE_DIAS = 60;
 
 /**
- * Inicio (4.2): resumen con saldo, notificaciones sin leer y lo próximo del calendario. Cada
+ * Inicio (4.2): aviso de inscripción abierta y resumen con saldo, notificaciones sin
+ * leer y lo próximo del calendario. Cada
  * tarjeta carga por su cuenta: si una falla, las demás se muestran igual.
  */
 export function Inicio() {
@@ -31,6 +33,7 @@ export function Inicio() {
         <h2 className="text-2xl font-bold">Hola, {nombre} 👋</h2>
         <p className="pt-1 text-sm text-texto-suave first-letter:uppercase">{nombreDia(hoy())}</p>
       </div>
+      <AvisoInscripcion />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <TarjetaSaldo />
         <TarjetaNotificaciones />
