@@ -112,10 +112,48 @@ describe('historial de compras: filtros', () => {
     expect(queries).toEqual([]);
   });
 
-  it('no muestra el filtro por sede', async () => {
-    servidor.use(bffCompras());
-    renderApp('/compras');
-    await screen.findByText('12 compras · Página 1 de 2');
-    expect(screen.queryByLabelText(/Sede/)).not.toBeInTheDocument();
+  it('filtra por sede: las opciones salen del catálogo y al BFF va el id', async () => {
+    const queries: URLSearchParams[] = [];
+    servidor.use(bffCompras(undefined, queries));
+    const { router } = renderApp('/compras?pagina=2');
+    await screen.findByText('12 compras · Página 2 de 2');
+    const sede = screen.getByLabelText('Sede');
+    await within(sede).findByRole('option', { name: 'Sede Monserrat' });
+    expect(
+      within(sede)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['Todas', 'Sede Monserrat', 'Sede Recoleta']);
+
+    await userEvent.selectOptions(sede, 'Sede Recoleta');
+    expect(await screen.findByText('6 compras · Página 1 de 1')).toBeInTheDocument();
+    expect(queries.at(-1)?.get('sede')).toBe('sede-recoleta');
+    expect(router.state.location.search).toBe('?sede=sede-recoleta');
+
+    await userEvent.selectOptions(sede, 'Todas');
+    expect(await screen.findByText('12 compras · Página 1 de 2')).toBeInTheDocument();
+    expect(queries.at(-1)?.has('sede')).toBe(false);
+  });
+
+  it('si el catálogo de sedes no carga, el listado funciona igual', async () => {
+    servidor.use(
+      bffCompras(),
+      http.get(`${BFF}/sedes`, () =>
+        HttpResponse.json(
+          { title: 'x', status: 503, code: 'UPSTREAM_UNAVAILABLE', modulo: 'BACKOFFICE' },
+          { status: 503 },
+        ),
+      ),
+    );
+    renderApp('/compras?sede=sede-recoleta');
+    expect(await screen.findByText('6 compras · Página 1 de 1')).toBeInTheDocument();
+    const sede = screen.getByLabelText('Sede');
+    expect(sede).toHaveValue('sede-recoleta');
+    expect(
+      within(sede)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['Todas', 'Otra sede']);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

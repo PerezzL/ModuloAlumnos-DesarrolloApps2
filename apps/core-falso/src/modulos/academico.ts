@@ -24,6 +24,11 @@ interface Periodo {
   nombre: string;
 }
 
+interface PeriodoConFechas extends Periodo {
+  inscripcionDesde: string;
+  inscripcionHasta: string;
+}
+
 interface Inscripcion {
   id: string;
   cursoId: string;
@@ -44,6 +49,7 @@ interface Correlativa {
 /** Todos los cursos de las fixtures son del plan del alumno demo (ver backoffice/users). */
 const PLAN_DEMO = '12';
 const ACTIVAS = new Set(['INSCRIPTO', 'CURSANDO']);
+const DIA_MS = 24 * 60 * 60 * 1000;
 const CUMPLE: Record<Correlativa['tipo'], Set<string>> = {
   APROBADA: new Set(['APROBADO']),
   REGULAR: new Set(['REGULAR', 'APROBADO']),
@@ -51,18 +57,21 @@ const CUMPLE: Record<Correlativa['tipo'], Set<string>> = {
 
 /**
  * Módulo 9, con estado en memoria: una inscripción hecha suma un inscripto al curso y
- * aparece en las inscripciones del alumno. `reiniciar()` vuelve a las fixtures.
+ * aparece en las inscripciones del alumno. Con `inscripcionCerrada` (`/__falso/inscripcion`) se
+ * simula que ningún período tiene la inscripción abierta. `reiniciar()` vuelve a las fixtures.
  * Los `code` de error del POST están pendientes en el Módulo 9: usamos los de openapi.yaml.
  */
 export class EstadoAcademico {
   cursos: Curso[] = [];
   inscripciones = new Map<string, Inscripcion[]>();
+  inscripcionCerrada = false;
 
   constructor() {
     this.reiniciar();
   }
 
   reiniciar() {
+    this.inscripcionCerrada = false;
     this.cursos = fixture<Curso[]>('academic/cursos.provisional.json');
     this.inscripciones = new Map([
       [ALUMNO_DEMO, fixture<Inscripcion[]>('academic/inscripciones-alumno.provisional.json')],
@@ -72,7 +81,30 @@ export class EstadoAcademico {
   inscripcionesDe(alumnoId: string) {
     return this.inscripciones.get(alumnoId) ?? [];
   }
+
+  /**
+   * Los períodos de la fixture. Con la inscripción cerrada simulada, el que hoy está abierto
+   * pasa a abrir en una semana (y a durar al menos dos), así el portal lo ve como próximo.
+   */
+  periodos(): PeriodoConFechas[] {
+    const periodos = fixture<PeriodoConFechas[]>('academic/periodos.provisional.json');
+    if (!this.inscripcionCerrada) return periodos;
+    const ahora = Date.now();
+    return periodos.map((p) => {
+      if (!estaAbierto(p, ahora)) return p;
+      const desde = ahora + 7 * DIA_MS;
+      const hasta = Math.max(Date.parse(p.inscripcionHasta), desde + 14 * DIA_MS);
+      return {
+        ...p,
+        inscripcionDesde: new Date(desde).toISOString(),
+        inscripcionHasta: new Date(hasta).toISOString(),
+      };
+    });
+  }
 }
+
+const estaAbierto = (p: PeriodoConFechas, ahora: number) =>
+  Date.parse(p.inscripcionDesde) <= ahora && ahora < Date.parse(p.inscripcionHasta);
 
 export function moduloAcademico(estado: EstadoAcademico) {
   const router = Router();
@@ -84,7 +116,7 @@ export function moduloAcademico(estado: EstadoAcademico) {
   });
 
   router.get('/api/v1/planificacion/periodos', (_req, res) => {
-    res.json(fixture('academic/periodos.provisional.json'));
+    res.json(estado.periodos());
   });
 
   router.get('/api/v1/planificacion/turnos-examen', (_req, res) => {
@@ -122,6 +154,9 @@ export function moduloAcademico(estado: EstadoAcademico) {
     }
     const curso = estado.cursos.find((c) => c.id === req.params.cursoId);
     if (!curso) return enviarProblema(res, 404, 'NOT_FOUND', 'Curso inexistente');
+    if (estado.inscripcionCerrada) {
+      return enviarProblema(res, 409, 'FUERA_DE_FECHA', 'La inscripción no está abierta');
+    }
 
     const previas = estado.inscripcionesDe(alumnoId);
     const yaInscripto = previas.some(
@@ -146,9 +181,7 @@ export function moduloAcademico(estado: EstadoAcademico) {
       return enviarProblema(res, 409, 'SIN_CUPO', 'La comisión no tiene cupo');
     }
 
-    const periodo = fixture<Periodo[]>('academic/periodos.provisional.json').find(
-      (p) => p.id === curso.periodoId,
-    );
+    const periodo = estado.periodos().find((p) => p.id === curso.periodoId);
     const inscripcion: Inscripcion = {
       id: randomUUID(),
       cursoId: curso.id,

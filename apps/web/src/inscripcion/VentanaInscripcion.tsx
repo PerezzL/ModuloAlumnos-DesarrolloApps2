@@ -1,6 +1,5 @@
 import type { OfertaInscripcion } from '@uadenet/api-types';
-import { CalendarCheck, CalendarX } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { CalendarCheck } from 'lucide-react';
 
 const fecha = new Intl.DateTimeFormat('es-AR', {
   dateStyle: 'long',
@@ -8,38 +7,22 @@ const fecha = new Intl.DateTimeFormat('es-AR', {
   timeZone: 'America/Argentina/Buenos_Aires',
 });
 
-const formatear = (instante?: string) => (instante ? fecha.format(new Date(instante)) : null);
+export const formatearInstante = (instante?: string) =>
+  instante ? fecha.format(new Date(instante)) : null;
 
-/** Si la inscripción está abierta y hasta cuándo. Cerrada, la oferta se ve pero no se inscribe. */
+/** Inscripción abierta y hasta cuándo. Cerrada, la pantalla es InscripcionCerrada. */
 export function VentanaInscripcion({ oferta }: { oferta: OfertaInscripcion }) {
-  const desde = formatear(oferta.inscripcionDesde);
-  const hasta = formatear(oferta.inscripcionHasta);
-  const abierta = oferta.inscripcionAbierta;
-  const Icono = abierta ? CalendarCheck : CalendarX;
+  const hasta = formatearInstante(oferta.inscripcionHasta);
 
   return (
     <div
       role="status"
-      className={cn(
-        'flex gap-2 rounded-item border p-3 text-sm',
-        abierta ? 'border-exito/30 bg-exito-fondo' : 'border-aviso/30 bg-aviso-fondo',
-      )}
+      className="flex gap-2 rounded-item border border-exito/30 bg-exito-fondo p-3 text-sm"
     >
-      <Icono
-        className={cn('mt-0.5 size-4 shrink-0', abierta ? 'text-exito' : 'text-aviso')}
-        aria-hidden
-      />
+      <CalendarCheck className="mt-0.5 size-4 shrink-0 text-exito" aria-hidden />
       <div>
-        <p className="font-semibold">
-          {abierta ? 'La inscripción está abierta' : 'La inscripción está cerrada'}
-        </p>
-        <p className="text-etiqueta">
-          {abierta
-            ? hasta && `Podés inscribirte hasta el ${hasta}.`
-            : desde && hasta
-              ? `El período de inscripción es del ${desde} al ${hasta}. Podés ver la oferta, pero no inscribirte.`
-              : 'Podés ver la oferta, pero no inscribirte.'}
-        </p>
+        <p className="font-semibold">La inscripción está abierta</p>
+        {hasta && <p className="text-etiqueta">Podés inscribirte hasta el {hasta}.</p>}
       </div>
     </div>
   );

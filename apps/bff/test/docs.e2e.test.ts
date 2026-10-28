@@ -20,14 +20,14 @@ describe('documentación del contrato', () => {
   afterAll(() => app.close());
 
   it.each(['/docs-json', '/api/v1/docs-json'])(
-    '%s sirve openapi.yaml con los 9 endpoints',
+    '%s sirve openapi.yaml con los 10 endpoints',
     async (ruta) => {
       const res = await request(app.getHttpServer()).get(ruta);
       expect(res.status).toBe(200);
       const operaciones = Object.values(res.body.paths as Record<string, object>).flatMap(
         Object.keys,
       );
-      expect(operaciones).toHaveLength(9);
+      expect(operaciones).toHaveLength(10);
     },
   );
 

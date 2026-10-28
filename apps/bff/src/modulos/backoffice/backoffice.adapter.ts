@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import type { ListaSedes } from '@uadenet/api-types';
 import type { Alumno } from '../../auth/alumno.decorator';
 import { CacheTtl } from '../../comun/cache';
 import { GatewayClient, RespuestaModuloError } from '../../gateway/gateway.client';
-import { aFicha, aSedes, fichaSoloIdentidad } from './backoffice.mapper';
+import { aFicha, aListaSedes, aSedes, fichaSoloIdentidad } from './backoffice.mapper';
 import type { FichaAlumno } from './backoffice.modelo';
 
 /** Las sedes casi no cambian y Backoffice no publica evento de sedes: se consultan y cachean. */
@@ -59,5 +60,10 @@ export class BackofficeAdapter {
       }
       return nombres;
     });
+  }
+
+  /** Todas las sedes, por nombre, del mismo catálogo cacheado. Si Backoffice falla, lanza. */
+  async sedes(): Promise<ListaSedes> {
+    return aListaSedes(await this.nombresDeSedes());
   }
 }

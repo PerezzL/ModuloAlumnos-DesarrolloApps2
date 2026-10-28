@@ -65,6 +65,17 @@ curl -X PUT localhost:4000/__falso/fallas/dining -H 'content-type: application/j
 - Para arrancar ya con fallas: `CORE_FALLAS=dining:caido,events:lento:3000` en el `.env`
   (o al lado de `docker compose up`).
 
+### Inscripción cerrada
+
+```bash
+curl -X PUT localhost:4000/__falso/inscripcion -H 'content-type: application/json' -d '{"cerrada":true}'
+```
+
+El período con la inscripción abierta pasa a abrir dentro de una semana, y el POST de
+inscripción responde 409 `FUERA_DE_FECHA`. Con `{"cerrada":false}` o `POST /__falso/reset`
+vuelve a la normalidad; `GET /__falso/inscripcion` muestra el estado. En la pantalla de
+Inscripción hay un botón que hace lo mismo, visible solo con `npm run dev`.
+
 ### Notificaciones a demanda
 
 ```bash
@@ -188,10 +199,11 @@ e historial.
 | Ya inscripto | Con dos pestañas abiertas, inscribirse en las dos | La segunda muestra "Ya estás inscripto" (`YA_INSCRIPTO`) |
 | Sin cupo al enviar | Llenar la comisión desde otra pestaña antes de confirmar | "La comisión se quedó sin cupo" (`SIN_CUPO`) |
 | Sin plan | `j.perez` (`careers: []`) | Aviso de que no se pudo confirmar el plan y oferta de todos los planes (`filtradaPorPlan: false`) |
-| Inscripción cerrada | `GET /inscripcion/oferta?periodoId=2026-2` | `inscripcionAbierta: false`; en pantalla, aviso y sin botones |
+| Inscripción cerrada | Botón "Simular inscripción cerrada" en la pantalla (solo en desarrollo), o `PUT /__falso/inscripcion` | Pantalla "El período de inscripción no está abierto" con la fecha en que abre, sin la oferta; "Quitar la simulación" la vuelve a abrir |
+| Período ya cerrado | `GET /inscripcion/oferta?periodoId=2026-2` | `inscripcionAbierta: false` |
 | Módulo 9 caído | Falla `academic: caido` | Error de servicio no disponible; el POST no se reintenta solo |
 
-El CORE falso no simula `SIN_REGULARIDAD` ni `FUERA_DE_FECHA`. Después de probar, hacé
+El CORE falso no simula `SIN_REGULARIDAD`; `FUERA_DE_FECHA`, solo con la inscripción cerrada simulada. Después de probar, hacé
 `POST /__falso/reset` para deshacer las inscripciones.
 
 ### Historial de cursadas (bloque D)
@@ -214,6 +226,8 @@ con filtro por período.
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
 | Listado | `v.moreno` | 3 compras: dos completadas (Monserrat y Recoleta) y una cancelada |
+| Filtro por sede | Elegir Sede Recoleta | 1 compra; el selector lista las 3 sedes de Backoffice |
+| Sin catálogo de sedes | Falla `backoffice: caido` | El filtro por sede queda sin opciones; el listado carga igual |
 | Detalle | Abrir una | Productos, cantidades, precio unitario y total |
 | Compra ajena | Pedir el id de una compra de `v.moreno` con el token de `j.perez` | 404 |
 | Sin compras | `j.perez` | Estado vacío |
@@ -226,6 +240,8 @@ Todo lo del Módulo 2 es suposición nuestra (no hay contrato).
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
 | Asistencia con alerta | Bases de Datos I | 5 de 8 clases (62,5 %); alerta: le queda 1 falta (límite 4) |
+| Filtro por sede | Elegir Sede Recoleta | 1 compra; el selector lista las 3 sedes de Backoffice |
+| Sin catálogo de sedes | Falla `backoffice: caido` | El filtro por sede queda sin opciones; el listado carga igual |
 | Asistencia sin límite | Desarrollo de Aplicaciones I | 8 de 8 clases; sin indicador de faltas |
 | Alumno libre | Algoritmos y Estructuras de Datos, entrando por URL: `/alumnos/cursos/curso-ayed-2025-2-a` (desde Mis cursos solo enlazan las cursadas en curso) | "Quedaste libre" en lugar del indicador; sin notas (estado vacío) |
 | Notas | Desarrollo de Aplicaciones I | 1er parcial 4 (desaprobado) y recuperatorio pendiente |

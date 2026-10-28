@@ -1,3 +1,4 @@
+import type { ListaSedes } from '@uadenet/api-types';
 import type { Alumno } from '../../auth/alumno.decorator';
 import { idOpaco, parsearOrigen, respuestaInvalida } from '../comun';
 import type { FichaAlumno } from './backoffice.modelo';
@@ -44,5 +45,14 @@ export function aSedes(datos: unknown) {
   return {
     nombres: new Map(pagina.items.map((s) => [s.siteId, s.name])),
     nextCursor: pagina.nextCursor ?? null,
+  };
+}
+
+/** Catálogo siteId → nombre → ListaSedes, por nombre. El id es el `siteId`, sin tocar. */
+export function aListaSedes(nombres: ReadonlyMap<string, string>): ListaSedes {
+  return {
+    items: [...nombres]
+      .map(([id, nombre]) => ({ id, nombre }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
   };
 }

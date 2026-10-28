@@ -11,6 +11,7 @@ import { GatewayModule } from './gateway/gateway.module';
 import { HealthController } from './health/health.controller';
 import { InscripcionModule } from './inscripcion/inscripcion.module';
 import { PerfilModule } from './perfil/perfil.module';
+import { SedesModule } from './sedes/sedes.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PerfilModule } from './perfil/perfil.module';
     InscripcionModule,
     CursadasModule,
     ComprasModule,
+    SedesModule,
   ],
   controllers: [HealthController],
   providers: [

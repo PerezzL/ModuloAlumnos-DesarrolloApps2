@@ -19,6 +19,12 @@ export const usuario = {
 /** Estado del CORE simulado: si hay cookie de refresh válida y cuántos refresh hubo. */
 export const core = { cookieValida: false, refreshes: 0, logouts: 0 };
 
+/** Catálogo de sedes del BFF simulado, ya ordenado por nombre */
+export const sedesBase = [
+  { id: 'sede-monserrat', nombre: 'Sede Monserrat' },
+  { id: 'sede-recoleta', nombre: 'Sede Recoleta' },
+];
+
 export const handlersCore = [
   http.post(`${GW}/api/v1/auth/login`, async ({ request }) => {
     const { email, password } = (await request.json()) as { email: string; password: string };
@@ -57,6 +63,7 @@ export const handlersCore = [
       apellido: 'Moreno',
     }),
   ),
+  http.get(`${BFF}/sedes`, () => HttpResponse.json({ items: sedesBase })),
 ];
 
 const transaccionesIniciales = () =>

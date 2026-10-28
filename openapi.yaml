@@ -49,6 +49,8 @@ tags:
     description: Calendario académico unificado (RF7)
   - name: Compras
     description: Historial de compras en la Tienda (RF8)
+  - name: Sedes
+    description: Catálogo de sedes de Backoffice, para los filtros
 
 paths:
   /me:
@@ -401,7 +403,10 @@ paths:
           schema: { type: string }
         - name: sede
           in: query
-          description: Filtro por sede (pedido al Módulo 5, todavía no confirmado)
+          description: >
+            Filtro por sede: el `id` de una sede de `GET /sedes` (el `siteId` de Backoffice).
+            Pedido al Módulo 5, todavía no confirmado; que la Tienda filtre por `siteId` es
+            suposición nuestra.
           x-provisional: true
           schema: { type: string }
       responses:
@@ -451,6 +456,29 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
+        '502': { $ref: '#/components/responses/ModuloInvalido' }
+        '503': { $ref: '#/components/responses/ModuloNoDisponible' }
+        '504': { $ref: '#/components/responses/ModuloTimeout' }
+
+  /sedes:
+    get:
+      tags: [Sedes]
+      operationId: getSedes
+      summary: Catálogo de sedes
+      description: >
+        Sedes de la universidad según Backoffice (`GET /api/v1/backoffice/sites`), ordenadas
+        por nombre. Incluye las inactivas, porque puede haber compras viejas en ellas. Se
+        cachea una hora en el BFF. Uso: opciones del filtro por sede de Compras (4.10).
+      x-fuentes: [Módulo 8]
+      x-estado-fuente: confirmado
+      responses:
+        '200':
+          description: Todas las sedes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListaSedes'
+        '401': { $ref: '#/components/responses/NoAutenticado' }
         '502': { $ref: '#/components/responses/ModuloInvalido' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }
         '504': { $ref: '#/components/responses/ModuloTimeout' }
@@ -867,6 +895,25 @@ components:
           type: string
           nullable: true
           description: Campus, sede o locación ya resuelta como texto
+
+    ListaSedes:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Sede' }
+
+    Sede:
+      type: object
+      required: [id, nombre]
+      properties:
+        id:
+          type: string
+          description: El `siteId` de Backoffice
+        nombre:
+          type: string
+          example: Sede Monserrat
 
     PaginaCompras:
       type: object

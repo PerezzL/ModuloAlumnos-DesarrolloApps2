@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { aFicha, aSedes } from './backoffice.mapper';
+import { aFicha, aListaSedes, aSedes } from './backoffice.mapper';
 
 const usuarios = fixture<Record<string, Record<string, unknown>>>(
   'backoffice/users.provisional.json',
@@ -124,5 +124,22 @@ describe('mapper de Backoffice → sedes', () => {
     } catch (e) {
       expect((e as ProblemaError).aProblema()).toMatchObject({ status: 502, modulo: 'BACKOFFICE' });
     }
+  });
+});
+
+describe('catálogo de sedes → ListaSedes', () => {
+  it('cada sede con su siteId como id, ordenadas por nombre', () => {
+    const nombres = new Map([
+      ['s-2', 'Sede Recoleta'],
+      ['s-1', 'Sede Monserrat'],
+      ['s-3', 'Sede Costa Argentina'],
+    ]);
+    expect(aListaSedes(nombres)).toEqual({
+      items: [
+        { id: 's-3', nombre: 'Sede Costa Argentina' },
+        { id: 's-1', nombre: 'Sede Monserrat' },
+        { id: 's-2', nombre: 'Sede Recoleta' },
+      ],
+    });
   });
 });

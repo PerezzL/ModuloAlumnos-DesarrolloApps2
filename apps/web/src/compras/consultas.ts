@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import type { CompraDetalle, PaginaCompras } from '@uadenet/api-types';
+import type { CompraDetalle, ListaSedes, PaginaCompras } from '@uadenet/api-types';
 import { api } from '@/api/cliente';
 import { datosDe } from '@/api/errores';
 
@@ -15,6 +15,21 @@ export interface FiltrosCompras {
   desde?: string;
   hasta?: string;
   estado?: string;
+  /** `id` de una sede de `GET /sedes` */
+  sede?: string;
+}
+
+/**
+ * Catálogo de sedes para el filtro. Casi no cambia: se pide una vez por sesión. Si falla, el
+ * filtro queda sin opciones y el listado funciona igual.
+ */
+export function useSedes() {
+  return useQuery({
+    queryKey: ['sedes'],
+    queryFn: (): Promise<ListaSedes> => datosDe(api.GET('/sedes')),
+    staleTime: Infinity,
+    retry: false,
+  });
 }
 
 /** Una página del historial de compras. Mientras carga la siguiente, se ve la anterior. */

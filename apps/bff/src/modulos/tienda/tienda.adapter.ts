@@ -8,7 +8,7 @@ export interface FiltrosCompras {
   desde?: string;
   hasta?: string;
   estado?: string;
-  /** Pedido al Módulo 5, sin confirmar */
+  /** `siteId` de Backoffice. Pedido al Módulo 5, sin confirmar */
   sede?: string;
 }
 

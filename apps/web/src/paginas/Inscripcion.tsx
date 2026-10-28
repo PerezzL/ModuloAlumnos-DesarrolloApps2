@@ -8,8 +8,10 @@ import { Button } from '@/componentes/ui/button';
 import { useAvisar } from '@/componentes/Avisos';
 import { useInscribir, useOferta } from '@/inscripcion/consultas';
 import { EstadoComision } from '@/inscripcion/EstadoComision';
+import { InscripcionCerrada } from '@/inscripcion/InscripcionCerrada';
 import { QUE_FALTA } from '@/inscripcion/rechazos';
 import { ResultadoInscripcion } from '@/inscripcion/ResultadoInscripcion';
+import { SimularInscripcion } from '@/inscripcion/SimularInscripcion';
 import { VentanaInscripcion } from '@/inscripcion/VentanaInscripcion';
 
 interface Eleccion {
@@ -17,7 +19,10 @@ interface Eleccion {
   comision: Comision;
 }
 
-/** Inscripción a materias (4.3): oferta del plan agrupada por materia. */
+/**
+ * Inscripción a materias (4.3): oferta del plan agrupada por materia. Con la inscripción
+ * cerrada no se muestra la oferta, solo cuándo abre o cuándo cerró.
+ */
 export function Inscripcion() {
   const { data, error, isPending, refetch } = useOferta();
   const inscribir = useInscribir();
@@ -45,6 +50,22 @@ export function Inscripcion() {
     });
   };
 
+  const simulacion = import.meta.env.DEV && (
+    <SimularInscripcion abierta={data.inscripcionAbierta} />
+  );
+
+  if (!data.inscripcionAbierta) {
+    return (
+      <section className="flex max-w-5xl flex-col gap-4" aria-labelledby="titulo-inscripcion">
+        <h2 id="titulo-inscripcion" className="text-lg font-semibold">
+          Inscripción a materias
+        </h2>
+        {simulacion}
+        <InscripcionCerrada oferta={data} />
+      </section>
+    );
+  }
+
   return (
     <section className="flex max-w-5xl flex-col gap-4" aria-labelledby="titulo-oferta">
       <div>
@@ -53,6 +74,7 @@ export function Inscripcion() {
         </h2>
       </div>
 
+      {simulacion}
       <VentanaInscripcion oferta={data} />
 
       {!data.filtradaPorPlan && (
