@@ -23,6 +23,10 @@ const Volver = () => (
   </Link>
 );
 
+/** "Azul institucional · Talle M"; vacío si el producto no tiene variantes */
+const variante = (p: { color: string | null; talle: string | null }) =>
+  [p.color, p.talle && `Talle ${p.talle}`].filter(Boolean).join(' · ');
+
 /** Detalle de una compra (4.10): productos con el precio que tenían al momento de comprar. */
 export function CompraDetalle() {
   const { orderId = '' } = useParams();
@@ -63,7 +67,7 @@ export function CompraDetalle() {
             <h2 id="titulo-compra" className="text-lg font-semibold">
               Compra del {fecha.format(new Date(data.fecha))}
             </h2>
-            {data.sede && <p className="text-sm text-texto-suave">Sede {data.sede}</p>}
+            {data.sede && <p className="text-sm text-texto-suave">{data.sede}</p>}
           </div>
           <span className="rounded-full bg-fondo px-2.5 py-0.5 text-xs font-semibold text-etiqueta">
             {estadoLegible(data.estado)}
@@ -91,8 +95,23 @@ export function CompraDetalle() {
             </thead>
             <tbody className="divide-y divide-borde-suave">
               {data.productos.map((p, i) => (
-                <tr key={p.productoId ?? i}>
-                  <td className="py-3 pr-4 font-medium">{p.nombre}</td>
+                <tr key={`${p.productoId}-${i}`}>
+                  <td className="py-3 pr-4">
+                    <div className="flex items-center gap-3">
+                      {p.imagenUrl && (
+                        <img
+                          src={p.imagenUrl}
+                          alt=""
+                          loading="lazy"
+                          className="size-10 shrink-0 rounded-item border border-borde-suave object-cover"
+                        />
+                      )}
+                      <div>
+                        <p className="font-medium">{p.nombre}</p>
+                        {variante(p) && <p className="text-xs text-texto-suave">{variante(p)}</p>}
+                      </div>
+                    </div>
+                  </td>
                   <td className="py-3 pr-4 text-right tabular-nums">{p.cantidad}</td>
                   <td className="py-3 pr-4 text-right tabular-nums">
                     {formatearMonto(p.precioUnitario)}

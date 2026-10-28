@@ -1,58 +1,78 @@
 import { Router } from 'express';
 import { fixture } from '../fixtures.js';
 import { enviarProblema } from '../problema.js';
-import { entero, esDemo } from './comun.js';
+import { esDemo } from './comun.js';
 
 interface Orden {
-  orderId: string;
-  fecha: string;
-  estado: string;
-  siteId?: string | null;
-  sede?: string | null;
+  id: string;
+  siteId: string;
+  status: string;
+  createdAt: string;
 }
 
-const DIA_MS = 24 * 60 * 60 * 1000;
-/** Inicio del día `YYYY-MM-DD` en Buenos Aires (UTC−3, sin horario de verano) */
-const inicioDelDia = (fecha: string) => Date.parse(`${fecha}T00:00:00-03:00`);
+const ESTADOS = ['PENDING_PAYMENT', 'COMPLETED', 'COMPENSATING', 'FAILED'];
+
+/** Valida la query de `/orders/me` como la Tienda; devuelve el error o los filtros */
+function consulta(query: Record<string, unknown>) {
+  const { status, siteId, from, to, limit = '20', cursor } = query;
+  const n = Number(limit);
+  if (typeof limit !== 'string' || !Number.isInteger(n) || n < 1 || n > 100) {
+    return { error: 'limit debe ser un entero entre 1 y 100' };
+  }
+  if (status !== undefined && !ESTADOS.includes(String(status))) {
+    return { error: `status debe ser uno de ${ESTADOS.join(', ')}` };
+  }
+  for (const [nombre, valor] of [
+    ['from', from],
+    ['to', to],
+  ] as const) {
+    if (valor !== undefined && Number.isNaN(Date.parse(String(valor)))) {
+      return { error: `${nombre} debe ser una fecha ISO 8601` };
+    }
+  }
+  return {
+    limit: n,
+    cursor: cursor === undefined ? undefined : String(cursor),
+    cumple: (o: Orden) => {
+      const t = Date.parse(o.createdAt);
+      if (status !== undefined && o.status !== status) return false;
+      if (siteId !== undefined && o.siteId !== siteId) return false;
+      if (from !== undefined && t < Date.parse(String(from))) return false;
+      if (to !== undefined && t > Date.parse(String(to))) return false;
+      return true;
+    },
+  };
+}
 
 /**
- * Filtros que la Tienda ofreció (fecha y estado) y el que le pedimos (sede, por `siteId` de
- * Backoffice). Los nombres de los parámetros y que la sede se filtre por `siteId` son una
- * suposición nuestra: `desde` y `hasta` inclusive, en `YYYY-MM-DD`.
+ * Módulo 5 (contrato confirmado). Solo devuelve las compras propias. Paginación por cursor
+ * como la Tienda: el cursor es el `id` de la última orden de la página anterior.
  */
-function filtrar(ordenes: Orden[], query: Record<string, unknown>) {
-  const { desde, hasta, estado, sede } = query;
-  return ordenes.filter((o) => {
-    const t = Date.parse(o.fecha);
-    if (typeof desde === 'string' && t < inicioDelDia(desde)) return false;
-    if (typeof hasta === 'string' && t >= inicioDelDia(hasta) + DIA_MS) return false;
-    if (typeof estado === 'string' && o.estado !== estado) return false;
-    if (typeof sede === 'string' && o.siteId !== sede) return false;
-    return true;
-  });
-}
-
-/** Módulo 5 (contrato propuesto). Solo devuelve las compras propias. */
 export function moduloTienda() {
   const router = Router();
 
   const ordenes = (demo: boolean) =>
-    demo ? fixture<{ items: Orden[] }>('store/orders-me.provisional.json').items : [];
+    demo ? fixture<{ items: Orden[] }>('store/orders-me.json').items : [];
 
   router.get('/api/v1/orders/me', (req, res) => {
-    const page = entero(req.query.page, 1);
-    const limit = entero(req.query.limit, 20, 100);
-    const todas = filtrar(ordenes(esDemo(req)), req.query);
-    res.json({
-      items: todas.slice((page - 1) * limit, page * limit),
-      page,
-      limit,
-      total: todas.length,
-    });
+    const c = consulta(req.query);
+    if ('error' in c) return enviarProblema(res, 400, 'VALIDATION_ERROR', c.error!);
+    const filtradas = ordenes(esDemo(req)).filter(c.cumple);
+    let desde = 0;
+    if (c.cursor !== undefined) {
+      const i = filtradas.findIndex((o) => o.id === c.cursor);
+      if (i === -1) {
+        return enviarProblema(res, 400, 'VALIDATION_ERROR', 'cursor inválido para estos filtros');
+      }
+      desde = i + 1;
+    }
+    const items = filtradas.slice(desde, desde + c.limit);
+    const hayMas = desde + c.limit < filtradas.length;
+    res.json({ items, nextCursor: hayMas ? items.at(-1)!.id : null });
   });
 
-  router.get('/api/v1/orders/:orderId', (req, res) => {
-    const orden = ordenes(esDemo(req)).find((o) => o.orderId === req.params.orderId);
+  router.get('/api/v1/orders/:id', (req, res) => {
+    const orden = ordenes(esDemo(req)).find((o) => o.id === req.params.id);
     if (!orden) return enviarProblema(res, 404, 'NOT_FOUND', 'Compra inexistente');
     res.json(orden);
   });

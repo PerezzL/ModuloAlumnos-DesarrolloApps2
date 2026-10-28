@@ -2,42 +2,39 @@ import { z } from 'zod';
 
 const monto = z.string().regex(/^-?\d+(\.\d+)?$/, 'se esperaba un importe decimal como string');
 
-const Producto = z
+/** Un ítem de la orden: copia del producto al momento de la compra */
+const Item = z
   .object({
-    productoId: z.union([z.string(), z.number()]).optional(),
-    nombre: z.string(),
-    cantidad: z.number().int(),
-    precioUnitario: monto,
-    subtotal: monto,
+    productId: z.string(),
+    productName: z.string(),
+    imageUrl: z.string().nullable().optional(),
+    quantity: z.number().int().positive(),
+    unitPrice: monto,
+    color: z.string().nullable().optional(),
+    size: z.string().nullable().optional(),
+    sku: z.string().nullable().optional(),
   })
   .passthrough();
 
 /**
- * Una orden de la Tienda. Contrato PROPUESTO (fixture `store/orders-me.provisional.json`):
- * falta definir qué campos van en el listado y cuáles solo en el detalle, así que `productos`
- * es opcional en el listado. Este tipo no sale de la carpeta del adaptador.
+ * Una orden de la Tienda (contrato confirmado, fixture `store/orders-me.json`). Listado y
+ * detalle traen la misma orden completa. Este tipo no sale de la carpeta del adaptador.
  */
 export const Orden = z
   .object({
-    orderId: z.union([z.string(), z.number()]),
-    fecha: z.string().datetime({ offset: true }),
-    sede: z.string().nullable().optional(),
-    estado: z.string(),
-    productos: z.array(Producto).optional(),
-    subtotal: monto.optional(),
+    id: z.string(),
+    siteId: z.string().nullable(),
+    status: z.string(),
+    createdAt: z.string().datetime({ offset: true }),
     total: monto,
+    items: z.array(Item),
   })
   .passthrough();
 
-/** Respuesta de `GET /api/store/orders/me?page=&limit=` (Módulo 5, propuesto). */
+/** Respuesta de `GET /api/v1/store/orders/me` (Módulo 5): paginación por cursor */
 export const PaginaOrdenes = z
   .object({
     items: z.array(Orden),
-    page: z.number().int(),
-    limit: z.number().int(),
-    total: z.number().int(),
+    nextCursor: z.string().nullable(),
   })
   .passthrough();
-
-/** Respuesta de `GET /api/store/orders/:orderId` (Módulo 5, propuesto): la orden con productos. */
-export const OrdenDetalle = Orden.extend({ productos: z.array(Producto) });

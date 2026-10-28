@@ -108,17 +108,32 @@ describe('Módulos externos desde fixtures', () => {
     expect((await get(`/api/v1/store/orders/${id}`, perez)).status).toBe(404);
   });
 
-  it('tienda: filtra por fecha (inclusive, en hora argentina), estado y sede', async () => {
+  it('tienda: filtra por fecha (ISO, inclusive), estado y sede', async () => {
     const ids = async (query: string) =>
-      ((await get(`/api/v1/store/orders/me?${query}`)).body as { items: { orderId: string }[] })
-        .items.length;
-    expect(await ids('desde=2026-09-10&hasta=2026-09-28')).toBe(2);
-    expect(await ids('desde=2026-09-29')).toBe(0);
-    expect(await ids('estado=CANCELADA')).toBe(1);
-    expect(await ids('sede=7b1d3f5a-9c2e-4a6b-8d0f-2e4a6c8b0d12')).toBe(1);
-    expect(await ids('sede=Recoleta')).toBe(0);
-    const res = await get('/api/v1/store/orders/me?estado=COMPLETADA&limit=1');
-    expect(res.body).toMatchObject({ total: 2, limit: 1 });
+      ((await get(`/api/v1/store/orders/me?${query}`)).body as { items: { id: string }[] }).items
+        .length;
+    expect(await ids('from=2026-09-10T13:05:00.000Z&to=2026-09-28T16:20:00.000Z')).toBe(2);
+    expect(await ids('from=2026-09-28T16:20:00.001Z')).toBe(0);
+    expect(await ids('status=FAILED')).toBe(1);
+    expect(await ids('siteId=7b1d3f5a-9c2e-4a6b-8d0f-2e4a6c8b0d12')).toBe(1);
+    expect((await get('/api/v1/store/orders/me?status=CANCELADA')).status).toBe(400);
+    expect((await get('/api/v1/store/orders/me?limit=101')).status).toBe(400);
+  });
+
+  it('tienda: pagina por cursor con los mismos filtros', async () => {
+    const pagina = async (query: string) =>
+      (await get(`/api/v1/store/orders/me?${query}`)).body as {
+        items: { id: string }[];
+        nextCursor: string | null;
+      };
+    const primera = await pagina('status=COMPLETED&limit=1');
+    expect(primera.items.map((o) => o.id)).toEqual(['93b28f67-e111-4a0d-b857-fdd015c4d3f1']);
+    expect(primera.nextCursor).toBe('93b28f67-e111-4a0d-b857-fdd015c4d3f1');
+    const segunda = await pagina(`status=COMPLETED&limit=1&cursor=${primera.nextCursor}`);
+    expect(segunda.items.map((o) => o.id)).toEqual(['1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f']);
+    expect(segunda.nextCursor).toBeNull();
+    const ajeno = await get('/api/v1/store/orders/me?status=FAILED&cursor=' + primera.nextCursor);
+    expect(ajeno.status).toBe(400);
   });
 
   it('docente: la nota se pide por el examId del actionUrl de la notificación', async () => {

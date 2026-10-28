@@ -378,35 +378,38 @@ paths:
       operationId: getCompras
       summary: Historial de compras del alumno
       description: >
-        Consulta en vivo a la Tienda (`GET /api/store/orders/me`), sin tabla propia.
-        Solo lectura. Pantalla: Historial de compras (4.10).
+        Consulta en vivo a la Tienda (`GET /api/v1/store/orders/me`), sin tabla propia.
+        Solo lectura. Pantalla: Historial de compras (4.10). Paginación por cursor, como la
+        Tienda: no hay número de página ni total.
       x-fuentes: [Módulo 5]
-      x-estado-fuente: propuesto (falta listado vs. detalle y filtro por sede)
+      x-estado-fuente: confirmado
       parameters:
-        - name: page
+        - name: cursor
           in: query
-          schema: { type: integer, minimum: 1, default: 1 }
+          description: El `nextCursor` de la página anterior, con los mismos filtros. Opaco.
+          schema: { type: string }
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
         - name: desde
           in: query
-          description: Fecha de compra desde (inclusive)
+          description: Fecha de compra desde (inclusive, hora de Argentina)
           schema: { type: string, format: date }
         - name: hasta
           in: query
-          description: Fecha de compra hasta (inclusive)
+          description: Fecha de compra hasta (inclusive, hora de Argentina)
           schema: { type: string, format: date }
         - name: estado
           in: query
-          description: Estado de la orden, tal como lo define la Tienda
+          description: >
+            Estado de la orden, tal como lo define la Tienda: `PENDING_PAYMENT`, `COMPLETED`,
+            `COMPENSATING` o `FAILED`.
           schema: { type: string }
         - name: sede
           in: query
           description: >
             Filtro por sede: el `id` de una sede de `GET /sedes` (el `siteId` de Backoffice).
-            Pedido al Módulo 5, todavía no confirmado; que la Tienda filtre por `siteId` es
-            suposición nuestra.
+            Que la Tienda use el mismo `siteId` que Backoffice es suposición nuestra.
           x-provisional: true
           schema: { type: string }
       responses:
@@ -418,8 +421,8 @@ paths:
                 $ref: '#/components/schemas/PaginaCompras'
         '400':
           description: >
-            Parámetro inválido (`code` `SOLICITUD_INVALIDA`): `page` o `limit` fuera de rango,
-            o una fecha que no es `YYYY-MM-DD`.
+            Parámetro inválido (`code` `SOLICITUD_INVALIDA`): `limit` fuera de rango, una
+            fecha que no es `YYYY-MM-DD` o un `cursor` que la Tienda no acepta.
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
@@ -434,9 +437,9 @@ paths:
       operationId: getCompra
       summary: Detalle de una compra
       description: >
-        Consulta `GET /api/store/orders/:orderId` en la Tienda. Solo compras propias.
+        Consulta `GET /api/v1/store/orders/{id}` en la Tienda. Solo compras propias.
       x-fuentes: [Módulo 5]
-      x-estado-fuente: propuesto
+      x-estado-fuente: confirmado
       parameters:
         - name: orderId
           in: path
@@ -917,31 +920,37 @@ components:
 
     PaginaCompras:
       type: object
-      required: [items, page, limit, total]
+      required: [items, nextCursor]
       properties:
         items:
           type: array
           items: { $ref: '#/components/schemas/CompraResumen' }
-        page: { type: integer }
-        limit: { type: integer }
-        total:
-          type: integer
-          description: Cantidad total de compras que cumplen el filtro
+        nextCursor:
+          type: string
+          nullable: true
+          description: Para pedir la página siguiente; null cuando no hay más
 
     CompraResumen:
       type: object
-      x-provisional: true
-      required: [orderId, fecha, estado, total]
+      required: [orderId, fecha, sede, estado, cantidadProductos, total]
       properties:
         orderId: { type: string }
-        fecha: { type: string, format: date-time }
+        fecha:
+          type: string
+          format: date-time
+          description: Fecha de creación de la orden
         sede:
           type: string
           nullable: true
+          description: Nombre de la sede según Backoffice; null si no se pudo resolver
         estado:
           type: string
-          description: Estado de la orden, tal como lo define la Tienda
-        cantidadProductos: { type: integer }
+          description: >
+            Estado de la orden, tal como lo define la Tienda (`PENDING_PAYMENT`, `COMPLETED`,
+            `COMPENSATING`, `FAILED`). Puede llegar otro: el front lo muestra igual.
+        cantidadProductos:
+          type: integer
+          description: Suma de las cantidades de los productos
         total: { $ref: '#/components/schemas/Monto' }
 
     CompraDetalle:
@@ -954,7 +963,8 @@ components:
               type: array
               items:
                 type: object
-                required: [nombre, cantidad, precioUnitario, subtotal]
+                required:
+                  [productoId, nombre, cantidad, precioUnitario, subtotal, imagenUrl, color, talle, sku]
                 properties:
                   productoId: { type: string }
                   nombre:
@@ -965,13 +975,29 @@ components:
                     allOf:
                       - $ref: '#/components/schemas/Monto'
                     description: Precio histórico, congelado al momento de la compra
-                  subtotal: { $ref: '#/components/schemas/Monto' }
+                  subtotal:
+                    allOf:
+                      - $ref: '#/components/schemas/Monto'
+                    description: Cantidad por precio unitario
+                  imagenUrl:
+                    type: string
+                    nullable: true
+                    description: URL completa de la imagen del momento de la compra
+                  color:
+                    type: string
+                    nullable: true
+                    description: Solo si el producto tiene variantes
+                  talle:
+                    type: string
+                    nullable: true
+                    description: Solo si el producto tiene variantes
+                  sku:
+                    type: string
+                    nullable: true
             subtotal:
               allOf:
                 - $ref: '#/components/schemas/Monto'
-              description: >
-                Subtotal de la compra. Si la Tienda no lo informa, es la suma de los subtotales
-                de los productos.
+              description: Suma de los subtotales de los productos
 
     Monto:
       type: string

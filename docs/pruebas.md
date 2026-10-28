@@ -57,7 +57,7 @@ curl -X PUT localhost:4000/__falso/fallas/dining -H 'content-type: application/j
 | `events` | Eventos en el calendario |
 | `academic` | Exámenes en el calendario, oferta, inscripción e historial |
 | `store` | Historial de compras |
-| `backoffice` | Datos del perfil (nombre, legajo, carrera, plan) y nombres de sede del calendario |
+| `backoffice` | Datos del perfil (nombre, legajo, carrera, plan) y nombres de sede del calendario y de compras |
 | `student` | Nuestro BFF entero (el front recibe la falla directo del Gateway) |
 
 - `GET /__falso/fallas` muestra las activas.
@@ -225,10 +225,11 @@ con filtro por período.
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
-| Listado | `v.moreno` | 3 compras: dos completadas (Monserrat y Recoleta) y una cancelada |
+| Listado | `v.moreno` | 3 compras: dos completadas (Sede Monserrat y Sede Recoleta) y una fallida |
+| Filtro por estado | Elegir Fallida | 1 compra |
 | Filtro por sede | Elegir Sede Recoleta | 1 compra; el selector lista las 3 sedes de Backoffice |
-| Sin catálogo de sedes | Falla `backoffice: caido` | El filtro por sede queda sin opciones; el listado carga igual |
-| Detalle | Abrir una | Productos, cantidades, precio unitario y total |
+| Sin catálogo de sedes | Falla `backoffice: caido` | El filtro por sede queda sin opciones; el listado carga igual y las compras salen sin sede |
+| Detalle | Abrir la del buzo | Productos con imagen, "Azul institucional · Talle M", cantidades, precio unitario, subtotal y total |
 | Compra ajena | Pedir el id de una compra de `v.moreno` con el token de `j.perez` | 404 |
 | Sin compras | `j.perez` | Estado vacío |
 | Tienda caída | Falla `store: caido` | Error de servicio no disponible |
@@ -240,8 +241,6 @@ Todo lo del Módulo 2 es suposición nuestra (no hay contrato).
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
 | Asistencia con alerta | Bases de Datos I | 5 de 8 clases (62,5 %); alerta: le queda 1 falta (límite 4) |
-| Filtro por sede | Elegir Sede Recoleta | 1 compra; el selector lista las 3 sedes de Backoffice |
-| Sin catálogo de sedes | Falla `backoffice: caido` | El filtro por sede queda sin opciones; el listado carga igual |
 | Asistencia sin límite | Desarrollo de Aplicaciones I | 8 de 8 clases; sin indicador de faltas |
 | Alumno libre | Algoritmos y Estructuras de Datos, entrando por URL: `/alumnos/cursos/curso-ayed-2025-2-a` (desde Mis cursos solo enlazan las cursadas en curso) | "Quedaste libre" en lugar del indicador; sin notas (estado vacío) |
 | Notas | Desarrollo de Aplicaciones I | 1er parcial 4 (desaprobado) y recuperatorio pendiente |

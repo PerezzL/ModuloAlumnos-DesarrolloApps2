@@ -34,8 +34,7 @@ suposición nuestra. Pasa por tres motivos:
 
 - **El módulo no tiene contrato.** El Módulo 2 (Docente) no publicó endpoints: rutas y
   campos son todos supuestos, alineados con lo que supusimos en [`openapi.yaml`](../../openapi.yaml).
-- **El módulo informó qué datos trae, pero no con qué nombres o forma.** Tienda listó
-  "fecha, sede, estado, productos…", pero no cómo se llaman los campos; Backoffice adelantó
+- **El módulo informó qué datos trae, pero no con qué nombres o forma.** Backoffice adelantó
   `careers` con el `planId`, pero todavía no lo publicó.
 - **El endpoint existe, pero no tenemos la respuesta.** Varios endpoints del Módulo 9 están
   implementados, pero solo conocemos la ruta. Lo mismo con partes de CORE (`wallets/me`, el
@@ -85,7 +84,7 @@ Cuando un módulo confirma o cambia su respuesta:
 | --- | --- |
 | `dining/calendar-me.json` | `GET /api/v1/calendar/me?from=&to=` |
 | `events/eventos.json` | `GET /api/v1/eventos` (y cada ítem, `GET /api/v1/eventos/{id}`) |
-| `store/orders-me.provisional.json` | `GET /api/v1/orders/me` (y cada ítem, `GET /api/v1/orders/{orderId}`) |
+| `store/orders-me.json` | `GET /api/v1/orders/me?status=&siteId=&from=&to=&limit=&cursor=` (y cada ítem, `GET /api/v1/orders/{id}`) |
 | `backoffice/users.provisional.json` | `GET /api/v1/users/{userId}`, por id |
 | `backoffice/sites.json` | `GET /api/v1/sites` (y cada ítem, `GET /api/v1/sites/{siteId}`) |
 | `academic/carreras.provisional.json` | `GET /api/v1/academica/carreras` |

@@ -21,8 +21,9 @@ function texto(nombre: string, valor: unknown): string | undefined {
 }
 
 /**
- * Query de `GET /compras`: `page` (desde 1, por defecto 1), `limit` (1 a 50, por defecto 10)
- * y los filtros opcionales `desde`/`hasta` (inclusive, `YYYY-MM-DD`), `estado` y `sede`.
+ * Query de `GET /compras`: `cursor` (opaco, el `nextCursor` anterior), `limit` (1 a 50, por
+ * defecto 10) y los filtros opcionales `desde`/`hasta` (inclusive, `YYYY-MM-DD`), `estado` y
+ * `sede`.
  */
 export function parsearConsultaCompras(query: Record<string, unknown>): ConsultaCompras {
   const desde = query.desde === undefined ? undefined : fechaSinHora('desde', query.desde);
@@ -31,7 +32,7 @@ export function parsearConsultaCompras(query: Record<string, unknown>): Consulta
   if (desde && hasta && hasta < desde)
     throw solicitudInvalida('hasta no puede ser anterior a desde');
   return {
-    page: entero('page', query.page, 1),
+    ...(query.cursor !== undefined && { cursor: texto('cursor', query.cursor) }),
     limit: entero('limit', query.limit, 10, 50),
     filtros: {
       ...(desde && { desde }),

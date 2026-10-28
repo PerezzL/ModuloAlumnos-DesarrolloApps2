@@ -91,8 +91,8 @@ Pertenece al Módulo 3. Se mockeó solo para representar el flujo de redirecció
 
 ## 4.10 Historial de compras
 
-- Listado: producto, fecha, monto, sede y estado, con paginación y filtros por fecha, estado y sede (las sedes salen de `GET /sedes`).
-- Detalle: productos, cantidades, precio unitario histórico, subtotal y total.
+- Listado: fecha, sede, cantidad de productos, estado y total, con "ver más" (paginación por cursor, sin total) y filtros por fecha, estado y sede (las sedes salen de `GET /sedes`).
+- Detalle: productos con imagen, color y talle si es variante, cantidades, precio unitario histórico, subtotal y total.
 
 ## 4.11 Saldo / Carga de saldo
 

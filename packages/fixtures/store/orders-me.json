@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "id": "93b28f67-e111-4a0d-b857-fdd015c4d3f1",
+      "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+      "status": "COMPLETED",
+      "createdAt": "2026-09-28T16:20:00.000Z",
+      "completedAt": "2026-09-28T16:20:00.412Z",
+      "total": "3500.00",
+      "currency": "ARS",
+      "balanceAfter": "6500.00",
+      "failureCode": null,
+      "items": [
+        {
+          "productId": "0f3a8c1e-6b2d-4e9f-a1c7-5d8b2e4f6a90",
+          "productName": "Cuaderno A4 UADE",
+          "imageUrl": "https://tienda.uadenet.test/assets/products/cuaderno-a4.png",
+          "image": "/assets/products/cuaderno-a4.png",
+          "quantity": 2,
+          "unitPrice": "1250.00",
+          "variantId": null,
+          "color": null,
+          "size": null,
+          "sku": null
+        },
+        {
+          "productId": "4c7e1a9b-2d5f-4b8e-9a3c-6f1d8e2b5a74",
+          "productName": "Lapicera azul",
+          "imageUrl": "https://tienda.uadenet.test/assets/products/lapicera-azul.png",
+          "image": "/assets/products/lapicera-azul.png",
+          "quantity": 1,
+          "unitPrice": "1000.00",
+          "variantId": null,
+          "color": null,
+          "size": null,
+          "sku": null
+        }
+      ]
+    },
+    {
+      "id": "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
+      "siteId": "7b1d3f5a-9c2e-4a6b-8d0f-2e4a6c8b0d12",
+      "status": "COMPLETED",
+      "createdAt": "2026-09-10T13:05:00.000Z",
+      "completedAt": "2026-09-10T13:05:00.388Z",
+      "total": "18000.00",
+      "currency": "ARS",
+      "balanceAfter": "10000.00",
+      "failureCode": null,
+      "items": [
+        {
+          "productId": "8a2b4c6d-1e3f-4a5b-8c7d-9e0f1a2b3c4d",
+          "productName": "Buzo UADE",
+          "imageUrl": "https://tienda.uadenet.test/assets/products/buzo-azul-m.png",
+          "image": "/assets/products/buzo-azul-m.png",
+          "quantity": 1,
+          "unitPrice": "18000.00",
+          "variantId": "b5c6d7e8-f9a0-4b1c-9d2e-3f4a5b6c7d8e",
+          "color": "Azul institucional",
+          "size": "M",
+          "sku": "BUZO-AZUL-M"
+        }
+      ]
+    },
+    {
+      "id": "7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d",
+      "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+      "status": "FAILED",
+      "createdAt": "2026-08-22T11:40:00.000Z",
+      "completedAt": null,
+      "total": "22000.00",
+      "currency": "ARS",
+      "balanceAfter": null,
+      "failureCode": "INSUFFICIENT_FUNDS",
+      "items": [
+        {
+          "productId": "c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f",
+          "productName": "Calculadora científica",
+          "imageUrl": "https://tienda.uadenet.test/assets/products/calculadora.png",
+          "image": "/assets/products/calculadora.png",
+          "quantity": 1,
+          "unitPrice": "22000.00",
+          "variantId": null,
+          "color": null,
+          "size": null,
+          "sku": null
+        }
+      ]
+    }
+  ],
+  "nextCursor": null
+}
