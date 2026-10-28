@@ -29,7 +29,7 @@ Todos con la contraseña `uade2026`.
 | Usuario | Para qué sirve |
 | --- | --- |
 | `v.moreno@uade.edu.ar` | Alumna con datos en todos los módulos. Es la de casi todos los casos |
-| `j.perez@uade.edu.ar` | Alumno sin datos: estados vacíos. Backoffice le devuelve `planId: null` |
+| `j.perez@uade.edu.ar` | Alumno sin datos: estados vacíos. Backoffice le devuelve `careers: []` (sin plan) |
 | `suspendido@uade.edu.ar` | Cuenta suspendida: el login responde 403 |
 
 ## 3. Controles del CORE falso
@@ -198,7 +198,7 @@ e historial.
 | Inscripción correcta | Sistemas Operativos | Confirmación; el cupo pasa de 10 a 11 y aparece en Mis Cursos |
 | Ya inscripto | Con dos pestañas abiertas, inscribirse en las dos | La segunda muestra "Ya estás inscripto" (`YA_INSCRIPTO`) |
 | Sin cupo al enviar | Llenar la comisión desde otra pestaña antes de confirmar | "La comisión se quedó sin cupo" (`SIN_CUPO`) |
-| Sin plan | `j.perez` (`planId: null`) | Aviso de que no se pudo confirmar el plan y oferta de todos los planes (`filtradaPorPlan: false`) |
+| Sin plan | `j.perez` (`careers: []`) | Aviso de que no se pudo confirmar el plan y oferta de todos los planes (`filtradaPorPlan: false`) |
 | Inscripción cerrada | Botón "Simular inscripción cerrada" en la pantalla (solo en desarrollo), o `PUT /__falso/inscripcion` | Pantalla "El período de inscripción no está abierto" con la fecha en que abre, sin la oferta; "Quitar la simulación" la vuelve a abrir |
 | Período ya cerrado | `GET /inscripcion/oferta?periodoId=2026-2` | `inscripcionAbierta: false` |
 | Módulo 9 caído | Falla `academic: caido` | Error de servicio no disponible; el POST no se reintenta solo |

@@ -8,6 +8,7 @@ const M9 = `${GW}/api/v1/academic`;
 export const RUTAS_ACADEMICO = {
   PERIODOS: `${M9}/planificacion/periodos`,
   CURSOS: `${M9}/planificacion/cursos`,
+  CARRERAS: `${M9}/academica/carreras`,
   CORRELATIVIDADES: `${M9}/academica/asignaturas/:asignaturaId/correlatividades`,
   INSCRIPCIONES: `${M9}/planificacion/alumnos/:alumnoId/inscripciones`,
   INSCRIBIR: `${M9}/planificacion/cursos/:cursoId/inscripciones`,

@@ -35,7 +35,7 @@ describe('GET /inscripcion/oferta', () => {
     });
     expect(oferta.materias).toHaveLength(4);
     expect(cursos?.searchParams.get('periodoId')).toBe('2027-1');
-    expect(cursos?.searchParams.get('planId')).toBe('plan-2020');
+    expect(cursos?.searchParams.get('planId')).toBe('12');
   });
 
   it('pide las inscripciones del alumno del token y marca dónde ya está inscripto', async () => {
@@ -141,8 +141,8 @@ describe('GET /inscripcion/oferta', () => {
   });
 
   it.each([
-    ['Backoffice devuelve planId null', HttpResponse.json({ ...USUARIO_CON_PLAN, planId: null })],
-    ['Backoffice no informa planId', HttpResponse.json({ email: 'v.moreno@uade.edu.ar' })],
+    ['Backoffice no informa carreras', HttpResponse.json({ ...USUARIO_CON_PLAN, careers: [] })],
+    ['Backoffice no manda careers', HttpResponse.json({ email: 'v.moreno@uade.edu.ar' })],
     ['Backoffice está caído', new HttpResponse(null, { status: 503 })],
   ])('%s: pide la oferta sin filtrar por plan y lo informa', async (_caso, respuesta) => {
     let cursos: URL | undefined;

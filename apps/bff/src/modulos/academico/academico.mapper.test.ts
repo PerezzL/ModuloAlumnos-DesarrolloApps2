@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
 import {
+  aCarreras,
   aCorrelativas,
   aCursos,
   aInscripcion,
@@ -225,5 +226,17 @@ describe('mapper de Gestión Académica: rechazos de la inscripción', () => {
         code: 'INSCRIPCION_RECHAZADA',
       });
     }
+  });
+});
+
+describe('mapper de Gestión Académica: carreras', () => {
+  it('arma el nombre por id, con el id como string opaco', () => {
+    const carreras = aCarreras(fixture('academic/carreras.provisional.json'));
+    expect(carreras.get('3')).toBe('Ingeniería en Informática');
+    expect(carreras.has('99')).toBe(false);
+  });
+
+  it('una carrera sin nombre es 502 de Gestión Académica', () => {
+    expect(() => aCarreras([{ id: 3 }])).toThrow(ProblemaError);
   });
 });

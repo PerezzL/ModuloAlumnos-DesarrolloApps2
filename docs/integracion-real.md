@@ -201,9 +201,9 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 | | |
 | --- | --- |
-| Falta confirmar | Campos de `GET /api/v1/backoffice/users/{userId}` y si incluye `planId` |
-| Fixtures | `packages/fixtures/backoffice/users.provisional.json` |
-| Adaptador | `apps/bff/src/modulos/backoffice/`. Lo usan `apps/bff/src/perfil/` y `apps/bff/src/inscripcion/` (para el `planId`) |
+| Falta confirmar | Que publiquen `careers: [{ careerId, planId }]`; la ruta definitiva de la ficha (lo define CORE) y el permiso de lectura |
+| Fixtures | `packages/fixtures/backoffice/users.provisional.json`; el nombre de la carrera sale de `academic/carreras.provisional.json` (Módulo 9) |
+| Adaptador | `apps/bff/src/modulos/backoffice/`. Lo usan `apps/bff/src/perfil/` (que resuelve el nombre de la carrera con el Módulo 9) y `apps/bff/src/inscripcion/` (para el `planId`). Si se manejan varias carreras, ver [`integraciones.md`](integraciones.md) |
 | Contrato | `Perfil`: `nombre`, `apellido`, `legajo`, `carrera`, `planId` (`x-provisional`) |
 | Decisiones | **11**: oferta sin filtrar por plan si no hay `planId` (`filtradaPorPlan`, en `apps/bff/src/inscripcion/oferta.ts`). Si Backoffice lo trae siempre, revisar si el caso sigue haciendo falta |
 | Pruebas y demo | [`pruebas.md`](pruebas.md) "Home y perfil" e "Inscripción" (caso "Sin plan" con `j.perez`); [`demo-guide.md`](demo-guide.md) pasos 3 y 5 |

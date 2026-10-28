@@ -28,7 +28,7 @@ autenticación es de CORE.
 - Id del alumno desde la sesión, tratado como string opaco.
 - Datos del alumno (nombre, apellido, legajo, carrera, plan) desde Backoffice: `GET /me` del BFF.
 
-Pendiente: qué devuelve Backoffice; en particular, si incluye `planId`.
+El plan viene en `careers` de la ficha de Backoffice (comprometido, sin publicar); el nombre de la carrera, del Módulo 9.
 
 ## RF2 — Inscripción a materias
 

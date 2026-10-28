@@ -293,25 +293,43 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 
 | Tema | Estado |
 | --- | --- |
-| `GET /api/v1/backoffice/users/{userId}` | Confirmado |
-| Qué campos trae (nombre, apellido, legajo, carrera) | Pendiente |
-| Si incluye `planId` | Pendiente |
+| `GET /api/v1/backoffice/users/{userId}` | Confirmado (documento de flujo de datos del Módulo 8) |
+| Campos de la ficha | Confirmado: `userId`, `email`, `firstName`, `lastName`, `documentId`, `fileNumber`, `roles`, `status`, `siteId`, `careerId` |
+| `careers: [{ careerId, planId }]` (un plan por carrera, asignado en el alta) | Comprometido; todavía no publicado |
+| Ruta definitiva de la consulta | Pendiente; adelantaron `GET /internal/v1/users/{userId}` con token de servicio. Lo define CORE: mientras tanto seguimos con la ruta del Gateway |
+| Permiso de lectura | Pendiente; nos avisan |
 | `GET /api/v1/backoffice/sites` · `/sites/{siteId}` | Confirmado (documento de flujo de datos del Módulo 8) |
 
-Sin `planId` no se puede filtrar la oferta de RF2. Decisión del bloque D: el dato debería
-venir, pero mientras no esté confirmado, si Backoffice no lo devuelve (o no responde) el BFF
-pide la oferta sin `planId` y la marca con `filtradaPorPlan: false`; la pantalla avisa que
-puede incluir materias de otros planes. Queda registrado con un warning en el log.
+- `careerId` y `planId` son ids del Módulo 9: numéricos, pero los mandan como texto.
+- El 404 para un `userId` que no existe está confirmado.
+- Nombre, apellido, legajo y carrera no viajan en `backoffice.user.upserted.v1`: se consultan
+  con este endpoint.
 
-Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/`):
+Suposiciones nuestras: la respuesta trae la ficha de arriba más `careers`, y **cada alumno
+tiene un solo plan**. Si `careers` trae varias, se toma la primera. Manejar varias carreras
+obliga a cambiar `planId` por una lista en el adaptador (`backoffice.mapper.ts`), en el
+filtro de la oferta (`InscripcionService` y `AcademicoAdapter.cursos`) y en `Perfil` del
+[`openapi.yaml`](../openapi.yaml).
 
-- El id y el mail salen del token de CORE; de Backoffice solo se toman nombre, apellido,
-  legajo, carrera y `planId`. Todos opcionales: si no vienen, el perfil sale sin ellos.
+Sin `planId` no se puede filtrar la oferta de RF2. Decisión del bloque D: si Backoffice no lo
+devuelve (`careers` vacío, null o ausente) o no responde, el BFF pide la oferta sin `planId`
+y la marca con `filtradaPorPlan: false`; la pantalla avisa que puede incluir materias de
+otros planes. Queda registrado con un warning en el log.
+
+Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/` y
+`apps/bff/src/perfil/perfil.service.ts`):
+
+- El id y el mail salen del token de CORE; de Backoffice se toman `firstName`, `lastName`,
+  `fileNumber` (→ `nombre`, `apellido`, `legajo`) y la primera de `careers`. Se ignoran
+  `documentId`, `roles`, `status`, `siteId` y el `careerId` suelto. Todos opcionales: si no
+  vienen, el perfil sale sin ellos.
+- Backoffice solo da el id de la carrera: el nombre sale de `GET /academica/carreras` del
+  Módulo 9, cacheado en memoria una hora. Si el Módulo 9 falla o no conoce la carrera, el
+  perfil sale igual, sin `carrera`.
 - Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale solo con id y mail.
-  Suposición nuestra, sin confirmar con el Módulo 8.
 
-Fixture: `backoffice/users.provisional.json` con `id`, `email`, `nombre`, `apellido`,
-`legajo`, `carrera`, `planId` y `status`, todos supuestos.
+Fixture: `backoffice/users.provisional.json`, con la ficha del documento más `careers`.
+Provisional hasta que publiquen `careers`.
 
 Sedes: Backoffice es el dueño del catálogo de sedes, y las sedes no tienen evento: se
 consultan y se cachean. `GET /sites?status=&cursor=&limit=` devuelve

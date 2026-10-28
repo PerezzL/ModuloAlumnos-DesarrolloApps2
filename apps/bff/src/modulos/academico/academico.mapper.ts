@@ -14,6 +14,7 @@ import type {
   PeriodoAcademico,
 } from './academico.modelo';
 import {
+  Carreras,
   Correlatividades,
   Cursos,
   InscripcionCreada,
@@ -72,6 +73,13 @@ export function aCursos(datos: unknown): CursoOfertado[] {
     inscriptosActivos: c.inscriptosActivos,
     asignatura: asignatura(c.asignatura),
   }));
+}
+
+/** Carreras → nombre por id, para resolver el `careerId` que da Backoffice. */
+export function aCarreras(datos: unknown): Map<string, string> {
+  return new Map(
+    parsearOrigen('GESTION_ACADEMICA', Carreras, datos).map((c) => [idOpaco(c.id), c.nombre]),
+  );
 }
 
 export function aCorrelativas(datos: unknown): Correlativa[] {

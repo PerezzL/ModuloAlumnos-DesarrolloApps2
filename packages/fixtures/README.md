@@ -35,8 +35,8 @@ suposición nuestra. Pasa por tres motivos:
 - **El módulo no tiene contrato.** El Módulo 2 (Docente) no publicó endpoints: rutas y
   campos son todos supuestos, alineados con lo que supusimos en [`openapi.yaml`](../../openapi.yaml).
 - **El módulo informó qué datos trae, pero no con qué nombres o forma.** Tienda listó
-  "fecha, sede, estado, productos…", pero no cómo se llaman los campos; Backoffice no dijo
-  qué campos trae ni si incluye `planId`.
+  "fecha, sede, estado, productos…", pero no cómo se llaman los campos; Backoffice adelantó
+  `careers` con el `planId`, pero todavía no lo publicó.
 - **El endpoint existe, pero no tenemos la respuesta.** Varios endpoints del Módulo 9 están
   implementados, pero solo conocemos la ruta. Lo mismo con partes de CORE (`wallets/me`, el
   ítem de notificación), porque no tenemos su `contracts/openapi.yaml`.
@@ -88,6 +88,7 @@ Cuando un módulo confirma o cambia su respuesta:
 | `store/orders-me.provisional.json` | `GET /api/v1/orders/me` (y cada ítem, `GET /api/v1/orders/{orderId}`) |
 | `backoffice/users.provisional.json` | `GET /api/v1/users/{userId}`, por id |
 | `backoffice/sites.json` | `GET /api/v1/sites` (y cada ítem, `GET /api/v1/sites/{siteId}`) |
+| `academic/carreras.provisional.json` | `GET /api/v1/academica/carreras` |
 | `academic/periodos.provisional.json` | `GET /api/v1/planificacion/periodos` |
 | `academic/turnos-examen.provisional.json` | `GET /api/v1/planificacion/turnos-examen` |
 | `academic/cursos.provisional.json` | `GET /api/v1/planificacion/cursos?periodoId=&planId=` |

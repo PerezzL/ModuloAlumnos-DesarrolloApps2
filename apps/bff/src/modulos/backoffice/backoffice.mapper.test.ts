@@ -1,51 +1,90 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { aListaSedes, aPerfil, aSedes } from './backoffice.mapper';
+import { aFicha, aListaSedes, aSedes } from './backoffice.mapper';
 
-const usuarios = fixture<Record<string, unknown>>('backoffice/users.provisional.json');
-const conPlan = usuarios['ba310c57-a684-4dbf-a4a4-905fcfbefa08'];
-const sinPlan = usuarios['6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f'];
+const usuarios = fixture<Record<string, Record<string, unknown>>>(
+  'backoffice/users.provisional.json',
+);
+const conPlan = usuarios['ba310c57-a684-4dbf-a4a4-905fcfbefa08']!;
+const sinCarreras = usuarios['6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f']!;
 const alumno = { id: 'ba310c57-a684-4dbf-a4a4-905fcfbefa08', email: 'v.moreno@uade.edu.ar' };
 
-describe('mapper de Backoffice → Perfil', () => {
-  it('combina la identidad del token con los datos personales', () => {
-    expect(aPerfil(alumno, conPlan)).toEqual({
-      id: alumno.id,
-      email: 'v.moreno@uade.edu.ar',
-      nombre: 'Valentina',
-      apellido: 'Moreno',
-      legajo: '1123456',
-      carrera: 'Ingeniería en Informática',
-      planId: 'plan-2020',
+describe('mapper de Backoffice → ficha del alumno', () => {
+  it('combina la identidad del token con los datos personales y la carrera', () => {
+    expect(aFicha(alumno, conPlan)).toEqual({
+      perfil: {
+        id: alumno.id,
+        email: 'v.moreno@uade.edu.ar',
+        nombre: 'Valentina',
+        apellido: 'Moreno',
+        legajo: '1123456',
+        planId: '12',
+      },
+      carreraId: '3',
     });
   });
 
   it('el id y el mail salen del token, no de Backoffice', () => {
-    const perfil = aPerfil({ id: 'otro', email: 'otro@uade.edu.ar' }, conPlan);
+    const { perfil } = aFicha({ id: 'otro', email: 'otro@uade.edu.ar' }, conPlan);
     expect(perfil).toMatchObject({ id: 'otro', email: 'otro@uade.edu.ar' });
   });
 
-  it('planId null se conserva como null', () => {
-    expect(aPerfil(alumno, sinPlan).planId).toBeNull();
+  it('sin carreras, planId es null y no hay carrera', () => {
+    expect(aFicha(alumno, sinCarreras)).toMatchObject({
+      perfil: { planId: null },
+      carreraId: null,
+    });
+  });
+
+  it('careers null es lo mismo que sin carreras', () => {
+    expect(aFicha(alumno, { ...conPlan, careers: null })).toMatchObject({
+      perfil: { planId: null },
+      carreraId: null,
+    });
+  });
+
+  it('con varias carreras se toma la primera', () => {
+    const dos = {
+      ...conPlan,
+      careers: [
+        { careerId: '5', planId: '20' },
+        { careerId: '3', planId: '12' },
+      ],
+    };
+    expect(aFicha(alumno, dos)).toMatchObject({ perfil: { planId: '20' }, carreraId: '5' });
+  });
+
+  it('ids numéricos se convierten a string', () => {
+    const numericos = { ...conPlan, fileNumber: 1123456, careers: [{ careerId: 3, planId: 12 }] };
+    expect(aFicha(alumno, numericos)).toMatchObject({
+      perfil: { legajo: '1123456', planId: '12' },
+      carreraId: '3',
+    });
+  });
+
+  it('sin careers, planId se omite: Backoffice no lo informó', () => {
+    const { careers: _, ...sinCampo } = conPlan;
+    const ficha = aFicha(alumno, sinCampo);
+    expect(ficha.perfil).not.toHaveProperty('planId');
+    expect(ficha.carreraId).toBeNull();
   });
 
   it('los campos que Backoffice no manda quedan afuera, sin romper', () => {
-    expect(aPerfil(alumno, { id: alumno.id })).toEqual({ id: alumno.id, email: alumno.email });
-  });
-
-  it('un legajo numérico se convierte a string', () => {
-    expect(aPerfil(alumno, { legajo: 1123456 }).legajo).toBe('1123456');
+    expect(aFicha(alumno, { userId: alumno.id })).toEqual({
+      perfil: { id: alumno.id, email: alumno.email },
+      carreraId: null,
+    });
   });
 
   it('sin mail en el token usa el de Backoffice', () => {
-    expect(aPerfil({ id: alumno.id }, conPlan).email).toBe('v.moreno@uade.edu.ar');
+    expect(aFicha({ id: alumno.id }, conPlan).perfil.email).toBe('v.moreno@uade.edu.ar');
   });
 
   it('una respuesta que no es un objeto es 502 de Backoffice', () => {
     const error = (() => {
       try {
-        aPerfil(alumno, [1, 2]);
+        aFicha(alumno, [1, 2]);
       } catch (e) {
         return e;
       }

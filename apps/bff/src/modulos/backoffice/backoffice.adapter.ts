@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import type { ListaSedes, Perfil } from '@uadenet/api-types';
+import type { ListaSedes } from '@uadenet/api-types';
 import type { Alumno } from '../../auth/alumno.decorator';
 import { CacheTtl } from '../../comun/cache';
 import { GatewayClient, RespuestaModuloError } from '../../gateway/gateway.client';
-import { aListaSedes, aPerfil, aSedes, perfilSoloIdentidad } from './backoffice.mapper';
+import { aFicha, aListaSedes, aSedes, fichaSoloIdentidad } from './backoffice.mapper';
+import type { FichaAlumno } from './backoffice.modelo';
 
 /** Las sedes casi no cambian y Backoffice no publica evento de sedes: se consultan y cachean. */
 const TTL_SEDES_MS = 60 * 60 * 1000;
@@ -18,24 +19,24 @@ export class BackofficeAdapter {
 
   constructor(private readonly gateway: GatewayClient) {}
 
-  async perfil(alumno: Alumno): Promise<Perfil> {
+  async ficha(alumno: Alumno): Promise<FichaAlumno> {
     try {
       const usuario = await this.gateway.get(
         'BACKOFFICE',
         `/users/${encodeURIComponent(alumno.id)}`,
       );
-      return aPerfil(alumno, usuario);
+      return aFicha(alumno, usuario);
     } catch (error) {
       if (error instanceof RespuestaModuloError && error.estadoOrigen === 404) {
-        return perfilSoloIdentidad(alumno);
+        return fichaSoloIdentidad(alumno);
       }
       throw error;
     }
   }
 
-  /** Plan de estudios del alumno, o null si Backoffice no lo informa. */
+  /** Plan de estudios del alumno (el de su primera carrera), o null si no lo informa. */
   async planId(alumno: Alumno): Promise<string | null> {
-    return (await this.perfil(alumno)).planId ?? null;
+    return (await this.ficha(alumno)).perfil.planId ?? null;
   }
 
   /**

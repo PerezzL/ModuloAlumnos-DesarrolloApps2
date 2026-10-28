@@ -1,6 +1,7 @@
 import { Contrato } from '@uadenet/contrato';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
+import { RUTAS_ACADEMICO } from './academico-gateway';
 import { ALUMNO, cuerpo, GW, prepararE2E } from './app-e2e';
 import { fixture } from './fixtures';
 
@@ -8,28 +9,52 @@ const contrato = new Contrato();
 const USUARIO = `${GW}/api/v1/backoffice/users/${ALUMNO}`;
 const datos = Object.values(
   fixture<Record<string, Record<string, unknown>>>('backoffice/users.provisional.json'),
-)[0];
+)[0]!;
+const carreras = () =>
+  http.get(RUTAS_ACADEMICO.CARRERAS, () =>
+    HttpResponse.json(fixture('academic/carreras.provisional.json')),
+  );
 
 describe('GET /me', () => {
   const e2e = prepararE2E();
 
-  it('combina token y Backoffice, y cumple el contrato', async () => {
+  it('combina token, Backoffice y la carrera del Módulo 9, y cumple el contrato', async () => {
     let autorizacion: string | null = null;
     e2e.server.use(
       http.get(USUARIO, ({ request }) => {
         autorizacion = request.headers.get('authorization');
         return HttpResponse.json(datos);
       }),
+      carreras(),
     );
     const res = await e2e.get('/me');
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({
+    expect(res.body).toEqual({
       id: ALUMNO,
       email: 'v.moreno@uade.edu.ar',
       nombre: 'Valentina',
+      apellido: 'Moreno',
+      legajo: '1123456',
+      carrera: 'Ingeniería en Informática',
+      planId: '12',
     });
     expect(contrato.validar('get', '/me', 200, res.body).errores).toEqual([]);
     expect(autorizacion).toBe(`Bearer ${e2e.token}`);
+  });
+
+  it('sin carreras no consulta al Módulo 9', async () => {
+    let consultado = false;
+    e2e.server.use(
+      http.get(USUARIO, () => HttpResponse.json({ ...datos, careers: [] })),
+      http.get(RUTAS_ACADEMICO.CARRERAS, () => {
+        consultado = true;
+        return HttpResponse.json([]);
+      }),
+    );
+    const res = await e2e.get('/me');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ planId: null });
+    expect(consultado).toBe(false);
   });
 
   it('si Backoffice no conoce al alumno, devuelve solo la identidad', async () => {
@@ -56,5 +81,50 @@ describe('GET /me', () => {
     const res = await e2e.get('/me');
     expect(res.status).toBe(502);
     expect(cuerpo(res)).toMatchObject({ code: 'UPSTREAM_INVALID', modulo: 'BACKOFFICE' });
+  });
+});
+
+// App propia: el catálogo de carreras queda en caché entre requests de la misma app
+describe('GET /me · nombre de la carrera', () => {
+  const e2e = prepararE2E();
+
+  it.each([
+    [
+      'el Módulo 9 está caído',
+      http.get(RUTAS_ACADEMICO.CARRERAS, () => new HttpResponse(null, { status: 503 })),
+    ],
+    [
+      'el Módulo 9 no conoce la carrera',
+      http.get(RUTAS_ACADEMICO.CARRERAS, () => HttpResponse.json([])),
+    ],
+  ])('si %s, el perfil sale sin carrera', async (_caso, respuesta) => {
+    e2e.server.use(
+      http.get(USUARIO, () => HttpResponse.json(datos)),
+      respuesta,
+    );
+    const res = await e2e.get('/me');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ nombre: 'Valentina', planId: '12' });
+    expect(res.body).not.toHaveProperty('carrera');
+    expect(contrato.validar('get', '/me', 200, res.body).errores).toEqual([]);
+  });
+});
+
+describe('GET /me · caché de carreras', () => {
+  const e2e = prepararE2E();
+
+  it('el catálogo de carreras se pide una vez entre requests', async () => {
+    let consultas = 0;
+    e2e.server.use(
+      http.get(USUARIO, () => HttpResponse.json(datos)),
+      http.get(RUTAS_ACADEMICO.CARRERAS, () => {
+        consultas++;
+        return HttpResponse.json(fixture('academic/carreras.provisional.json'));
+      }),
+    );
+    await e2e.get('/me');
+    const res = await e2e.get('/me');
+    expect(res.body).toMatchObject({ carrera: 'Ingeniería en Informática' });
+    expect(consultas).toBe(1);
   });
 });
