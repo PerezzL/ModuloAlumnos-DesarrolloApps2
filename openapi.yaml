@@ -195,9 +195,12 @@ paths:
       description: >
         Devuelve las inscripciones del alumno con materia, cuatrimestre, nota final y situación.
         Incluye las cursadas en curso (`enCurso: true`), que enlazan al detalle de cursada.
-        Consulta en vivo al Módulo 9; el portal no persiste el historial.
+        Inscripciones y situación salen del Módulo 9; la nota final, de los resultados de
+        actas del Módulo 2. Si el Módulo 2 no responde, el historial sale igual con
+        `notaFinal` en null y `DOCENTE` en `fuentesConError`. Si falla el Módulo 9, es error.
+        Consulta en vivo; el portal no persiste el historial.
         Pantalla: Historial académico (4.4).
-      x-fuentes: [Módulo 9]
+      x-fuentes: [Módulo 9, Módulo 2]
       x-estado-fuente: comprometido (inscripciones por alumno)
       parameters:
         - name: periodoId
@@ -212,11 +215,15 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [items]
+                required: [items, fuentesConError]
                 properties:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/CursadaResumen' }
+                  fuentesConError:
+                    type: array
+                    description: Módulos que no respondieron; el resto del historial es válido
+                    items: { $ref: '#/components/schemas/ModuloExterno' }
         '400':
           description: '`periodoId` vacío (`code` `SOLICITUD_INVALIDA`)'
           content:
@@ -238,7 +245,6 @@ paths:
         y `notas` en null y el motivo en `fuentesConError`.
         Pantalla: Detalle de cursada (4.5). Es también el destino `/alumnos/cursos/{cursoId}`.
       x-fuentes: [Módulo 9, Módulo 2]
-      x-estado-fuente: pendiente (faltan endpoints y respuesta del Módulo 2)
       parameters:
         - $ref: '#/components/parameters/CursoId'
       responses:
@@ -264,21 +270,20 @@ paths:
       operationId: getNota
       summary: Detalle de la nota de un examen
       description: >
-        Página de destino de la notificación `EXAM_RESULT_PUBLISHED` y del listado de notas
-        del detalle de cursada. Los identificadores salen del `actionUrl` de la notificación.
-        Materia y comisión salen de la inscripción del alumno en el Módulo 9, que además
-        confirma que el curso es suyo.
+        Página de destino de la notificación `TEACHER_EXAM_RESULT_PUBLISHED` y del listado de
+        notas del detalle de cursada. Los identificadores salen del `actionUrl` de la
+        notificación. Materia y comisión salen de la inscripción del alumno en el Módulo 9,
+        que además confirma que el curso es suyo. El nombre del docente que cargó la nota sale
+        de Backoffice; si no se puede obtener, `docente` viene en null.
         Pantalla: Detalle — Nota de un examen (4.7).
-      x-fuentes: [Módulo 9, Módulo 2]
-      x-estado-fuente: pendiente (formato del actionUrl e identificadores)
+      x-fuentes: [Módulo 9, Módulo 2, Módulo 8]
+      x-estado-fuente: propuesto (ruta del actionUrl)
       parameters:
         - $ref: '#/components/parameters/CursoId'
         - name: notaId
           in: path
           required: true
-          description: >
-            Identificador de la nota según el Módulo 2. Suponemos que es el `examId` del
-            `actionUrl` de la notificación (pendiente con el Módulo 2).
+          description: Identificador del examen en el Módulo 2 (`examId`)
           schema: { type: string }
       responses:
         '200':
@@ -731,6 +736,7 @@ components:
         notaFinal:
           type: number
           nullable: true
+          description: Nota del acta final (Módulo 2). Null si no hay acta o el Módulo 2 no respondió.
         estado: { $ref: '#/components/schemas/EstadoCursada' }
         enCurso:
           type: boolean
@@ -751,6 +757,10 @@ components:
               type: array
               nullable: true
               items: { $ref: '#/components/schemas/NotaResumen' }
+            promedio:
+              type: number
+              nullable: true
+              description: Promedio de las notas del alumno en la cursada, si el Módulo 2 lo informa
             fuentesConError:
               type: array
               description: Módulos que no respondieron; el resto del detalle es válido
@@ -758,57 +768,78 @@ components:
 
     Asistencia:
       type: object
-      x-provisional: true
-      required: [clasesDictadas, presentes, ausentes, porcentaje]
+      required:
+        [clasesDictadas, presentes, justificadas, ausentes, porcentaje, porcentajeMinimo, condicion, clases]
       properties:
-        clasesDictadas: { type: integer }
+        clasesDictadas:
+          type: integer
+          description: Clases con asistencia registrada hasta hoy
         presentes: { type: integer }
+        justificadas:
+          type: integer
+          description: Faltas justificadas; cuentan como asistencia
         ausentes: { type: integer }
         porcentaje:
           type: number
-          description: Porcentaje de asistencia sobre las clases dictadas (0 a 100)
-        limiteInasistencias:
-          type: integer
-          nullable: true
-          description: Inasistencias a partir de las cuales el alumno queda libre. Null si el módulo dueño no lo expone.
-        inasistenciasRestantes:
-          type: integer
-          nullable: true
-          description: Cuántas faltas le quedan antes de quedar libre. Null si no hay límite informado.
+          description: (presentes + justificadas) / clases dictadas × 100, sin redondear
+        porcentajeMinimo:
+          type: number
+          description: Porcentaje mínimo para quedar regular, tal como lo informa el Módulo 2
+          example: 75
+        condicion: { $ref: '#/components/schemas/CondicionAsistencia' }
         clases:
           type: array
           items:
             type: object
-            required: [fecha, presente]
+            required: [fecha, estado]
             properties:
               fecha: { type: string, format: date }
-              presente: { type: boolean }
+              estado:
+                type: string
+                nullable: true
+                description: Null si la clase todavía no tiene la asistencia del alumno
+                enum: [PRESENTE, AUSENTE, JUSTIFICADO, null]
+              comentario:
+                type: string
+                nullable: true
+
+    CondicionAsistencia:
+      type: string
+      description: Condición por asistencia según el Módulo 2 (no es la situación de la materia)
+      enum: [REGULAR, LIBRE]
 
     InstanciaExamen:
       type: string
-      enum: [PARCIAL, RECUPERATORIO, FINAL]
-      x-provisional: true
+      description: >
+        Sale de la categoría del examen en el Módulo 2. Su catálogo puede crecer: una
+        categoría que no está acá llega como `instancia` null.
+      enum: [PARCIAL, RECUPERATORIO, INTEGRADOR, FINAL]
 
     ResultadoExamen:
       type: string
       enum: [APROBADO, DESAPROBADO, AUSENTE]
-      x-provisional: true
 
     NotaResumen:
       type: object
-      x-provisional: true
-      required: [notaId, instancia]
+      required: [notaId, titulo, fecha, nota]
       properties:
         notaId: { type: string }
-        instancia: { $ref: '#/components/schemas/InstanciaExamen' }
+        instancia:
+          type: string
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/InstanciaExamen'
         titulo:
           type: string
-          example: 1er parcial
+          example: Parcial 1
         fecha: { type: string, format: date }
         nota:
           type: number
           nullable: true
-        resultado: { $ref: '#/components/schemas/ResultadoExamen' }
+        resultado:
+          description: Solo si el Módulo 2 lo informa; sin nota todavía, no viene
+          allOf:
+            - $ref: '#/components/schemas/ResultadoExamen'
 
     NotaDetalle:
       allOf:
@@ -822,10 +853,7 @@ components:
             docente:
               type: string
               nullable: true
-            observaciones:
-              type: string
-              nullable: true
-              description: Solo si el Módulo 2 las expone
+              description: Docente que cargó la nota, según Backoffice
 
     CategoriaCalendario:
       type: string

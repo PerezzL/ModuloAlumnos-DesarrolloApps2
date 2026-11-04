@@ -10,7 +10,6 @@ const inscripcion = (cambios: Partial<InscripcionAlumno>): InscripcionAlumno => 
   cursoId: 'c',
   asignatura: { id: 'a', nombre: 'a' },
   periodo: { id: 'p', nombre: 'p' },
-  notaFinal: null,
   estado: 'CURSANDO',
   ...cambios,
 });

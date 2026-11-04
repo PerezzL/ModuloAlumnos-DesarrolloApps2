@@ -12,17 +12,31 @@ const fechaMs = (i: InscripcionAlumno) => (i.fecha === undefined ? -Infinity : D
 export const masRecientesPrimero = (inscripciones: InscripcionAlumno[]) =>
   [...inscripciones].sort((a, b) => fechaMs(b) - fechaMs(a));
 
-/** Una inscripción como cursada. La situación es la del Módulo 9: el portal no la calcula. */
-export const aCursadaResumen = (i: InscripcionAlumno): CursadaResumen => ({
+/**
+ * Una inscripción como cursada. La situación es la del Módulo 9 y la nota final, la del acta
+ * del Módulo 2: el portal no calcula ninguna de las dos.
+ */
+export const aCursadaResumen = (
+  i: InscripcionAlumno,
+  notaFinal: number | null,
+): CursadaResumen => ({
   cursoId: i.cursoId,
   asignatura: i.asignatura,
   periodo: i.periodo,
-  notaFinal: i.notaFinal,
+  notaFinal,
   estado: i.estado,
   enCurso: EN_CURSO.has(i.estado),
 });
 
-/** Inscripciones del alumno → historial, de la más reciente a la más antigua. */
-export function aHistorial(inscripciones: InscripcionAlumno[]): CursadaResumen[] {
-  return masRecientesPrimero(inscripciones).map(aCursadaResumen);
+/**
+ * Inscripciones del alumno y notas finales por curso → historial, de la más reciente a la más
+ * antigua. Sin notas finales (el Módulo 2 no respondió), todas quedan en null.
+ */
+export function aHistorial(
+  inscripciones: InscripcionAlumno[],
+  notasFinales: ReadonlyMap<string, number | null> | null,
+): CursadaResumen[] {
+  return masRecientesPrimero(inscripciones).map((i) =>
+    aCursadaResumen(i, notasFinales?.get(i.cursoId) ?? null),
+  );
 }

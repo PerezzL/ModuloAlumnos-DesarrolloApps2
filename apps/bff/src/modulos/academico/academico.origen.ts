@@ -99,7 +99,6 @@ export const InscripcionesAlumno = z.array(
       comision: z.string().optional(),
       asignatura: Asignatura,
       periodo: z.object({ id, nombre: z.string() }).passthrough(),
-      notaFinal: z.number().nullable().optional(),
       estado: z.enum([
         'INSCRIPTO',
         'CURSANDO',

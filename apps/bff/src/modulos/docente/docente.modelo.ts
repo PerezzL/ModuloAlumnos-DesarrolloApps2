@@ -1,7 +1,12 @@
 import type { NotaResumen } from '@uadenet/api-types';
 
-/** Una nota del Módulo 2 con los datos del detalle (4.7). Lo arma el adaptador. */
+/** Una nota del Módulo 2 con el id del docente que la cargó (para buscar su nombre). */
 export interface NotaConDocente extends NotaResumen {
-  docente: string | null;
-  observaciones: string | null;
+  docenteId: string | null;
+}
+
+/** Las notas del alumno en un curso y su promedio, si el Módulo 2 lo informa. */
+export interface NotasCurso {
+  notas: NotaConDocente[];
+  promedio: number | null;
 }

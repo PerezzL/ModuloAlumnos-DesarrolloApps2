@@ -36,7 +36,6 @@ export interface InscripcionAlumno {
   comision?: string;
   asignatura: Asignatura;
   periodo: Periodo;
-  notaFinal: number | null;
   estado: EstadoCursada;
   fecha?: string;
 }

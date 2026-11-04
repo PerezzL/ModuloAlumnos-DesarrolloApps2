@@ -96,7 +96,6 @@ export function aInscripciones(datos: unknown): InscripcionAlumno[] {
     ...(i.comision !== undefined && { comision: i.comision }),
     asignatura: asignatura(i.asignatura),
     periodo: { id: idOpaco(i.periodo.id), nombre: i.periodo.nombre },
-    notaFinal: i.notaFinal ?? null,
     estado: i.estado,
     ...(i.fecha !== undefined && { fecha: i.fecha }),
   }));

@@ -10,7 +10,12 @@
     "status": "ACTIVE",
     "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
     "careerId": "3",
-    "careers": [{ "careerId": "3", "planId": "12" }]
+    "careers": [
+      {
+        "careerId": "3",
+        "planId": "12"
+      }
+    ]
   },
   "6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f": {
     "userId": "6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f",
@@ -20,6 +25,45 @@
     "documentId": "41987654",
     "fileNumber": "1129876",
     "roles": ["STUDENT"],
+    "status": "ACTIVE",
+    "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+    "careerId": null,
+    "careers": []
+  },
+  "7c1d9e2a-3b4f-4a5c-9d6e-8f7a0b1c2d3e": {
+    "userId": "7c1d9e2a-3b4f-4a5c-9d6e-8f7a0b1c2d3e",
+    "email": "lgomez@uade.edu.ar",
+    "firstName": "Laura",
+    "lastName": "Gómez",
+    "documentId": null,
+    "fileNumber": "D-2041",
+    "roles": ["TEACHER"],
+    "status": "ACTIVE",
+    "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+    "careerId": null,
+    "careers": []
+  },
+  "9e2f0a1b-4c5d-4e6f-8a7b-1c2d3e4f5a6b": {
+    "userId": "9e2f0a1b-4c5d-4e6f-8a7b-1c2d3e4f5a6b",
+    "email": "msosa@uade.edu.ar",
+    "firstName": "Martín",
+    "lastName": "Sosa",
+    "documentId": null,
+    "fileNumber": "D-2077",
+    "roles": ["TEACHER"],
+    "status": "ACTIVE",
+    "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+    "careerId": null,
+    "careers": []
+  },
+  "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e": {
+    "userId": "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
+    "email": "cruiz@uade.edu.ar",
+    "firstName": "Carla",
+    "lastName": "Ruiz",
+    "documentId": null,
+    "fileNumber": "D-2102",
+    "roles": ["TEACHER"],
     "status": "ACTIVE",
     "siteId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
     "careerId": null,

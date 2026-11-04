@@ -29,7 +29,6 @@ const inscripcionEn = (
   cursoId,
   asignatura: { id: 'x', nombre: 'x' },
   periodo: { id: '2027-1', nombre: '1° cuatrimestre 2027' },
-  notaFinal: null,
   estado,
 });
 

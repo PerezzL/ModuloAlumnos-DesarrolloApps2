@@ -1,0 +1,201 @@
+{
+  "curso-bd1-2026-2-a": {
+    "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "courseId": "curso-bd1-2026-2-a",
+    "threshold": 75,
+    "classesRecorded": 8,
+    "present": 5,
+    "justified": 1,
+    "absences": 2,
+    "attendancePercentage": 75.0,
+    "condition": "REGULAR",
+    "classes": [
+      {
+        "date": "2026-08-10",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-08-17",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-08-24",
+        "status": "AUSENTE",
+        "note": null
+      },
+      {
+        "date": "2026-08-31",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-09-07",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-09-14",
+        "status": "JUSTIFICADO",
+        "note": "Certificado médico"
+      },
+      {
+        "date": "2026-09-21",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-09-28",
+        "status": "AUSENTE",
+        "note": null
+      }
+    ]
+  },
+  "curso-desa1-2026-2-a": {
+    "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "courseId": "curso-desa1-2026-2-a",
+    "threshold": 75,
+    "classesRecorded": 8,
+    "present": 8,
+    "justified": 0,
+    "absences": 0,
+    "attendancePercentage": 100.0,
+    "condition": "REGULAR",
+    "classes": [
+      {
+        "date": "2026-08-12",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-08-19",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-08-26",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-09-02",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-09-09",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-09-16",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-09-23",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2026-09-30",
+        "status": "PRESENTE",
+        "note": null
+      }
+    ]
+  },
+  "curso-ayed-2025-2-a": {
+    "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "courseId": "curso-ayed-2025-2-a",
+    "threshold": 75,
+    "classesRecorded": 16,
+    "present": 11,
+    "justified": 0,
+    "absences": 5,
+    "attendancePercentage": 68.75,
+    "condition": "LIBRE",
+    "classes": [
+      {
+        "date": "2025-08-05",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-08-12",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-08-19",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-08-26",
+        "status": "AUSENTE",
+        "note": null
+      },
+      {
+        "date": "2025-09-02",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-09-09",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-09-16",
+        "status": "AUSENTE",
+        "note": null
+      },
+      {
+        "date": "2025-09-23",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-09-30",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-10-07",
+        "status": "AUSENTE",
+        "note": null
+      },
+      {
+        "date": "2025-10-14",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-10-21",
+        "status": "AUSENTE",
+        "note": null
+      },
+      {
+        "date": "2025-10-28",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-11-04",
+        "status": "AUSENTE",
+        "note": null
+      },
+      {
+        "date": "2025-11-11",
+        "status": "PRESENTE",
+        "note": null
+      },
+      {
+        "date": "2025-11-18",
+        "status": "PRESENTE",
+        "note": null
+      }
+    ]
+  }
+}

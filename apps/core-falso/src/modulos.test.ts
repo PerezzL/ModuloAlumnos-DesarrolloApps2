@@ -43,8 +43,9 @@ describe('Módulos externos desde fixtures', () => {
       '/api/v1/academic/academica/carreras',
       '/api/v1/academic/academica/asignaturas/asig-so/correlatividades',
       `/api/v1/academic/planificacion/alumnos/${DEMO}/inscripciones`,
-      `/api/v1/teacher/cursos/curso-bd1-2026-2-a/alumnos/${DEMO}/asistencia`,
-      `/api/v1/teacher/cursos/curso-desa1-2026-2-a/alumnos/${DEMO}/notas`,
+      `/api/v1/teacher/students/${DEMO}/courses/curso-bd1-2026-2-a/attendance`,
+      `/api/v1/teacher/students/${DEMO}/courses/curso-desa1-2026-2-a/grades`,
+      `/api/v1/teacher/students/${DEMO}/results`,
     ];
     for (const ruta of rutas) {
       const res = await get(ruta);
@@ -136,12 +137,15 @@ describe('Módulos externos desde fixtures', () => {
     expect(ajeno.status).toBe(400);
   });
 
-  it('docente: la nota se pide por el examId del actionUrl de la notificación', async () => {
-    const base = `/api/v1/teacher/cursos/curso-bd1-2026-2-a/alumnos/${DEMO}/notas`;
-    const res = await get(`${base}/exam-bd1-2026-2-p1`);
-    expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ examId: 'exam-bd1-2026-2-p1', nota: 7 });
-    expect((await get(`${base}/no-existe`)).status).toBe(404);
+  it('docente: datos por alumno; un curso que no cursa es 404 y los resultados se filtran', async () => {
+    const alumno = `/api/v1/teacher/students/${DEMO}`;
+    expect((await get(`${alumno}/courses/curso-so-2027-1-a/grades`)).status).toBe(404);
+    expect(
+      (await get(`/api/v1/teacher/students/otro/courses/curso-bd1-2026-2-a/grades`)).status,
+    ).toBe(404);
+    const resultados = await get(`${alumno}/results?courseId=curso-prog1-2025-2-a`);
+    expect(resultados.body).toEqual([expect.objectContaining({ grade: 8, result: 'APROBADO' })]);
+    expect((await get('/api/v1/teacher/students/otro/results')).body).toEqual([]);
   });
 
   it('una ruta inexistente del módulo → 404 problem+json', async () => {

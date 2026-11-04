@@ -8,7 +8,7 @@ import { enviarProblema } from './problema.js';
 import type { Tokens } from './tokens.js';
 
 export const TIPOS_NOTIFICACION = [
-  'EXAM_RESULT_PUBLISHED',
+  'TEACHER_EXAM_RESULT_PUBLISHED',
   'LIBRARY_PENALTY_APPLIED',
   'EVENT_REMINDER',
 ] as const;
@@ -80,12 +80,12 @@ export class Notificaciones {
 export function ejemplo(tipo: TipoNotificacion) {
   const ref = randomUUID();
   const ejemplos: Record<TipoNotificacion, DatosNotificacion> = {
-    EXAM_RESULT_PUBLISHED: {
+    TEACHER_EXAM_RESULT_PUBLISHED: {
       type: tipo,
       title: 'Se publicó tu nota de Desarrollo de Aplicaciones I',
-      message: 'Recuperatorio 1er parcial: 8 (aprobado)',
-      // El formato del actionUrl del Módulo 2 está pendiente
-      actionUrl: '/teacher/courses/curso-desa1-2026-2-a/exams/exam-desa1-2026-2-r1',
+      message: 'Recuperatorio Parcial 1: 8 (aprobado)',
+      // actionUrl provisorio del Módulo 2: nos pidieron la ruta y la ajustan
+      actionUrl: '/student/courses/curso-desa1-2026-2-a/exams/202',
       sourceModule: 'teacher',
       sourceReference: `exam-result/${ref}`,
       expiresAt: null,

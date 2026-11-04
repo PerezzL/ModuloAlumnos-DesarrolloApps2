@@ -2,12 +2,12 @@
   {
     "id": "2f6d1a3b-9c8e-4d7f-a1b2-c3d4e5f6a7b8",
     "userId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
-    "type": "EXAM_RESULT_PUBLISHED",
+    "type": "TEACHER_EXAM_RESULT_PUBLISHED",
     "title": "Se publicó tu nota de Bases de Datos I",
     "message": "1er parcial: 7 (aprobado)",
-    "actionUrl": "/teacher/courses/curso-bd1-2026-2-a/exams/exam-bd1-2026-2-p1",
+    "actionUrl": "/student/courses/curso-bd1-2026-2-a/exams/101",
     "sourceModule": "teacher",
-    "sourceReference": "exam-result/exam-bd1-2026-2-p1/ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "sourceReference": "exam-result/101/ba310c57-a684-4dbf-a4a4-905fcfbefa08",
     "createdAt": "2026-09-24T20:15:00.000Z",
     "readAt": "2026-09-24T23:00:00.000Z",
     "expiresAt": null

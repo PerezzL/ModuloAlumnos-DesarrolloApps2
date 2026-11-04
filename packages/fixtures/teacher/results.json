@@ -1,0 +1,46 @@
+{
+  "ba310c57-a684-4dbf-a4a4-905fcfbefa08": [
+    {
+      "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+      "courseId": "curso-prog1-2025-2-a",
+      "subjectId": 69,
+      "periodId": 8,
+      "subject": "Programación I",
+      "commission": "A - Noche",
+      "period": "2° cuatrimestre 2025",
+      "grade": 8.0,
+      "result": "APROBADO",
+      "actaType": "FINAL",
+      "actaNumber": "2025-031",
+      "resultDate": "2025-12-10"
+    },
+    {
+      "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+      "courseId": "curso-discreta-2025-2-a",
+      "subjectId": 24,
+      "periodId": 8,
+      "subject": "Matemática Discreta",
+      "commission": "A - Noche",
+      "period": "2° cuatrimestre 2025",
+      "grade": 7.0,
+      "result": "APROBADO",
+      "actaType": "FINAL",
+      "actaNumber": "2025-044",
+      "resultDate": "2025-12-15"
+    },
+    {
+      "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+      "courseId": "curso-ayed-2025-2-a",
+      "subjectId": 70,
+      "periodId": 8,
+      "subject": "Algoritmos y Estructuras de Datos",
+      "commission": "A - Mañana",
+      "period": "2° cuatrimestre 2025",
+      "grade": null,
+      "result": "LIBRE",
+      "actaType": "CURSADA",
+      "actaNumber": "2025-052",
+      "resultDate": "2025-11-28"
+    }
+  ]
+}

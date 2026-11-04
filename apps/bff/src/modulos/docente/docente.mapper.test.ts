@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { aAsistencia, aNotaConDocente, aNotas } from './docente.mapper';
+import { aAsistencia, aNotasCurso, aNotasFinales } from './docente.mapper';
 
-const asistencias = fixture<Record<string, Record<string, unknown>>>(
-  'teacher/asistencia.provisional.json',
-);
+const DEMO = 'ba310c57-a684-4dbf-a4a4-905fcfbefa08';
+const asistencias = fixture<Record<string, Record<string, unknown>>>('teacher/attendance.json');
 const bd1 = asistencias['curso-bd1-2026-2-a']!;
-const notas = fixture<Record<string, Record<string, unknown>[]>>('teacher/notas.provisional.json');
+const notas = fixture<Record<string, { exams: Record<string, unknown>[] }>>('teacher/grades.json');
 const notasDesa1 = notas['curso-desa1-2026-2-a']!;
+const examen = notasDesa1.exams[0]!;
+const resultados = fixture<Record<string, unknown[]>>('teacher/results.json')[DEMO]!;
 
 const error502 = (fn: () => unknown) => {
   try {
@@ -21,63 +22,61 @@ const error502 = (fn: () => unknown) => {
 };
 
 describe('mapper de Docente: asistencia', () => {
-  it('totales, porcentaje, límite y clases por fecha', () => {
-    const asistencia = aAsistencia(bd1);
-    expect(asistencia).toMatchObject({
+  it('totales, porcentaje, mínimo y condición tal como los informa el Módulo 2', () => {
+    expect(aAsistencia(bd1)).toMatchObject({
       clasesDictadas: 8,
       presentes: 5,
-      ausentes: 3,
-      porcentaje: 62.5,
-      limiteInasistencias: 4,
-      inasistenciasRestantes: 1,
-    });
-    expect(asistencia.clases).toHaveLength(8);
-    expect(asistencia.clases![0]).toEqual({ fecha: '2026-08-10', presente: true });
-    expect(asistencia.clases!.filter((c) => !c.presente)).toHaveLength(3);
-  });
-
-  it('sin límite informado, límite y faltas restantes quedan null: no se calculan', () => {
-    const { limiteInasistencias: _l, inasistenciasRestantes: _r, ...sinLimite } = bd1;
-    expect(aAsistencia(sinLimite)).toMatchObject({
-      limiteInasistencias: null,
-      inasistenciasRestantes: null,
+      justificadas: 1,
+      ausentes: 2,
+      porcentaje: 75,
+      porcentajeMinimo: 75,
+      condicion: 'REGULAR',
     });
   });
 
-  it('con límite pero sin faltas restantes, no se calculan a partir de las ausencias', () => {
-    expect(aAsistencia({ ...bd1, inasistenciasRestantes: null })).toMatchObject({
-      limiteInasistencias: 4,
-      inasistenciasRestantes: null,
+  it('cada clase con su estado y el comentario, si viene', () => {
+    const { clases } = aAsistencia(bd1);
+    expect(clases).toHaveLength(8);
+    expect(clases[0]).toEqual({ fecha: '2026-08-10', estado: 'PRESENTE', comentario: null });
+    expect(clases[5]).toEqual({
+      fecha: '2026-09-14',
+      estado: 'JUSTIFICADO',
+      comentario: 'Certificado médico',
     });
+  });
+
+  it('una clase sin registro del alumno queda con estado null', () => {
+    const clases = [{ date: '2026-10-05' }];
+    expect(aAsistencia({ ...bd1, classes: clases }).clases).toEqual([
+      { fecha: '2026-10-05', estado: null, comentario: null },
+    ]);
   });
 
   it('las clases quedan ordenadas por fecha aunque lleguen desordenadas', () => {
     const clases = [
-      { fecha: '2026-08-24', presente: true },
-      { fecha: '2026-08-10', presente: false },
+      { date: '2026-08-24', status: 'PRESENTE' },
+      { date: '2026-08-10', status: 'AUSENTE' },
     ];
-    expect(aAsistencia({ ...bd1, clases }).clases!.map((c) => c.fecha)).toEqual([
+    expect(aAsistencia({ ...bd1, classes: clases }).clases.map((c) => c.fecha)).toEqual([
       '2026-08-10',
       '2026-08-24',
     ]);
   });
 
-  it('sin clases dictadas ni listado, lista vacía', () => {
-    const { clases: _c, ...sinClases } = bd1;
-    const asistencia = aAsistencia({
-      ...sinClases,
-      clasesDictadas: 0,
-      presentes: 0,
-      ausentes: 0,
-      porcentaje: 0,
+  it('la condición LIBRE pasa tal cual: el portal no la calcula', () => {
+    expect(aAsistencia(asistencias['curso-ayed-2025-2-a'])).toMatchObject({
+      porcentaje: 68.75,
+      condicion: 'LIBRE',
     });
-    expect(asistencia).toMatchObject({ clasesDictadas: 0, clases: [] });
   });
 
   it.each([
-    ['un porcentaje fuera de rango', { porcentaje: 875 }],
-    ['una fecha con hora', { clases: [{ fecha: '2026-08-10T19:00:00Z', presente: true }] }],
-    ['una cantidad como string', { presentes: '5' }],
+    ['un porcentaje fuera de rango', { attendancePercentage: 875 }],
+    ['una condición desconocida', { condition: 'CONDICIONAL' }],
+    ['sin mínimo', { threshold: undefined }],
+    ['una fecha con hora', { classes: [{ date: '2026-08-10T19:00:00Z', status: 'PRESENTE' }] }],
+    ['un estado de clase desconocido', { classes: [{ date: '2026-08-10', status: 'TARDE' }] }],
+    ['una cantidad como string', { present: '5' }],
   ])('%s es 502 de DOCENTE', (_caso, cambio) => {
     expect(error502(() => aAsistencia({ ...bd1, ...cambio }))).toMatchObject({
       status: 502,
@@ -88,71 +87,88 @@ describe('mapper de Docente: asistencia', () => {
 });
 
 describe('mapper de Docente: notas', () => {
-  it('instancia, título, fecha, nota y resultado; el examId es el notaId', () => {
-    expect(aNotas(notas['curso-bd1-2026-2-a'])).toEqual([
-      {
-        notaId: 'exam-bd1-2026-2-p1',
-        instancia: 'PARCIAL',
-        titulo: '1er parcial',
-        fecha: '2026-09-21',
-        nota: 7,
-        resultado: 'APROBADO',
-      },
-    ]);
+  it('instancia desde la categoría, título, fecha, nota y resultado; el examId es el notaId', () => {
+    const { notas: lista, promedio } = aNotasCurso(notas['curso-bd1-2026-2-a']);
+    expect(promedio).toBe(8);
+    expect(lista[0]).toEqual({
+      notaId: '101',
+      instancia: 'PARCIAL',
+      titulo: 'Parcial 1',
+      fecha: '2026-09-21',
+      nota: 7,
+      resultado: 'APROBADO',
+      docenteId: '7c1d9e2a-3b4f-4a5c-9d6e-8f7a0b1c2d3e',
+    });
+    expect(lista[1]).toMatchObject({ instancia: 'INTEGRADOR', titulo: 'TP1' });
   });
 
   it('un examen sin nota todavía queda con nota null y sin resultado', () => {
-    const [, recuperatorio] = aNotas(notasDesa1);
-    expect(recuperatorio).toEqual({
-      notaId: 'exam-desa1-2026-2-r1',
-      instancia: 'RECUPERATORIO',
-      titulo: 'Recuperatorio 1er parcial',
-      fecha: '2026-10-28',
+    const futuro = aNotasCurso(notas['curso-bd1-2026-2-a']).notas[2];
+    expect(futuro).toEqual({
+      notaId: '103',
+      instancia: 'PARCIAL',
+      titulo: 'Parcial 2',
+      fecha: '2026-11-16',
       nota: null,
+      docenteId: null,
     });
   });
 
-  it('docente y observaciones no van en el listado', () => {
-    expect(aNotas(notasDesa1)[0]).not.toHaveProperty('observaciones');
-    expect(aNotas(notasDesa1)[0]).not.toHaveProperty('docente');
+  it('resultado: ausente, aprobado o desaprobado según lo que informa el Módulo 2', () => {
+    const [p1, recuperatorio, oral] = aNotasCurso(notasDesa1).notas;
+    expect(p1).toMatchObject({ nota: 3.5, resultado: 'DESAPROBADO' });
+    expect(recuperatorio).toMatchObject({ nota: 8, resultado: 'APROBADO' });
+    expect(oral).toMatchObject({ nota: null, resultado: 'AUSENTE' });
   });
 
-  it('un examId numérico pasa a string sin interpretarlo', () => {
-    expect(aNotas([{ ...notasDesa1[0], examId: 42 }])[0]!.notaId).toBe('42');
+  it('los exámenes cancelados no se listan', () => {
+    expect(aNotasCurso(notasDesa1).notas.map((n) => n.notaId)).toEqual(['201', '202', '204']);
   });
 
-  it('sin notas, lista vacía', () => {
-    expect(aNotas(notas['curso-ayed-2025-2-a'])).toEqual([]);
+  it('una categoría desconocida o null deja la instancia en null: el catálogo puede crecer', () => {
+    expect(aNotasCurso(notasDesa1).notas[2]).toMatchObject({
+      instancia: null,
+      titulo: 'Exposición oral',
+    });
+    const conTp3 = { ...notasDesa1, exams: [{ ...examen, category: 'COLOQUIO' }] };
+    expect(aNotasCurso(conTp3).notas[0]!.instancia).toBeNull();
+  });
+
+  it('sin promedio informado, queda null', () => {
+    const { average: _a, ...sinPromedio } = notasDesa1 as Record<string, unknown>;
+    expect(aNotasCurso(sinPromedio).promedio).toBeNull();
+  });
+
+  it('sin exámenes, lista vacía', () => {
+    expect(aNotasCurso({ ...notasDesa1, exams: [] }).notas).toEqual([]);
   });
 
   it.each([
-    ['una instancia desconocida', { instancia: 'COLOQUIO' }],
-    ['una nota como string', { nota: '7' }],
+    ['una nota como string', { grade: '7' }],
     ['sin examId', { examId: undefined }],
+    ['sin nombre', { name: undefined }],
+    ['una fecha con hora', { date: '2026-09-23T19:00:00Z' }],
   ])('%s es 502 de DOCENTE', (_caso, cambio) => {
-    expect(error502(() => aNotas([{ ...notasDesa1[0], ...cambio }]))).toMatchObject({
-      status: 502,
-      modulo: 'DOCENTE',
-    });
+    const datos = { ...notasDesa1, exams: [{ ...examen, ...cambio }] };
+    expect(error502(() => aNotasCurso(datos))).toMatchObject({ status: 502, modulo: 'DOCENTE' });
   });
 });
 
-describe('mapper de Docente: detalle de una nota', () => {
-  it('la nota con docente y observaciones', () => {
-    expect(aNotaConDocente(notasDesa1[0])).toEqual({
-      notaId: 'exam-desa1-2026-2-p1',
-      instancia: 'PARCIAL',
-      titulo: '1er parcial',
-      fecha: '2026-09-23',
-      nota: 4,
-      resultado: 'DESAPROBADO',
-      docente: 'Lic. Martín Sosa',
-      observaciones: 'Revisar normalización.',
-    });
+describe('mapper de Docente: notas finales', () => {
+  it('la nota de cada curso con acta; sin nota (LIBRE), null', () => {
+    const finales = aNotasFinales(resultados);
+    expect(finales.get('curso-prog1-2025-2-a')).toBe(8);
+    expect(finales.get('curso-ayed-2025-2-a')).toBeNull();
+    expect(finales.has('curso-bd1-2026-2-a')).toBe(false);
   });
 
-  it('sin docente ni observaciones, quedan null', () => {
-    const { docente: _d, observaciones: _o, ...sinDatos } = notasDesa1[0]!;
-    expect(aNotaConDocente(sinDatos)).toMatchObject({ docente: null, observaciones: null });
+  it('un courseId numérico pasa a string sin interpretarlo', () => {
+    const finales = aNotasFinales([{ courseId: 42, grade: 6, result: 'APROBADO' }]);
+    expect(finales.get('42')).toBe(6);
+  });
+
+  it('una nota como string es 502 de DOCENTE', () => {
+    const datos = [{ courseId: 42, grade: '6', result: 'APROBADO' }];
+    expect(error502(() => aNotasFinales(datos))).toMatchObject({ modulo: 'DOCENTE' });
   });
 });

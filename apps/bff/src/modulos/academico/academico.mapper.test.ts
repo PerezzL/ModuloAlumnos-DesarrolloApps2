@@ -143,18 +143,16 @@ describe('mapper de Gestión Académica: datos para la inscripción', () => {
     ]);
   });
 
-  it('inscripciones del alumno; sin nota final queda null', () => {
+  it('inscripciones del alumno; la nota final no se toma de acá (sale del Módulo 2)', () => {
     const inscripciones = aInscripciones(fixture('academic/inscripciones-alumno.provisional.json'));
     expect(inscripciones[0]).toEqual({
       cursoId: 'curso-prog1-2025-2-a',
       comision: 'A - Noche',
       asignatura: { id: 'asig-prog1', codigo: '3.4.069', nombre: 'Programación I' },
       periodo: { id: '2025-2', nombre: '2° cuatrimestre 2025' },
-      notaFinal: 8,
       estado: 'APROBADO',
       fecha: '2025-07-22T13:10:00.000Z',
     });
-    expect(inscripciones.find((i) => i.estado === 'LIBRE')?.notaFinal).toBeNull();
   });
 
   it('un estado desconocido es 502 de GESTION_ACADEMICA', () => {
