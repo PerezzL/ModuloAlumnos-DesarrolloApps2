@@ -11,6 +11,7 @@ const VENTANA_INTENTOS_MS = 60_000;
 const datosUsuario = (u: UsuarioPrueba) => ({
   id: u.id,
   email: u.email,
+  careerIds: u.careerIds,
   roles: u.roles,
   permissions: u.permissions,
   status: u.status,
@@ -82,6 +83,7 @@ export function routerAuth(config: ConfigCore, tokens: Tokens) {
     res.json({
       accessToken: await tokens.emitirAccess(usuario, rotado.sesion.sid),
       expiresIn: config.accessTtlS,
+      user: datosUsuario(usuario),
     });
   });
 

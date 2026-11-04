@@ -23,9 +23,15 @@ export class EmisorDePrueba {
       aud?: string;
       exp?: string | number;
       kid?: string;
+      /** Claims extra (por ejemplo `careerIds`) */
+      claims?: Record<string, unknown>;
     } = {},
   ) {
-    const jwt = new SignJWT({ email: 'v.moreno@uade.edu.ar', roles: ['STUDENT'] })
+    const jwt = new SignJWT({
+      email: 'v.moreno@uade.edu.ar',
+      roles: ['STUDENT'],
+      ...opciones.claims,
+    })
       .setProtectedHeader({ alg: 'RS256', kid: opciones.kid ?? this.kid })
       .setIssuer(opciones.iss ?? envDePrueba.JWT_ISSUER)
       .setAudience(opciones.aud ?? envDePrueba.JWT_AUDIENCE)

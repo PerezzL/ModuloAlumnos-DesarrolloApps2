@@ -66,6 +66,30 @@ las respuestas; no guardamos una copia.
 - `store.purchase.completed.v1` no se enruta a los portales.
 - No expone un endpoint de calendario agregado.
 
+Novedades del 4 de noviembre de 2026 (PDF "CORE G10 · Novedades" y OpenAPI de producción).
+CORE aclara que todo es compatible: no se quitaron rutas, campos, roles ni permisos.
+
+- **En producción:** `https://core-api-production-e458.up.railway.app` (JWKS en
+  `/.well-known/jwks.json`, `kid` `dev-key-1`). Valores de configuración en
+  [`integracion-real.md`](integracion-real.md).
+- **`iss` nuevo:** pasó de `http://localhost:3000` a la URL de Railway; `aud` sigue `uadenet`.
+  El BFF lo lee de `JWT_ISSUER`: no hay que tocar código.
+- **`careerIds`:** la identidad trae `careerIds` en el `user` del login y del refresh y en
+  `GET /auth/me` (el refresh ahora también devuelve `user`). El BFF toma la carrera del claim
+  `careerIds` del JWT y usa Backoffice solo de respaldo (ver Módulo 8). Que viaje en el JWT
+  no está confirmado: `/auth/me` dice devolver lo que trae el token, pero la lista de claims de
+  [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md) no lo incluye.
+- **Roles y permisos:** roles nuevos de Backoffice (`BACKOFFICE_VIEWER`, `PAYROLL_ADMIN`) y
+  permisos `backoffice:*`. STUDENT y TEACHER siguen con solo la wallet propia. Al portal no le
+  cambia nada: no autoriza por rol. Un usuario TEACHER puede entrar al portal del alumno.
+- **No nos afecta:** `GET /internal/v1/identities/{userId}` y sus errores `AUTH_*` (para
+  Backoffice), reversa idempotente del saldo, `events:read` en
+  `GET /internal/v1/events/{eventId}`.
+- **Límite de pedidos:** 100 por minuto por IP de cliente, en toda la API. Ver el pendiente
+  de abajo.
+- **401 sin token:** llega con `code: "HTTP_401"` y sin `correlationId`, aunque el OpenAPI lo
+  marca obligatorio. El front decide el refresh por status, así que no le afecta.
+
 Confirmado por el OpenAPI (fixtures `core/wallet-me.json` y `core/transacciones.json`):
 
 | Tema | Forma |
@@ -86,6 +110,10 @@ Pendiente (la fixture `core/notificaciones.provisional.json` sigue provisional p
 | `actionUrl` de `LIBRARY_PENALTY_APPLIED` | `/library/{loanId}/penalty` (pendiente con el Módulo 3) |
 | `actionUrl` de `EVENT_REMINDER` | `/events/{eventoId}`, relativa (ejemplo de la sección 8.1) |
 | Paginación de `/notifications` | El OpenAPI solo documenta `read` y devuelve `nextCursor`; seguimos mandando `limit` y `cursor` |
+| Paginación de `/wallets/me/transactions` | El OpenAPI solo documenta `limit` ("a lo sumo 100") y devuelve `nextCursor`; seguimos mandando `cursor` |
+| `careerIds` en el JWT | Lo damos por hecho; si no viene, la carrera sale de Backoffice |
+| Límite de 100 pedidos por minuto en el proxy | Pendiente: todo lo del BFF sale de una sola IP (ver [`integracion-real.md`](integracion-real.md)) |
+| Cookie de refresh con el front en otro sitio | `SameSite=Lax`: desde otro sitio (incluso `localhost`) no viajaría en el refresh. Probar con un usuario real |
 
 Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/destino.ts`, el
 único lugar que conoce su formato):
@@ -347,14 +375,20 @@ otros planes. Queda registrado con un warning en el log.
 Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/` y
 `apps/bff/src/perfil/perfil.service.ts`):
 
-- El id y el mail salen del token de CORE; de Backoffice se toman `firstName`, `lastName`,
-  `fileNumber` (→ `nombre`, `apellido`, `legajo`) y la primera de `careers`. Se ignoran
-  `documentId`, `roles`, `status`, `siteId` y el `careerId` suelto. Todos opcionales: si no
-  vienen, el perfil sale sin ellos.
-- Backoffice solo da el id de la carrera: el nombre sale de `GET /academica/carreras` del
-  Módulo 9, cacheado en memoria una hora. Si el Módulo 9 falla o no conoce la carrera, el
-  perfil sale igual, sin `carrera`.
-- Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale solo con id y mail.
+- El id y el mail salen del token de CORE; de Backoffice se toman `firstName`, `lastName` y
+  `fileNumber` (→ `nombre`, `apellido`, `legajo`). Se ignoran `documentId`, `roles`,
+  `status`, `siteId` y el `careerId` suelto. Todos opcionales: si no vienen, el perfil sale
+  sin ellos.
+- **Carrera:** la primera del claim `careerIds` del token de CORE. Backoffice es el
+  respaldo: si el token no trae carreras (claim ausente o lista vacía), se usa la primera de
+  `careers`.
+- **Plan:** solo lo da Backoffice. Es el de la carrera elegida dentro de `careers`; si
+  Backoffice no tiene la carrera del token, `planId` es null y la oferta sale sin filtrar por
+  plan (decisión del bloque D, abajo).
+- El nombre de la carrera sale de `GET /academica/carreras` del Módulo 9, cacheado en memoria
+  una hora. Si el Módulo 9 falla o no conoce la carrera, el perfil sale igual, sin `carrera`.
+- Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale con id, mail y, si
+  el token la trae, la carrera.
 
 Fixture: `backoffice/users.provisional.json`, con la ficha del documento más `careers`.
 Provisional hasta que publiquen `careers`.
@@ -446,3 +480,5 @@ Cómo lo usa el BFF (oferta, inscripción e historial, adaptador en
 1. Responderle al Módulo 2 la ruta del `actionUrl` y confirmar el acceso con el token del
    alumno con CORE.
 2. Qué datos devuelve el endpoint de usuarios del Módulo 8.
+3. Con CORE: credenciales de los usuarios de prueba, si el límite de 100 pedidos por minuto
+   aplica al proxy del BFF, si `careerIds` viaja en el JWT y la URL del WebSocket.

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { aFicha, aListaSedes, aNombreCompleto, aSedes } from './backoffice.mapper';
+import {
+  aFicha,
+  aListaSedes,
+  aNombreCompleto,
+  aSedes,
+  fichaSoloIdentidad,
+} from './backoffice.mapper';
 
 const usuarios = fixture<Record<string, Record<string, unknown>>>(
   'backoffice/users.provisional.json',
@@ -74,6 +80,59 @@ describe('mapper de Backoffice → ficha del alumno', () => {
     expect(aFicha(alumno, { userId: alumno.id })).toEqual({
       perfil: { id: alumno.id, email: alumno.email },
       carreraId: null,
+    });
+  });
+
+  describe('carrera del token de CORE (`careerIds`)', () => {
+    const dos = {
+      ...conPlan,
+      careers: [
+        { careerId: '5', planId: '20' },
+        { careerId: '3', planId: '12' },
+      ],
+    };
+
+    it('la carrera sale del token y el plan, de esa carrera en Backoffice', () => {
+      expect(aFicha({ ...alumno, carreraIds: ['3'] }, dos)).toMatchObject({
+        perfil: { planId: '12' },
+        carreraId: '3',
+      });
+    });
+
+    it('compara ids como texto: Backoffice puede mandarlos numéricos', () => {
+      const numericos = { ...conPlan, careers: [{ careerId: 3, planId: 12 }] };
+      expect(aFicha({ ...alumno, carreraIds: ['3'] }, numericos)).toMatchObject({
+        perfil: { planId: '12' },
+        carreraId: '3',
+      });
+    });
+
+    it('si Backoffice no tiene esa carrera, la carrera es la del token y el plan, null', () => {
+      expect(aFicha({ ...alumno, carreraIds: ['9'] }, conPlan)).toMatchObject({
+        perfil: { planId: null },
+        carreraId: '9',
+      });
+    });
+
+    it('con la carrera en el token no hace falta `careers` en Backoffice', () => {
+      const { careers: _, ...sinCampo } = conPlan;
+      const ficha = aFicha({ ...alumno, carreraIds: ['3'] }, sinCampo);
+      expect(ficha.carreraId).toBe('3');
+      expect(ficha.perfil).not.toHaveProperty('planId');
+    });
+
+    it('sin carreras en el token (vacío) usa las de Backoffice', () => {
+      expect(aFicha({ ...alumno, carreraIds: [] }, dos)).toMatchObject({
+        perfil: { planId: '20' },
+        carreraId: '5',
+      });
+    });
+
+    it('si Backoffice no conoce al alumno, la carrera sale igual del token', () => {
+      expect(fichaSoloIdentidad({ ...alumno, carreraIds: ['3'] })).toEqual({
+        perfil: { id: alumno.id, email: alumno.email },
+        carreraId: '3',
+      });
     });
   });
 

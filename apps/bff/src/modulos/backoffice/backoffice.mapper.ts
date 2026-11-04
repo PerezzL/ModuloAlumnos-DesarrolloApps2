@@ -8,15 +8,23 @@ import { SedesBackoffice, UsuarioBackoffice } from './backoffice.origen';
  * Identidad de CORE (token) + datos personales de Backoffice → ficha. El id sale siempre
  * del token. Los campos que no vengan se omiten.
  *
- * Suponemos un solo plan por alumno: de `careers` se toma la primera. Si se manejan varias
- * carreras, hay que cambiar `planId` por una lista acá, en el filtro de cursos de la oferta
- * (InscripcionService y AcademicoAdapter.cursos) y en `Perfil` del openapi.yaml.
+ * Carrera: la primera de `careerIds` del token de CORE; Backoffice (`careers`) queda de
+ * respaldo si el token no trae ninguna. El plan solo lo da Backoffice: es el de la carrera
+ * elegida, o null si Backoffice no la tiene (la oferta sale entonces sin filtrar por plan).
+ *
+ * Suponemos un solo plan por alumno. Si se manejan varias carreras, hay que cambiar `planId`
+ * por una lista acá, en el filtro de cursos de la oferta (InscripcionService y
+ * AcademicoAdapter.cursos) y en `Perfil` del openapi.yaml.
  */
 export function aFicha(alumno: Alumno, datos: unknown): FichaAlumno {
   const usuario = parsearOrigen('BACKOFFICE', UsuarioBackoffice, datos);
   const email = alumno.email ?? usuario.email;
   if (!email) throw respuestaInvalida('BACKOFFICE', 'El usuario no tiene mail');
-  const carrera = usuario.careers?.[0];
+  const delToken = carreraDelToken(alumno);
+  const carrera =
+    delToken === null
+      ? usuario.careers?.[0]
+      : usuario.careers?.find((c) => idOpaco(c.careerId) === delToken);
   return {
     perfil: {
       id: alumno.id,
@@ -29,9 +37,12 @@ export function aFicha(alumno: Alumno, datos: unknown): FichaAlumno {
         planId: carrera ? idOpaco(carrera.planId) : null,
       }),
     },
-    carreraId: carrera ? idOpaco(carrera.careerId) : null,
+    carreraId: delToken ?? (carrera ? idOpaco(carrera.careerId) : null),
   };
 }
+
+/** Primera carrera del token, o null si no trae ninguna. */
+const carreraDelToken = (alumno: Alumno) => alumno.carreraIds?.[0] ?? null;
 
 /** Nombre y apellido de un usuario de Backoffice; null si no tiene ninguno de los dos. */
 export function aNombreCompleto(datos: unknown): string | null {
@@ -40,10 +51,10 @@ export function aNombreCompleto(datos: unknown): string | null {
   return nombre || null;
 }
 
-/** Backoffice no conoce al alumno: la ficha queda solo con la identidad del token. */
+/** Backoffice no conoce al alumno: la ficha queda solo con lo que trae el token. */
 export function fichaSoloIdentidad(alumno: Alumno): FichaAlumno {
   if (!alumno.email) throw respuestaInvalida('BACKOFFICE', 'El usuario no existe en Backoffice');
-  return { perfil: { id: alumno.id, email: alumno.email }, carreraId: null };
+  return { perfil: { id: alumno.id, email: alumno.email }, carreraId: carreraDelToken(alumno) };
 }
 
 /** Una página del catálogo de sedes → siteId → nombre, y el cursor de la siguiente. */

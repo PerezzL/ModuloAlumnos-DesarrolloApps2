@@ -13,17 +13,19 @@ actualizan los dos.
 
 ### Qué nos tiene que dar CORE
 
-Todo esto está pendiente (tarjeta "[CORE] Dominio de los portales…" en Trello):
+CORE está desplegado en Railway desde sus novedades del 4 de noviembre de 2026. Lo que sigue
+pendiente se sigue en la tarjeta "[CORE] Dominio de los portales…" de Trello:
 
 | Dato | Valor |
 | --- | --- |
-| URL pública del Gateway | _pendiente_ |
-| URL del JWKS | _pendiente_ |
-| `iss` y `aud` de los tokens | _pendiente_ |
-| URL del WebSocket de notificaciones | _pendiente_ |
+| URL pública del Gateway | `https://core-api-production-e458.up.railway.app` |
+| URL del JWKS | `https://core-api-production-e458.up.railway.app/.well-known/jwks.json` |
+| `iss` y `aud` de los tokens | `iss`: la URL de la API en Railway (antes `http://localhost:3000`); `aud`: `uadenet`. Falta ver con un token real si el `iss` termina en `/`: `jose` compara el valor exacto |
+| URL del WebSocket de notificaciones | _pendiente_; no figura en su OpenAPI. Suponemos `<URL del Gateway>/notifications` |
 | Dominio bajo el que se sirven los portales (por la cookie de refresh) | _pendiente_ |
 | Si el Gateway espera una URL pública del BFF o una red compartida | _pendiente_ |
-| Usuarios de prueba en su ambiente | _pendiente_ |
+| Usuarios de prueba en su ambiente | Hay uno STUDENT, uno TEACHER y uno ADMIN; las credenciales se piden por privado a CORE |
+| Límite de pedidos | 100 por minuto por IP de cliente, en toda la API (`x-ratelimit-limit: 100`). Pendiente: si aplica al proxy `/api/v1/{module}/*`, porque todo lo que pide el BFF sale de una sola IP (ver "Del lado de CORE") |
 | Prefijo y rutas de cada módulo detrás del Gateway | _pendiente_ (hoy usamos la suposición de [`integraciones.md`](integraciones.md)) |
 
 ### Variables que cambian
@@ -32,13 +34,13 @@ Ninguna URL está en el código: pasar a CORE real es cambiar estas variables.
 
 | Variable | App | Hoy (CORE falso) | Con CORE real |
 | --- | --- | --- | --- |
-| `GATEWAY_URL` | BFF | `http://localhost:4000` | URL del Gateway |
-| `JWKS_URL` | BFF | `http://localhost:4000/.well-known/jwks.json` | JWKS de CORE |
-| `JWT_ISSUER` | BFF | `http://localhost:4000` | `iss` de CORE |
-| `JWT_AUDIENCE` | BFF | `uadenet` | `aud` de CORE |
-| `PREFIJO_*` | BFF | `/api/v1/{modulo}` | Los que confirme CORE (solo si difieren) |
-| `VITE_GATEWAY_URL` | Front | `http://localhost:4000` | URL del Gateway |
-| `VITE_NOTIFICATIONS_URL` | Front | `http://localhost:4000/notifications` | WebSocket de CORE |
+| `GATEWAY_URL` | BFF | `http://localhost:4000` | `https://core-api-production-e458.up.railway.app` |
+| `JWKS_URL` | BFF | `http://localhost:4000/.well-known/jwks.json` | `https://core-api-production-e458.up.railway.app/.well-known/jwks.json` |
+| `JWT_ISSUER` | BFF | `http://localhost:4000` | `https://core-api-production-e458.up.railway.app` (a confirmar con un token real) |
+| `JWT_AUDIENCE` | BFF | `uadenet` | `uadenet` |
+| `PREFIJO_*` | BFF | `/api/v1/{modulo}` | Los mismos: el OpenAPI de CORE registra `student`, `teacher`, `library`, etc. |
+| `VITE_GATEWAY_URL` | Front | `http://localhost:4000` | `https://core-api-production-e458.up.railway.app` |
+| `VITE_NOTIFICATIONS_URL` | Front | `http://localhost:4000/notifications` | `https://core-api-production-e458.up.railway.app/notifications` (supuesto) |
 | `VITE_BIBLIOTECA_URL` | Front | `https://biblioteca.uadenet.example` | Portal de Biblioteca (Módulo 3) |
 | `VITE_EVENTOS_URL` | Front | `https://eventos.uadenet.example` | Portal de Eventos (Módulo 6) |
 
@@ -65,6 +67,15 @@ con las variables de la tabla anterior.
 - **Cookie de refresh:** es `SameSite=Lax` y la define CORE. Si el front no queda bajo el
   mismo sitio que CORE, la sesión se pierde al recargar. Plan B: una regla de reescritura en
   el hosting del front para login, refresh y logout (ver [`arquitectura.md`](arquitectura.md), "Despliegue").
+  El CORS de producción acepta `http://localhost:5173` con credenciales, pero desde
+  `localhost` la cookie `Lax` tampoco viaja en el `POST /auth/refresh`: probarlo con un
+  usuario real antes de dar por buena la sesión.
+- **Límite de pedidos:** CORE limita a 100 pedidos por minuto por IP de cliente
+  (`TRUST_PROXY_HOPS=1` en Railway). Todo lo que el BFF pide al Gateway sale de la IP del BFF,
+  y una sola pantalla puede hacer varios pedidos (el calendario hace tres): si el límite
+  aplica al proxy, todos los alumnos juntos comparten esos 100. Hay que preguntarle a CORE
+  si el proxy está exento o si pueden darle al BFF un límite propio. Un 429 del Gateway hoy
+  llega al alumno como error del módulo.
 
 ### Lo que deja de existir
 
@@ -82,6 +93,9 @@ Recorrer la tarjeta "[Integración] CORE" de Trello y la sección 14 de
 
 - [ ] `GET /health/live` y `GET /health/ready` del BFF responden.
 - [ ] Login con un usuario de CORE y entrada al Home.
+- [ ] El `iss` del token coincide exacto con `JWT_ISSUER` (si no, el BFF responde 401 a todo).
+- [ ] El token trae el claim `careerIds` y el Perfil muestra la carrera. Si no lo trae, la
+      carrera sale de Backoffice (ver [`integraciones.md`](integraciones.md), Módulo 8).
 - [ ] Recargar la página no pierde la sesión (cookie de refresh).
 - [ ] Una pantalla que pasa por el BFF (Perfil o Calendario) trae datos: prueba que el
       Gateway llega al BFF con `X-User-Id` y que el guard valida los tokens reales.
@@ -139,9 +153,9 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | | |
 | --- | --- |
 | OpenAPI | https://core-api-production-e458.up.railway.app/docs-json (formas de auth, saldo, notificaciones y errores del Gateway: ya aplicadas) |
-| Falta confirmar | Formato del `actionUrl` de cada notificación; que cada módulo sirva sus rutas bajo `/api/v1` |
+| Falta confirmar | Formato del `actionUrl` de cada notificación; que cada módulo sirva sus rutas bajo `/api/v1`; que `careerIds` viaje en el JWT; paginación con `cursor` en `/notifications` y `/wallets/me/transactions`; si el límite de 100 pedidos por minuto aplica al proxy |
 | Fixtures | `packages/fixtures/core/` (`wallet-me.json` y `transacciones.json` confirmadas; `notificaciones.provisional.json` por el `actionUrl`) |
-| Código | Front: `apps/web/src/core/` (`saldo.ts`, `notificaciones.ts`, `cargaSaldo.ts`). Errores del Gateway: `apps/bff/src/gateway/gateway.client.ts`, `apps/bff/src/modulos/comun.ts` y `apps/web/src/api/errores.ts` (deciden por status). CORE falso: `saldo.ts`, `notificaciones.ts`, `gateway.ts` |
+| Código | Front: `apps/web/src/core/` (`saldo.ts`, `notificaciones.ts`, `cargaSaldo.ts`). Claim `careerIds`: `apps/bff/src/auth/jwt.guard.ts` (`idsDeCarrera`). Errores del Gateway: `apps/bff/src/gateway/gateway.client.ts`, `apps/bff/src/modulos/comun.ts` y `apps/web/src/api/errores.ts` (deciden por status). CORE falso: `saldo.ts`, `notificaciones.ts`, `gateway.ts` |
 | Contrato | No toca [`openapi.yaml`](../openapi.yaml): el front consume a CORE directo |
 | Si cambian las rutas | Actualizar la tabla "Rutas detrás del Gateway" de [`integraciones.md`](integraciones.md), los `PREFIJO_*` (`.env.example`, `docker-compose.yml`) y el CORE falso |
 | Trello | "[CORE] Pedir contracts/openapi.yaml…" (Backlog) e "[Integración] CORE" |

@@ -8,6 +8,8 @@ export interface UsuarioPrueba {
   password: string;
   roles: string[];
   permissions: string[];
+  /** Carreras (ids del Módulo 9), las mismas que da Backoffice en `careers` */
+  careerIds: string[];
   status: 'ACTIVE' | 'SUSPENDED';
 }
 
@@ -20,6 +22,7 @@ export const USUARIOS: UsuarioPrueba[] = [
     password: 'uade2026',
     roles: ['STUDENT'],
     permissions: permisosAlumno,
+    careerIds: ['3'],
     status: 'ACTIVE',
   },
   {
@@ -28,6 +31,7 @@ export const USUARIOS: UsuarioPrueba[] = [
     password: 'uade2026',
     roles: ['STUDENT'],
     permissions: permisosAlumno,
+    careerIds: [],
     status: 'ACTIVE',
   },
   {
@@ -36,6 +40,7 @@ export const USUARIOS: UsuarioPrueba[] = [
     password: 'uade2026',
     roles: ['STUDENT'],
     permissions: permisosAlumno,
+    careerIds: [],
     status: 'SUSPENDED',
   },
 ];
