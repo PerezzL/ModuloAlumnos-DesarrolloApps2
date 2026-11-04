@@ -4,10 +4,14 @@ import { destinoDe } from './destino';
 const portales = { biblioteca: 'https://biblioteca.test', eventos: 'https://eventos.test/' };
 
 describe('traducción de actionUrl', () => {
-  it('nota de examen → pantalla propia del detalle de la nota', () => {
-    expect(
-      destinoDe('EXAM_RESULT_PUBLISHED', '/teacher/courses/curso-bd1/exams/exam-p1', portales),
-    ).toEqual({ tipo: 'interno', ruta: '/cursadas/curso-bd1/notas/exam-p1' });
+  it.each([
+    ['provisoria del Módulo 2', '/student/courses/curso-bd1/exams/101'],
+    ['propuesta por nosotros', '/cursadas/curso-bd1/notas/101'],
+  ])('nota de examen, ruta %s → pantalla propia del detalle de la nota', (_caso, url) => {
+    expect(destinoDe('TEACHER_EXAM_RESULT_PUBLISHED', url, portales)).toEqual({
+      tipo: 'interno',
+      ruta: '/cursadas/curso-bd1/notas/101',
+    });
   });
 
   it('sanción → portal de Biblioteca configurado', () => {
@@ -36,8 +40,10 @@ describe('traducción de actionUrl', () => {
     ['otro origen', 'EVENT_REMINDER', 'https://malicioso.test/events/ev-1'],
     ['protocolo relativo', 'EVENT_REMINDER', '//malicioso.test/events/ev-1'],
     ['javascript:', 'LIBRARY_PENALTY_APPLIED', 'javascript:alert(1)'],
-    ['formato desconocido', 'EXAM_RESULT_PUBLISHED', '/teacher/exams/123'],
-    ['path traversal', 'EXAM_RESULT_PUBLISHED', '/teacher/courses/../exams/x'],
+    ['formato desconocido', 'TEACHER_EXAM_RESULT_PUBLISHED', '/teacher/exams/123'],
+    ['formato anterior', 'TEACHER_EXAM_RESULT_PUBLISHED', '/teacher/courses/c/exams/1'],
+    ['path traversal', 'TEACHER_EXAM_RESULT_PUBLISHED', '/student/courses/../exams/x'],
+    ['tipo anterior', 'EXAM_RESULT_PUBLISHED', '/student/courses/c/exams/1'],
     ['tipo desconocido', 'NUEVO_TIPO', '/events/ev-1'],
     ['ruta de otro tipo', 'LIBRARY_PENALTY_APPLIED', '/events/ev-1'],
   ])('%s → no navega', (_caso, tipo, url) => {

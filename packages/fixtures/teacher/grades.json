@@ -1,0 +1,152 @@
+{
+  "curso-bd1-2026-2-a": {
+    "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "courseId": "curso-bd1-2026-2-a",
+    "passingGrade": 4,
+    "average": 8.0,
+    "exams": [
+      {
+        "examId": 101,
+        "type": "PARCIAL_1",
+        "name": "Parcial 1",
+        "category": "PARCIAL",
+        "date": "2026-09-21",
+        "status": "PROGRAMADO",
+        "phase": "COMPLETED",
+        "grade": 7,
+        "absent": false,
+        "passed": true,
+        "gradedAt": "2026-09-24T20:10:00-03:00",
+        "gradedBy": "7c1d9e2a-3b4f-4a5c-9d6e-8f7a0b1c2d3e"
+      },
+      {
+        "examId": 102,
+        "type": "TP_1",
+        "name": "TP1",
+        "category": "INTEGRADOR",
+        "date": "2026-10-05",
+        "status": "PROGRAMADO",
+        "phase": "COMPLETED",
+        "grade": 9,
+        "absent": false,
+        "passed": true,
+        "gradedAt": "2026-10-09T18:00:00-03:00",
+        "gradedBy": "7c1d9e2a-3b4f-4a5c-9d6e-8f7a0b1c2d3e"
+      },
+      {
+        "examId": 103,
+        "type": "PARCIAL_2",
+        "name": "Parcial 2",
+        "category": "PARCIAL",
+        "date": "2026-11-16",
+        "status": "PROGRAMADO",
+        "phase": "UPCOMING",
+        "grade": null,
+        "absent": false,
+        "passed": null,
+        "gradedAt": null,
+        "gradedBy": null
+      }
+    ]
+  },
+  "curso-desa1-2026-2-a": {
+    "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "courseId": "curso-desa1-2026-2-a",
+    "passingGrade": 4,
+    "average": 5.75,
+    "exams": [
+      {
+        "examId": 201,
+        "type": "PARCIAL_1",
+        "name": "Parcial 1",
+        "category": "PARCIAL",
+        "date": "2026-09-23",
+        "status": "PROGRAMADO",
+        "phase": "COMPLETED",
+        "grade": 3.5,
+        "absent": false,
+        "passed": false,
+        "gradedAt": "2026-09-28T19:30:00-03:00",
+        "gradedBy": "9e2f0a1b-4c5d-4e6f-8a7b-1c2d3e4f5a6b"
+      },
+      {
+        "examId": 202,
+        "type": "RECUP_1",
+        "name": "Recuperatorio Parcial 1",
+        "category": "RECUPERATORIO",
+        "date": "2026-10-28",
+        "status": "PROGRAMADO",
+        "phase": "COMPLETED",
+        "grade": 8,
+        "absent": false,
+        "passed": true,
+        "gradedAt": "2026-10-30T21:00:00-03:00",
+        "gradedBy": "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e"
+      },
+      {
+        "examId": 203,
+        "type": "TP_1",
+        "name": "TP1",
+        "category": "INTEGRADOR",
+        "date": "2026-10-14",
+        "status": "CANCELADO",
+        "phase": "CANCELLED",
+        "grade": null,
+        "absent": false,
+        "passed": null,
+        "gradedAt": null,
+        "gradedBy": null
+      },
+      {
+        "examId": 204,
+        "type": "ORAL_1",
+        "name": "Exposición oral",
+        "category": null,
+        "date": "2026-10-21",
+        "status": "PROGRAMADO",
+        "phase": "COMPLETED",
+        "grade": null,
+        "absent": true,
+        "passed": null,
+        "gradedAt": "2026-10-22T10:00:00-03:00",
+        "gradedBy": "9e2f0a1b-4c5d-4e6f-8a7b-1c2d3e4f5a6b"
+      }
+    ]
+  },
+  "curso-ayed-2025-2-a": {
+    "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "courseId": "curso-ayed-2025-2-a",
+    "passingGrade": 4,
+    "average": 2.0,
+    "exams": [
+      {
+        "examId": 301,
+        "type": "PARCIAL_1",
+        "name": "Parcial 1",
+        "category": "PARCIAL",
+        "date": "2025-09-23",
+        "status": "PROGRAMADO",
+        "phase": "COMPLETED",
+        "grade": null,
+        "absent": true,
+        "passed": null,
+        "gradedAt": "2025-09-26T18:00:00-03:00",
+        "gradedBy": "7c1d9e2a-3b4f-4a5c-9d6e-8f7a0b1c2d3e"
+      },
+      {
+        "examId": 302,
+        "type": "PARCIAL_2",
+        "name": "Parcial 2",
+        "category": "PARCIAL",
+        "date": "2025-11-11",
+        "status": "PROGRAMADO",
+        "phase": "COMPLETED",
+        "grade": 2,
+        "absent": false,
+        "passed": false,
+        "gradedAt": "2025-11-14T18:00:00-03:00",
+        "gradedBy": "7c1d9e2a-3b4f-4a5c-9d6e-8f7a0b1c2d3e"
+      }
+    ]
+  }
+}

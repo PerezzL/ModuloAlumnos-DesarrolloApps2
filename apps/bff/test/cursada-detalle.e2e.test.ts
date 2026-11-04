@@ -11,6 +11,11 @@ const contrato = new Contrato();
 const inscripciones = fixture<object[]>('academic/inscripciones-alumno.provisional.json');
 const moduloNueve = () =>
   http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => HttpResponse.json(inscripciones));
+const moduloDosCaido = (status: number) => [
+  http.get(RUTAS_DOCENTE.ASISTENCIA, () => new HttpResponse(null, { status })),
+  http.get(RUTAS_DOCENTE.NOTAS, () => new HttpResponse(null, { status })),
+  http.get(RUTAS_DOCENTE.RESULTADOS, () => new HttpResponse(null, { status })),
+];
 
 const validar = (status: number, body: unknown) =>
   expect(contrato.validar('get', '/cursadas/{cursoId}', status, body).errores).toEqual([]);
@@ -30,19 +35,18 @@ describe('GET /cursadas/{cursoId}', () => {
       comision: 'A - Noche',
       estado: 'CURSANDO',
       enCurso: true,
+      notaFinal: null,
     });
   });
 
-  it('asistencia del Módulo 2 para el alumno del token', async () => {
+  it('asistencia del Módulo 2 para el alumno del token, con mínimo y condición', async () => {
     let pedido: Record<string, unknown> = {};
     e2e.server.use(
       moduloNueve(),
       http.get(RUTAS_DOCENTE.ASISTENCIA, ({ params }) => {
         pedido = { ...params };
         return HttpResponse.json(
-          fixture<Record<string, object>>('teacher/asistencia.provisional.json')[
-            'curso-bd1-2026-2-a'
-          ],
+          fixture<Record<string, object>>('teacher/attendance.json')['curso-bd1-2026-2-a'],
         );
       }),
       ...docenteConFixtures(),
@@ -52,44 +56,43 @@ describe('GET /cursadas/{cursoId}', () => {
     expect((res.body as CursadaDetalle).asistencia).toMatchObject({
       clasesDictadas: 8,
       presentes: 5,
-      ausentes: 3,
-      porcentaje: 62.5,
+      justificadas: 1,
+      ausentes: 2,
+      porcentaje: 75,
+      porcentajeMinimo: 75,
+      condicion: 'REGULAR',
     });
     expect(pedido).toEqual({ cursoId: 'curso-bd1-2026-2-a', alumnoId: ALUMNO });
   });
 
-  it.each([
-    ['con límite', 'curso-bd1-2026-2-a', 'CURSANDO', 4, 1],
-    ['sin límite', 'curso-desa1-2026-2-a', 'CURSANDO', null, null],
-    ['alumno libre', 'curso-ayed-2025-2-a', 'LIBRE', 4, 0],
-  ])(
-    'faltas restantes %s: pasan tal como las informa el Módulo 2',
-    async (_c, cursoId, estado, limite, restantes) => {
-      e2e.server.use(moduloNueve(), ...docenteConFixtures());
-      const res = await e2e.get(`/cursadas/${cursoId}`);
-      validar(200, res.body);
-      expect(res.body).toMatchObject({
-        estado,
-        asistencia: { limiteInasistencias: limite, inasistenciasRestantes: restantes },
-      });
-    },
-  );
-
-  it('notas del Módulo 2, cada una con su notaId', async () => {
+  it('notas del Módulo 2 sin las canceladas, con su notaId y el promedio', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
     const res = await e2e.get('/cursadas/curso-desa1-2026-2-a');
     validar(200, res.body);
-    const { notas } = res.body as CursadaDetalle;
-    expect(notas?.map((n) => [n.notaId, n.nota, n.resultado])).toEqual([
-      ['exam-desa1-2026-2-p1', 4, 'DESAPROBADO'],
-      ['exam-desa1-2026-2-r1', null, undefined],
+    const { notas, promedio } = res.body as CursadaDetalle;
+    expect(notas?.map((n) => [n.notaId, n.instancia, n.nota, n.resultado])).toEqual([
+      ['201', 'PARCIAL', 3.5, 'DESAPROBADO'],
+      ['202', 'RECUPERATORIO', 8, 'APROBADO'],
+      ['204', null, null, 'AUSENTE'],
     ]);
+    expect(notas?.[0]).not.toHaveProperty('docenteId');
+    expect(promedio).toBe(5.75);
   });
 
-  it('sin notas cargadas, lista vacía (no null)', async () => {
-    e2e.server.use(moduloNueve(), ...docenteConFixtures());
-    const res = await e2e.get('/cursadas/curso-ayed-2025-2-a');
-    expect((res.body as CursadaDetalle).notas).toEqual([]);
+  it('la nota final sale de los resultados de actas del Módulo 2 para ese curso', async () => {
+    let courseId: string | null = null;
+    e2e.server.use(
+      moduloNueve(),
+      http.get(RUTAS_DOCENTE.RESULTADOS, ({ request, params }) => {
+        expect(params.alumnoId).toBe(ALUMNO);
+        courseId = new URL(request.url).searchParams.get('courseId');
+        return HttpResponse.json([{ courseId, grade: 9, result: 'APROBADO' }]);
+      }),
+      ...docenteConFixtures(),
+    );
+    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    expect(res.body).toMatchObject({ notaFinal: 9 });
+    expect(courseId).toBe('curso-bd1-2026-2-a');
   });
 
   it('un curso en el que el alumno no está inscripto es 404', async () => {
@@ -125,13 +128,9 @@ describe('GET /cursadas/{cursoId}', () => {
     [504, 'timeout'],
     [502, 'respuesta inválida'],
   ])(
-    'Módulo 2 %i (%s): 200 con asistencia y notas en null y DOCENTE en fuentesConError',
+    'Módulo 2 %i (%s): 200 con asistencia, notas y nota final en null y DOCENTE en fuentesConError',
     async (status) => {
-      e2e.server.use(
-        moduloNueve(),
-        http.get(RUTAS_DOCENTE.ASISTENCIA, () => new HttpResponse(null, { status })),
-        http.get(RUTAS_DOCENTE.NOTAS, () => new HttpResponse(null, { status })),
-      );
+      e2e.server.use(moduloNueve(), ...moduloDosCaido(status));
       const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
       expect(res.status).toBe(200);
       validar(200, res.body);
@@ -140,6 +139,8 @@ describe('GET /cursadas/{cursoId}', () => {
         estado: 'CURSANDO',
         asistencia: null,
         notas: null,
+        promedio: null,
+        notaFinal: null,
         fuentesConError: ['DOCENTE'],
       });
     },
@@ -150,6 +151,7 @@ describe('GET /cursadas/{cursoId}', () => {
       moduloNueve(),
       http.get(RUTAS_DOCENTE.ASISTENCIA, () => new Promise(() => undefined)),
       http.get(RUTAS_DOCENTE.NOTAS, () => new Promise(() => undefined)),
+      ...docenteConFixtures(),
     );
     const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
     expect(res.status).toBe(200);
@@ -159,13 +161,13 @@ describe('GET /cursadas/{cursoId}', () => {
   it('una respuesta del Módulo 2 con forma inesperada cuenta como falla de DOCENTE', async () => {
     e2e.server.use(
       moduloNueve(),
-      http.get(RUTAS_DOCENTE.ASISTENCIA, () => HttpResponse.json({ presentes: 'muchos' })),
+      http.get(RUTAS_DOCENTE.ASISTENCIA, () => HttpResponse.json({ present: 'muchos' })),
       ...docenteConFixtures(),
     );
     const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
     validar(200, res.body);
     expect(res.body).toMatchObject({ asistencia: null, fuentesConError: ['DOCENTE'] });
-    expect((res.body as CursadaDetalle).notas).toHaveLength(1);
+    expect((res.body as CursadaDetalle).notas).toHaveLength(3);
   });
 
   it('si falla solo notas, la asistencia sale igual', async () => {
@@ -184,21 +186,21 @@ describe('GET /cursadas/{cursoId}', () => {
   });
 
   it('un 404 del Módulo 2 para un curso que el Módulo 9 sí tiene es falla de DOCENTE, no vacío', async () => {
-    e2e.server.use(
-      moduloNueve(),
-      http.get(RUTAS_DOCENTE.ASISTENCIA, () => HttpResponse.json({}, { status: 404 })),
-      http.get(RUTAS_DOCENTE.NOTAS, () => HttpResponse.json({}, { status: 404 })),
-    );
+    e2e.server.use(moduloNueve(), ...docenteConFixtures());
     const res = await e2e.get('/cursadas/curso-prog1-2025-2-a');
     validar(200, res.body);
-    expect(res.body).toMatchObject({ asistencia: null, notas: null, fuentesConError: ['DOCENTE'] });
+    expect(res.body).toMatchObject({
+      asistencia: null,
+      notas: null,
+      notaFinal: 8,
+      fuentesConError: ['DOCENTE'],
+    });
   });
 
   it('si fallan los dos módulos, manda el error del Módulo 9', async () => {
     e2e.server.use(
       http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => new HttpResponse(null, { status: 504 })),
-      http.get(RUTAS_DOCENTE.ASISTENCIA, () => new HttpResponse(null, { status: 503 })),
-      http.get(RUTAS_DOCENTE.NOTAS, () => new HttpResponse(null, { status: 503 })),
+      ...moduloDosCaido(503),
     );
     const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
     expect(res.status).toBe(504);

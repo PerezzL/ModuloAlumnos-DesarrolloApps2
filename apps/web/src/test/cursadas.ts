@@ -41,16 +41,19 @@ export const cursadaDetalleBase = (): CursadaDetalle => ({
   ...cursadasBase()[0]!,
   comision: 'A - Noche',
   asistencia: {
-    clasesDictadas: 3,
+    clasesDictadas: 4,
     presentes: 2,
+    justificadas: 1,
     ausentes: 1,
-    porcentaje: 66.67,
-    limiteInasistencias: 4,
-    inasistenciasRestantes: 3,
+    porcentaje: 75,
+    porcentajeMinimo: 75,
+    condicion: 'REGULAR',
     clases: [
-      { fecha: '2026-08-12', presente: true },
-      { fecha: '2026-08-19', presente: false },
-      { fecha: '2026-08-26', presente: true },
+      { fecha: '2026-08-12', estado: 'PRESENTE', comentario: null },
+      { fecha: '2026-08-19', estado: 'AUSENTE', comentario: null },
+      { fecha: '2026-08-26', estado: 'JUSTIFICADO', comentario: 'Certificado médico' },
+      { fecha: '2026-09-02', estado: 'PRESENTE', comentario: null },
+      { fecha: '2026-09-09', estado: null, comentario: null },
     ],
   },
   notas: [
@@ -70,6 +73,7 @@ export const cursadaDetalleBase = (): CursadaDetalle => ({
       nota: null,
     },
   ],
+  promedio: 4,
   fuentesConError: [],
 });
 
@@ -79,6 +83,5 @@ export const notaDetalleBase = (): NotaDetalle => ({
   cursoId: 'curso-desa1',
   asignatura: { id: 'asig-desa1', nombre: 'Desarrollo de Aplicaciones I' },
   comision: 'A - Noche',
-  docente: 'Lic. Martín Sosa',
-  observaciones: 'Revisar normalización.',
+  docente: 'Martín Sosa',
 });

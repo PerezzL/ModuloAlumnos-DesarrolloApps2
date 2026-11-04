@@ -79,10 +79,10 @@ Inscripción hay un botón que hace lo mismo, visible solo con `npm run dev`.
 ### Notificaciones a demanda
 
 ```bash
-curl -X POST localhost:4000/__falso/notificaciones -H 'content-type: application/json' -d '{"tipo":"EXAM_RESULT_PUBLISHED"}'
+curl -X POST localhost:4000/__falso/notificaciones -H 'content-type: application/json' -d '{"tipo":"TEACHER_EXAM_RESULT_PUBLISHED"}'
 ```
 
-Tipos: `EXAM_RESULT_PUBLISHED`, `LIBRARY_PENALTY_APPLIED`, `EVENT_REMINDER`. Sin `email` va
+Tipos: `TEACHER_EXAM_RESULT_PUBLISHED`, `LIBRARY_PENALTY_APPLIED`, `EVENT_REMINDER`. Sin `email` va
 a `v.moreno`; con `"email": "j.perez@uade.edu.ar"` va a otro alumno. Se guarda y se emite
 por el socket, como hace CORE.
 
@@ -236,18 +236,21 @@ con filtro por período.
 
 ### Detalle de cursada y de nota (bloque E)
 
-Todo lo del Módulo 2 es suposición nuestra (no hay contrato).
+Con el contrato confirmado del Módulo 2 (fixtures `teacher/*.json`).
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
-| Asistencia con alerta | Bases de Datos I | 5 de 8 clases (62,5 %); alerta: le queda 1 falta (límite 4) |
-| Asistencia sin límite | Desarrollo de Aplicaciones I | 8 de 8 clases; sin indicador de faltas |
-| Alumno libre | Algoritmos y Estructuras de Datos, entrando por URL: `/alumnos/cursos/curso-ayed-2025-2-a` (desde Mis cursos solo enlazan las cursadas en curso) | "Quedaste libre" en lugar del indicador; sin notas (estado vacío) |
-| Notas | Desarrollo de Aplicaciones I | 1er parcial 4 (desaprobado) y recuperatorio pendiente |
-| Detalle de nota | Abrir el 1er parcial de Desarrollo de Aplicaciones I | Nota 4, docente y observaciones; enlace para volver a la cursada |
-| Nota desde la notificación | Tocar "Se publicó tu nota de Bases de Datos I" en la campana | Detalle del 1er parcial: nota 7, sin observaciones |
+| Asistencia en el mínimo | Bases de Datos I | 5 presentes, 1 justificada ("Certificado médico") y 2 ausentes de 8 (75 %); alerta: cerca del mínimo de 75 % |
+| Asistencia completa | Desarrollo de Aplicaciones I | 8 de 8 clases (100 %); "Tu asistencia está al día" |
+| Alumno libre | Algoritmos y Estructuras de Datos, entrando por URL: `/alumnos/cursos/curso-ayed-2025-2-a` (desde Mis cursos solo enlazan las cursadas en curso) | "Quedaste libre" (68,75 %); Parcial 1 ausente y Parcial 2 desaprobado |
+| Notas | Bases de Datos I | Parcial 1: 7, TP1 (Integrador): 9, Parcial 2 pendiente; promedio 8 |
+| Notas con ausente e instancia desconocida | Desarrollo de Aplicaciones I | Parcial 1: 3,5 desaprobado, recuperatorio 8 aprobado, "Exposición oral" ausente con instancia "—"; el TP1 cancelado no aparece |
+| Detalle de nota | Abrir el recuperatorio de Desarrollo de Aplicaciones I | Nota 8, aprobado, docente Carla Ruiz; enlace para volver a la cursada |
+| Nota desde la notificación | Tocar "Se publicó tu nota de Bases de Datos I" en la campana | Detalle del Parcial 1: nota 7, docente Laura Gómez |
+| Nota final en el historial | Mis cursos | Programación I 8 y Matemática Discreta 7 (del Módulo 2); Algoritmos sin nota |
 | Curso o nota ajenos | `/alumnos/cursos/no-existe` o `/cursadas/curso-bd1-2026-2-a/notas/no-existe` | "No encontramos esa cursada" / "esa nota" |
-| Módulo 2 caído | Falla `teacher: caido` | El detalle sale con el encabezado y un aviso con reintento en asistencia y en notas (`DOCENTE` en `fuentesConError`); el detalle de nota muestra error |
+| Módulo 2 caído | Falla `teacher: caido` | El detalle sale con el encabezado y un aviso con reintento en asistencia y en notas (`DOCENTE` en `fuentesConError`); el historial sale sin notas finales y con aviso; el detalle de nota muestra error |
+| Backoffice caído en el detalle de nota | Falla `backoffice: caido` | La nota sale igual, sin docente (si su nombre no estaba en caché) |
 
 Sin clases dictadas (estado vacío en lugar de 0 %) no tiene caso en las fixtures: se prueba
 con los tests del front.

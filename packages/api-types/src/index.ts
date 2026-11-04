@@ -16,6 +16,7 @@ export type Inscripcion = Schemas['Inscripcion'];
 export type CursadaResumen = Schemas['CursadaResumen'];
 export type CursadaDetalle = Schemas['CursadaDetalle'];
 export type Asistencia = Schemas['Asistencia'];
+export type CondicionAsistencia = Schemas['CondicionAsistencia'];
 export type NotaResumen = Schemas['NotaResumen'];
 export type InstanciaExamen = Schemas['InstanciaExamen'];
 export type ResultadoExamen = Schemas['ResultadoExamen'];

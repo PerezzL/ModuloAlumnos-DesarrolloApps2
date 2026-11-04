@@ -4,8 +4,9 @@ import { config } from '@/config';
  * Traducción de `actionUrl` a destino. ÚNICO lugar del front que conoce el formato del
  * `actionUrl` de cada módulo (pendiente con los módulos 2 y 3: docs/integraciones.md).
  *
- * - `EXAM_RESULT_PUBLISHED`: `/teacher/courses/{cursoId}/exams/{notaId}` → pantalla propia
- *   del detalle de la nota.
+ * - `TEACHER_EXAM_RESULT_PUBLISHED`: `/student/courses/{cursoId}/exams/{notaId}` (provisorio
+ *   del Módulo 2) o `/cursadas/{cursoId}/notas/{notaId}` (la ruta que les propusimos) →
+ *   pantalla propia del detalle de la nota. Cuando confirmen, queda una sola.
  * - `LIBRARY_PENALTY_APPLIED`: `/library/{loanId}/penalty` → portal de Biblioteca.
  * - `EVENT_REMINDER`: `/events/{eventoId}` → portal de Eventos.
  *
@@ -20,7 +21,10 @@ export type Destino =
 
 /** Segmento de id seguro: sin `/`, `.`, `%` ni nada que cambie la ruta */
 const ID = '([A-Za-z0-9_-]+)';
-const EXAMEN = new RegExp(`^/teacher/courses/${ID}/exams/${ID}/?$`);
+const EXAMEN = [
+  new RegExp(`^/student/courses/${ID}/exams/${ID}/?$`),
+  new RegExp(`^/cursadas/${ID}/notas/${ID}/?$`),
+];
 const SANCION = new RegExp(`^/library/${ID}/penalty/?$`);
 const EVENTO = new RegExp(`^/events/${ID}/?$`);
 
@@ -57,8 +61,8 @@ export function destinoDe(
   if (!actionUrl) return null;
 
   switch (tipo) {
-    case 'EXAM_RESULT_PUBLISHED': {
-      const [, cursoId, notaId] = EXAMEN.exec(actionUrl) ?? [];
+    case 'TEACHER_EXAM_RESULT_PUBLISHED': {
+      const [, cursoId, notaId] = EXAMEN.map((r) => r.exec(actionUrl)).find(Boolean) ?? [];
       return cursoId && notaId
         ? { tipo: 'interno', ruta: `/cursadas/${cursoId}/notas/${notaId}` }
         : null;

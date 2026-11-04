@@ -6,7 +6,7 @@ import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { useCursada } from '@/cursadas/consultas';
 import { AvisoSeccion } from '@/cursadas/AvisoSeccion';
-import { IndicadorFaltas } from '@/cursadas/IndicadorFaltas';
+import { IndicadorCondicion } from '@/cursadas/IndicadorCondicion';
 import { Seccion } from '@/cursadas/Seccion';
 import { SeccionAsistencia } from '@/cursadas/SeccionAsistencia';
 import { SeccionNotas } from '@/cursadas/SeccionNotas';
@@ -80,7 +80,7 @@ export function CursadaDetalle() {
       </section>
       {data.asistencia ? (
         <SeccionAsistencia asistencia={data.asistencia}>
-          <IndicadorFaltas estado={data.estado} asistencia={data.asistencia} />
+          <IndicadorCondicion estado={data.estado} asistencia={data.asistencia} />
         </SeccionAsistencia>
       ) : (
         <Seccion id="titulo-asistencia" titulo="Asistencia">
@@ -88,7 +88,7 @@ export function CursadaDetalle() {
         </Seccion>
       )}
       {data.notas ? (
-        <SeccionNotas cursoId={data.cursoId} notas={data.notas} />
+        <SeccionNotas cursoId={data.cursoId} notas={data.notas} promedio={data.promedio} />
       ) : (
         <Seccion id="titulo-notas" titulo="Notas">
           <AvisoSeccion que="tus notas" reintentar={reintentar} reintentando={isFetching} />

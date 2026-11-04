@@ -51,17 +51,21 @@ Pantalla de entrada tras el login. No corresponde a un RF explícito.
 Agregada por la corrección del profesor: la asistencia está ligada al estado de la materia.
 
 - Encabezado: materia, comisión, cuatrimestre y situación actual (Cursando / Regular / Libre).
-- Asistencia: clases dictadas, presentes, ausentes y porcentaje, con el listado de clases por fecha.
-- Indicador de riesgo: cuántas inasistencias le quedan antes de quedar libre
-  (sujeto a que el módulo dueño exponga el límite).
-- Estado cuando el alumno quedó libre por inasistencias.
-- Notas parciales, cada una con acceso al detalle de la nota (4.7).
+- Asistencia: clases dictadas, presentes, justificadas, ausentes y porcentaje, con el listado
+  de clases por fecha (presente, justificada, ausente o sin registrar) y su comentario.
+- Condición por asistencia: el porcentaje contra el mínimo para quedar regular que informa el
+  Módulo 2 (hoy 75 %), con alerta cerca del mínimo. El Módulo 2 no informa cuántas faltas
+  quedan.
+- Estado cuando el alumno quedó libre (por asistencia, según el Módulo 2, o en la materia,
+  según el Módulo 9).
+- Notas de parciales, recuperatorios, integradores y finales, cada una con acceso al detalle
+  de la nota (4.7), y el promedio si viene.
 - Si el Módulo 2 no responde: se muestra la cursada sin asistencia ni notas, con aviso.
 
 ## 4.6 Centro de notificaciones
 
 - Panel o dropdown con listado, leídas / no leídas.
-- Variante visual por `type`: `EXAM_RESULT_PUBLISHED`, `LIBRARY_PENALTY_APPLIED`, `EVENT_REMINDER`.
+- Variante visual por `type`: `TEACHER_EXAM_RESULT_PUBLISHED`, `LIBRARY_PENALTY_APPLIED`, `EVENT_REMINDER`.
 - Acceso desde la campana del header, en todas las pantallas.
 - Un único componente con variantes según `type`.
 
@@ -71,9 +75,10 @@ Marcada como faltante en la corrección del profesor. Se llega desde una notific
 (deep link) o desde el detalle de cursada.
 
 - Materia y comisión.
-- Instancia (parcial o final) y fecha del examen.
+- Nombre e instancia (parcial, recuperatorio, integrador o final) y fecha del examen.
 - Nota y resultado.
-- Observaciones del docente, si el Módulo 2 las expone.
+- Docente que cargó la nota (de Backoffice), si se puede obtener. El Módulo 2 no expone
+  observaciones.
 - Enlace para volver al detalle de cursada.
 
 ## 4.8 Detalle — Sanción de biblioteca

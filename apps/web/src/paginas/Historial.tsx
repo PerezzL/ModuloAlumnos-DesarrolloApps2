@@ -1,5 +1,5 @@
 import type { CursadaResumen, Periodo } from '@uadenet/api-types';
-import { ChevronRight, GraduationCap } from 'lucide-react';
+import { ChevronRight, GraduationCap, TriangleAlert } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
@@ -16,7 +16,8 @@ function periodosDe(cursadas: CursadaResumen[]): Periodo[] {
 
 /**
  * Mis cursos (4.4): las cursadas en curso, con acceso a su detalle, y el historial con nota y
- * situación, filtrable por período (`?periodo=` en la URL).
+ * situación, filtrable por período (`?periodo=` en la URL). Si el Módulo 2 no respondió, el
+ * historial se muestra igual, sin notas finales y con un aviso.
  */
 export function Historial() {
   const { data, error, isPending, refetch } = useCursadas();
@@ -28,7 +29,8 @@ export function Historial() {
       <ErrorCarga error={error} fuente="El historial académico" reintentar={() => void refetch()} />
     );
   }
-  if (data.length === 0) {
+  const cursadas = data.items;
+  if (cursadas.length === 0) {
     return (
       <EstadoVacio
         icono={GraduationCap}
@@ -39,8 +41,9 @@ export function Historial() {
     );
   }
 
-  const enCurso = data.filter((c) => c.enCurso);
-  const historial = data.filter((c) => !c.enCurso);
+  const enCurso = cursadas.filter((c) => c.enCurso);
+  const historial = cursadas.filter((c) => !c.enCurso);
+  const sinNotasFinales = data.fuentesConError.includes('DOCENTE');
   const periodos = periodosDe(historial);
   const pedido = params.get('periodo');
   const periodo = periodos.some((p) => p.id === pedido) ? pedido : null;
@@ -111,6 +114,15 @@ export function Historial() {
             </label>
           )}
         </div>
+        {sinNotasFinales && (
+          <p
+            role="alert"
+            className="mb-4 flex items-center gap-2 rounded-item border border-aviso/30 bg-aviso-fondo p-3 text-sm text-aviso-texto"
+          >
+            <TriangleAlert className="size-4 shrink-0 text-aviso" aria-hidden />
+            No pudimos cargar las notas finales: el servicio de Docente no respondió.
+          </p>
+        )}
         {filtrado.length === 0 ? (
           <EstadoVacio
             icono={GraduationCap}

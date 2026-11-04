@@ -55,21 +55,24 @@ describe('detalle de cursada: encabezado (H16)', () => {
 describe('detalle de cursada: asistencia (H17)', () => {
   beforeEach(() => reiniciarCore(true));
 
-  it('clases dictadas, presentes, ausentes y porcentaje, con las clases por fecha', async () => {
+  it('clases dictadas, presentes, justificadas, ausentes y porcentaje, con las clases por fecha', async () => {
     renderApp('/alumnos/cursos/curso-desa1');
     const seccion = await screen.findByRole('region', { name: 'Asistencia' });
     const dato = (titulo: string) => within(seccion).getByText(titulo).nextSibling;
-    expect(dato('Clases dictadas')).toHaveTextContent('3');
+    expect(dato('Clases dictadas')).toHaveTextContent('4');
     expect(dato('Presentes')).toHaveTextContent('2');
+    expect(dato('Justificadas')).toHaveTextContent('1');
     expect(dato('Ausentes')).toHaveTextContent('1');
-    expect(dato('Porcentaje')).toHaveTextContent('66,7 %');
+    expect(dato('Porcentaje')).toHaveTextContent('75 %');
     const clases = within(within(seccion).getByRole('list', { name: 'Clases' })).getAllByRole(
       'listitem',
     );
     expect(clases.map((c) => c.textContent)).toEqual([
       '12 de agosto de 2026Presente',
       '19 de agosto de 2026Ausente',
-      '26 de agosto de 2026Presente',
+      '26 de agosto de 2026JustificadaCertificado médico',
+      '2 de septiembre de 2026Presente',
+      '9 de septiembre de 2026Sin registrar',
     ]);
   });
 
@@ -81,10 +84,11 @@ describe('detalle de cursada: asistencia (H17)', () => {
           asistencia: {
             clasesDictadas: 0,
             presentes: 0,
+            justificadas: 0,
             ausentes: 0,
             porcentaje: 0,
-            limiteInasistencias: null,
-            inasistenciasRestantes: null,
+            porcentajeMinimo: 75,
+            condicion: 'REGULAR',
             clases: [],
           },
         }),
@@ -97,7 +101,7 @@ describe('detalle de cursada: asistencia (H17)', () => {
   });
 });
 
-describe('detalle de cursada: faltas restantes (H18)', () => {
+describe('detalle de cursada: condición por asistencia (H18)', () => {
   beforeEach(() => reiniciarCore(true));
 
   const conAsistencia = (cambios: Partial<Asistencia>, estado: EstadoCursada = 'CURSANDO') => {
@@ -110,47 +114,50 @@ describe('detalle de cursada: faltas restantes (H18)', () => {
   };
   const indicador = async () => {
     await screen.findByRole('region', { name: 'Asistencia' });
-    return screen.queryByLabelText('Faltas');
+    return screen.getByLabelText('Condición por asistencia');
   };
 
-  it('con límite informado, cuántas faltas quedan, sin alerta', async () => {
-    conAsistencia({ limiteInasistencias: 4, inasistenciasRestantes: 3 });
+  it('lejos del mínimo, el porcentaje contra el mínimo, sin alerta', async () => {
+    conAsistencia({ porcentaje: 90, porcentajeMinimo: 75 });
     renderApp('/alumnos/cursos/curso-desa1');
-    const faltas = await indicador();
-    expect(faltas).toHaveRole('status');
-    expect(faltas).toHaveTextContent('Te quedan 3 faltas antes de quedar libre');
-    expect(faltas).toHaveTextContent('El límite es de 4 faltas.');
+    const condicion = await indicador();
+    expect(condicion).toHaveRole('status');
+    expect(condicion).toHaveTextContent('Tu asistencia está al día');
+    expect(condicion).toHaveTextContent(
+      'Tenés 90 % de asistencia; el mínimo para quedar regular es 75 %.',
+    );
   });
 
-  it.each([
-    [1, 'Te queda 1 falta antes de quedar libre'],
-    [0, 'No te quedan faltas disponibles'],
-  ])('con %i restantes, alerta', async (restantes, texto) => {
-    conAsistencia({ limiteInasistencias: 4, inasistenciasRestantes: restantes });
+  it('cerca del mínimo, alerta', async () => {
+    conAsistencia({ porcentaje: 77.5, porcentajeMinimo: 75 });
     renderApp('/alumnos/cursos/curso-desa1');
-    const faltas = await indicador();
-    expect(faltas).toHaveRole('alert');
-    expect(faltas).toHaveTextContent(texto);
+    const condicion = await indicador();
+    expect(condicion).toHaveRole('alert');
+    expect(condicion).toHaveTextContent('Estás cerca del mínimo de asistencia');
   });
 
-  it('sin límite informado, no se muestra el indicador', async () => {
-    conAsistencia({ limiteInasistencias: null, inasistenciasRestantes: null });
+  it('el mínimo es el que informa el Módulo 2, no una constante', async () => {
+    conAsistencia({ porcentaje: 77.5, porcentajeMinimo: 60 });
     renderApp('/alumnos/cursos/curso-desa1');
-    expect(await indicador()).toBeNull();
+    const condicion = await indicador();
+    expect(condicion).toHaveRole('status');
+    expect(condicion).toHaveTextContent('el mínimo para quedar regular es 60 %');
   });
 
-  it('con límite pero sin faltas restantes, tampoco: no se calcula', async () => {
-    conAsistencia({ limiteInasistencias: 4, inasistenciasRestantes: null });
+  it('libre por asistencia según el Módulo 2: no se calcula en el portal', async () => {
+    conAsistencia({ porcentaje: 80, porcentajeMinimo: 75, condicion: 'LIBRE' });
     renderApp('/alumnos/cursos/curso-desa1');
-    expect(await indicador()).toBeNull();
+    const condicion = await indicador();
+    expect(condicion).toHaveRole('alert');
+    expect(condicion).toHaveTextContent('Quedaste libre por asistencia');
   });
 
-  it('si ya quedó libre, se muestra ese estado en lugar del indicador', async () => {
-    conAsistencia({ limiteInasistencias: 4, inasistenciasRestantes: 0 }, 'LIBRE');
+  it('si la materia ya figura libre en Gestión Académica, se muestra eso', async () => {
+    conAsistencia({ condicion: 'LIBRE' }, 'LIBRE');
     renderApp('/alumnos/cursos/curso-ayed');
-    const faltas = await indicador();
-    expect(faltas).toHaveTextContent('Quedaste libre en esta materia');
-    expect(faltas).not.toHaveTextContent(/te quedan|disponibles/i);
+    const condicion = await indicador();
+    expect(condicion).toHaveTextContent('Quedaste libre en esta materia');
+    expect(condicion).not.toHaveTextContent(/por asistencia/);
   });
 });
 
@@ -172,6 +179,24 @@ describe('detalle de cursada: notas (H19)', () => {
       ['1er parcial', 'Parcial', '23 de septiembre de 2026', '4', 'Desaprobado'],
       ['Recuperatorio 1er parcial', 'Recuperatorio', '28 de octubre de 2026', '—', 'Pendiente'],
     ]);
+    expect(screen.getByText('Promedio:')).toHaveTextContent('Promedio: 4');
+  });
+
+  it('una instancia que no conocemos se muestra con un guion; sin promedio, no se muestra', async () => {
+    const base = cursadaDetalleBase();
+    servidor.use(
+      http.get(`${BFF}/cursadas/:cursoId`, () =>
+        HttpResponse.json({
+          ...base,
+          notas: [{ ...base.notas![0]!, instancia: null, titulo: 'Exposición oral' }],
+          promedio: null,
+        }),
+      ),
+    );
+    renderApp('/alumnos/cursos/curso-desa1');
+    const tabla = await screen.findByRole('table', { name: 'Notas de la cursada' });
+    expect(within(tabla).getAllByRole('cell')[1]).toHaveTextContent('—');
+    expect(screen.queryByText('Promedio:')).not.toBeInTheDocument();
   });
 
   it('cada nota enlaza a su detalle', async () => {

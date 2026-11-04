@@ -1,30 +1,21 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import type { CursadaDetalle, CursadaResumen, NotaDetalle } from '@uadenet/api-types';
+import type { CursadaDetalle, NotaDetalle } from '@uadenet/api-types';
 import { type Alumno, AlumnoActual } from '../auth/alumno.decorator';
 import { idOpcional } from '../comun/parametros';
-import { AcademicoAdapter } from '../modulos/academico/academico.adapter';
-import { CursadasService } from './cursadas.service';
-import { aHistorial } from './historial';
+import { CursadasService, type Historial } from './cursadas.service';
 
 /** Historial, detalle de cursada y de nota (RF3 y RF4, pantallas 4.4, 4.5 y 4.7). En vivo. */
 @Controller('cursadas')
 export class CursadasController {
-  constructor(
-    private readonly academico: AcademicoAdapter,
-    private readonly cursadas: CursadasService,
-  ) {}
+  constructor(private readonly cursadas: CursadasService) {}
 
   /** `GET /cursadas?periodoId=` */
   @Get()
-  async historial(
+  historial(
     @AlumnoActual() alumno: Alumno,
     @Query('periodoId') periodoId: unknown,
-  ): Promise<{ items: CursadaResumen[] }> {
-    const inscripciones = await this.academico.inscripciones(
-      alumno.id,
-      idOpcional('periodoId', periodoId),
-    );
-    return { items: aHistorial(inscripciones) };
+  ): Promise<Historial> {
+    return this.cursadas.historial(alumno.id, idOpcional('periodoId', periodoId));
   }
 
   /** `GET /cursadas/{cursoId}`. Solo cursos en los que el alumno del token está inscripto. */

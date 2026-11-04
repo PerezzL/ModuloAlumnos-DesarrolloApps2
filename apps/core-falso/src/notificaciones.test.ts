@@ -96,13 +96,13 @@ describe('Notificaciones por REST', () => {
     expect(todas.nextCursor).toBeNull();
     expect(todas.items.map((n: Notificacion) => n.type)).toEqual([
       'EVENT_REMINDER',
-      'EXAM_RESULT_PUBLISHED',
+      'TEACHER_EXAM_RESULT_PUBLISHED',
       'LIBRARY_PENALTY_APPLIED',
     ]);
     expect((await get('/api/v1/notifications?read=false')).body.items).toHaveLength(2);
-    expect((await get('/api/v1/notifications?type=EXAM_RESULT_PUBLISHED')).body.items).toHaveLength(
-      1,
-    );
+    expect(
+      (await get('/api/v1/notifications?type=TEACHER_EXAM_RESULT_PUBLISHED')).body.items,
+    ).toHaveLength(1);
     expect((await get('/api/v1/notifications', perez)).body).toEqual({
       items: [],
       nextCursor: null,

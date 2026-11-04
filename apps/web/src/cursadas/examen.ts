@@ -1,11 +1,16 @@
 import type { InstanciaExamen, ResultadoExamen } from '@uadenet/api-types';
 
-/** Instancias y resultados de examen del Módulo 2 (`x-provisional`: los supusimos nosotros) */
+/** Instancias (categorías) y resultados de examen del Módulo 2 */
 export const INSTANCIA: Record<InstanciaExamen, string> = {
   PARCIAL: 'Parcial',
   RECUPERATORIO: 'Recuperatorio',
+  INTEGRADOR: 'Integrador',
   FINAL: 'Final',
 };
+
+/** Una categoría que no conocemos llega como null: el catálogo del Módulo 2 puede crecer */
+export const instanciaLegible = (instancia?: InstanciaExamen | null) =>
+  instancia ? INSTANCIA[instancia] : '—';
 
 export const RESULTADO: Record<ResultadoExamen, string> = {
   APROBADO: 'Aprobado',

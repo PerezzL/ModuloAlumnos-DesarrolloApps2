@@ -184,8 +184,8 @@ rutas de API propias, que duplicarían el rol del BFF).
 | Identidad y sesión (id del alumno) | CORE | Lee el token / headers del Gateway |
 | Datos del alumno (nombre, plan) | Módulo 8 | Consulta |
 | Cursos, períodos, correlatividades | Módulo 9 | Consulta y cachea |
-| Inscripciones y situación final | Módulo 9 | Consulta y da de alta |
-| Asistencia y notas parciales | Módulo 2 | Consulta |
+| Inscripciones y situación | Módulo 9 | Consulta y da de alta |
+| Asistencia, notas parciales y nota final (actas) | Módulo 2 | Consulta |
 | Reservas de comedor | Módulo 4 | Muestra en el calendario |
 | Eventos e inscripción a eventos | Módulo 6 | Muestra en el calendario |
 | Saldo | CORE | Muestra e inicia cargas |
@@ -238,7 +238,7 @@ socket.on("notification.created", (n) => {
 - La notificación se persiste antes de emitirse. Al conectar o reconectar hay que pedir
   `GET /api/v1/notifications`.
 - Payload: `id`, `type`, `title`, `message`, `actionUrl`, `read`, `timestamp`.
-- Tipos: `EXAM_RESULT_PUBLISHED`, `LIBRARY_PENALTY_APPLIED`, `EVENT_REMINDER`.
+- Tipos: `TEACHER_EXAM_RESULT_PUBLISHED`, `LIBRARY_PENALTY_APPLIED`, `EVENT_REMINDER`.
 - Al hacer clic, el frontend navega según `actionUrl`.
 - REST: `GET /api/v1/notifications` (paginado), `GET /api/v1/notifications/unread-count`,
   `PATCH /api/v1/notifications/{id}`, `POST /api/v1/notifications/read-all`.
@@ -262,9 +262,9 @@ Definida en [`openapi.yaml`](../openapi.yaml). Rutas relativas a `/api/v1/studen
 | `GET /me` | Header y Home | CORE · Módulo 8 |
 | `GET /inscripcion/oferta` | Inscripción a materias | Módulos 9 y 8 |
 | `POST /inscripciones` | Inscripción a materias | Módulo 9 |
-| `GET /cursadas` | Historial académico | Módulo 9 |
+| `GET /cursadas` | Historial académico | Módulos 9 y 2 |
 | `GET /cursadas/{cursoId}` | Detalle de cursada | Módulos 9 y 2 |
-| `GET /cursadas/{cursoId}/notas/{notaId}` | Detalle de nota | Módulo 2 |
+| `GET /cursadas/{cursoId}/notas/{notaId}` | Detalle de nota | Módulos 9, 2 y 8 |
 | `GET /calendario` | Calendario académico | Módulos 4, 6 y 9 |
 | `GET /compras` | Historial de compras | Módulo 5 |
 | `GET /compras/{orderId}` | Detalle de compra | Módulo 5 |
@@ -283,14 +283,16 @@ Definida en [`openapi.yaml`](../openapi.yaml). Rutas relativas a `/api/v1/studen
 - Sanciones y recordatorios de eventos redirigen a los portales de Biblioteca y Eventos;
   el detalle de la nota es una página propia.
 - El id del alumno se trata como string opaco.
+- La nota final sale de las actas del Módulo 2; la situación de la materia, del Módulo 9. No
+  hay notificación de nota final.
+- La condición por asistencia la calcula el Módulo 2; el portal muestra el porcentaje contra
+  el mínimo que informa, sin calcular faltas restantes.
 - El frontend consume directo de CORE auth, notificaciones y saldo; el BFF expone solo lo
   que agrega o traduce de otros módulos.
 
 **Abiertas**
 
 - Rutas definitivas de los módulos 4, 5, 8 y 9 detrás del Gateway.
-- Fuente única de la notificación de nota final (Módulo 2 o Módulo 9).
-- Cómo se muestra el límite de inasistencias en el detalle de cursada.
 
 **Definidas por la consigna o por CORE (no se discuten)**
 

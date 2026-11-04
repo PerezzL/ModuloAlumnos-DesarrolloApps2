@@ -33,6 +33,13 @@ export function aFicha(alumno: Alumno, datos: unknown): FichaAlumno {
   };
 }
 
+/** Nombre y apellido de un usuario de Backoffice; null si no tiene ninguno de los dos. */
+export function aNombreCompleto(datos: unknown): string | null {
+  const usuario = parsearOrigen('BACKOFFICE', UsuarioBackoffice, datos);
+  const nombre = [usuario.firstName, usuario.lastName].filter(Boolean).join(' ');
+  return nombre || null;
+}
+
 /** Backoffice no conoce al alumno: la ficha queda solo con la identidad del token. */
 export function fichaSoloIdentidad(alumno: Alumno): FichaAlumno {
   if (!alumno.email) throw respuestaInvalida('BACKOFFICE', 'El usuario no existe en Backoffice');

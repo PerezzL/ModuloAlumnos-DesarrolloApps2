@@ -26,7 +26,7 @@ y pasos. El porqué de cada decisión está en [`arquitectura.md`](arquitectura.
 | — | Despliegue | Proveedor sin elegir; todo configurable por variables de entorno |
 | — | Equipo | Sin reparto: el trabajo lo hace una persona con el agente. Sin revisores obligatorios ni protección de `main` |
 | 11 | Oferta sin `planId` | Si Backoffice no devuelve el `planId` (o no responde), la oferta se pide sin filtrar por plan y se informa con `filtradaPorPlan: false` (ver abajo) |
-| 12 | Módulo 2 sin contrato | El `examId` del `actionUrl` es el `notaId`; un 404 del Módulo 2 para un curso que el Módulo 9 tiene cuenta como falla de `DOCENTE`; asistencia y notas fallan por separado; alerta de faltas con 1 o 0 restantes (ver [`integraciones.md`](integraciones.md)) |
+| 12 | Módulo 2 | El `examId` es el `notaId`; un 404 del Módulo 2 para un curso que el Módulo 9 tiene cuenta como falla de `DOCENTE`; cada llamada falla por separado. Con el contrato confirmado (bloque `docente-contrato`): condición por asistencia contra el mínimo que informa el Módulo 2, sin faltas restantes; nota final desde sus actas; docente desde Backoffice; sin observaciones (ver [`integraciones.md`](integraciones.md)) |
 
 Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 
@@ -83,6 +83,7 @@ confirme el campo, se revisa si el caso sigue haciendo falta.
 | C · Features firmes | Header/Home (`GET /me`), Calendario, Saldo, Centro de notificaciones |
 | D · Features provisionales | Inscripción, Historial, Compras |
 | E · Módulo 2 | Detalle de cursada y detalle de nota, contra la suposición del contrato |
+| Docente contrato | Asistencia, notas, nota final y notificación con el contrato confirmado del Módulo 2 |
 | Entrega 2 | Guion de demo (E01) y ajustes que surjan al ensayarla |
 
 Criterio: primero lo que tiene contrato firme y lo que deja armado un patrón reutilizable.
@@ -124,13 +125,14 @@ Cada paso termina con algo que se puede correr y verificar.
 Aplicadas (T03): ítem de comedor con `todoElDia: true` y sin hora; `GET /calendario` devuelve
 400 `RANGO_INVALIDO` si el rango supera 62 días; `asistencia` nullable válido en OpenAPI 3.0.
 
-Pendiente para el front: el deep link de la nota depende del `actionUrl` del Módulo 2; la
-traducción de `actionUrl` a ruta propia se aísla en un solo lugar.
+Pendiente para el front: el Módulo 2 espera que le digamos la ruta del `actionUrl` de la nota
+(propuesta: `/cursadas/{courseId}/notas/{examId}`); hasta entonces `destino.ts` acepta las dos.
 
 ## Pendientes externos
 
 - **CORE:** dominio de los portales (por la cookie de refresh), URL pública o red compartida,
   ambiente de pruebas, credenciales de servicio si hicieran falta.
-- **Módulo 2:** endpoints y respuesta de asistencia y notas; formato del `actionUrl`.
+- **Módulo 2:** confirmar la ruta del `actionUrl` que les propusimos. El acceso con el token
+  del alumno se ve con CORE.
 - **Módulo 8:** campos del endpoint de usuarios y si incluye `planId`.
 - Resto: ver [`integraciones.md`](integraciones.md).

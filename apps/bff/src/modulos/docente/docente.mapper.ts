@@ -1,49 +1,76 @@
-import type { Asistencia, NotaResumen } from '@uadenet/api-types';
+import type { Asistencia, InstanciaExamen, NotaResumen } from '@uadenet/api-types';
 import type { z } from 'zod';
 import { idOpaco, parsearOrigen } from '../comun';
-import type { NotaConDocente } from './docente.modelo';
-import { AsistenciaAlumno, Nota, Notas } from './docente.origen';
+import type { NotaConDocente, NotasCurso } from './docente.modelo';
+import { AsistenciaAlumno, ExamenAlumno, NotasAlumno, ResultadosAlumno } from './docente.origen';
 
 /**
- * Asistencia del alumno en el curso. Límite y faltas restantes pasan tal como llegan: si el
- * Módulo 2 no los informa quedan en null y el portal no los calcula. Las clases, por fecha.
+ * Asistencia del alumno en el curso. Porcentaje, mínimo y condición pasan tal como llegan: el
+ * portal no los calcula. Las clases, por fecha.
  */
 export function aAsistencia(datos: unknown): Asistencia {
   const a = parsearOrigen('DOCENTE', AsistenciaAlumno, datos);
   return {
-    clasesDictadas: a.clasesDictadas,
-    presentes: a.presentes,
-    ausentes: a.ausentes,
-    porcentaje: a.porcentaje,
-    limiteInasistencias: a.limiteInasistencias ?? null,
-    inasistenciasRestantes: a.inasistenciasRestantes ?? null,
-    clases: (a.clases ?? [])
-      .map((c) => ({ fecha: c.fecha, presente: c.presente }))
+    clasesDictadas: a.classesRecorded,
+    presentes: a.present,
+    justificadas: a.justified,
+    ausentes: a.absences,
+    porcentaje: a.attendancePercentage,
+    porcentajeMinimo: a.threshold,
+    condicion: a.condition,
+    clases: a.classes
+      .map((c) => ({ fecha: c.date, estado: c.status ?? null, comentario: c.note ?? null }))
       .sort((x, y) => x.fecha.localeCompare(y.fecha)),
   };
 }
 
-/** El `examId` del Módulo 2 es nuestro `notaId`. Sin nota todavía, sin `resultado`. */
-const aNotaResumen = (n: z.infer<typeof Nota>): NotaResumen => ({
-  notaId: idOpaco(n.examId),
-  instancia: n.instancia,
-  ...(n.titulo !== undefined && { titulo: n.titulo }),
-  ...(n.fecha !== undefined && { fecha: n.fecha }),
-  nota: n.nota ?? null,
-  ...(n.resultado != null && { resultado: n.resultado }),
-});
+const INSTANCIAS: ReadonlySet<string> = new Set<InstanciaExamen>([
+  'PARCIAL',
+  'RECUPERATORIO',
+  'INTEGRADOR',
+  'FINAL',
+]);
 
-/** Notas del alumno en el curso, en el orden en que las da el Módulo 2 */
-export function aNotas(datos: unknown): NotaResumen[] {
-  return parsearOrigen('DOCENTE', Notas, datos).map(aNotaResumen);
+/** La categoría del examen, si es una de las nuestras. El catálogo puede crecer: si no, null. */
+const instancia = (categoria: string | null | undefined) =>
+  categoria != null && INSTANCIAS.has(categoria) ? (categoria as InstanciaExamen) : null;
+
+/** El resultado, solo si el Módulo 2 lo informa: ausente, o aprobado/desaprobado por `passed`. */
+function resultado(e: z.infer<typeof ExamenAlumno>): NotaResumen['resultado'] {
+  if (e.absent) return 'AUSENTE';
+  if (e.passed == null) return undefined;
+  return e.passed ? 'APROBADO' : 'DESAPROBADO';
 }
 
-/** Una nota con lo que solo va en el detalle: docente y observaciones, si el Módulo 2 las da */
-export function aNotaConDocente(datos: unknown): NotaConDocente {
-  const n = parsearOrigen('DOCENTE', Nota, datos);
+/** El `examId` del Módulo 2 es nuestro `notaId`. Sin nota todavía, sin `resultado`. */
+function aNota(e: z.infer<typeof ExamenAlumno>): NotaConDocente {
+  const r = resultado(e);
   return {
-    ...aNotaResumen(n),
-    docente: n.docente ?? null,
-    observaciones: n.observaciones ?? null,
+    notaId: idOpaco(e.examId),
+    instancia: instancia(e.category),
+    titulo: e.name,
+    fecha: e.date,
+    nota: e.grade ?? null,
+    ...(r !== undefined && { resultado: r }),
+    docenteId: e.gradedBy ?? null,
   };
+}
+
+/** Notas del alumno en el curso, en el orden en que las da el Módulo 2, sin las canceladas. */
+export function aNotasCurso(datos: unknown): NotasCurso {
+  const n = parsearOrigen('DOCENTE', NotasAlumno, datos);
+  return {
+    notas: n.exams.filter((e) => e.status !== 'CANCELADO').map(aNota),
+    promedio: n.average ?? null,
+  };
+}
+
+/** Resultados de actas del alumno → nota final por curso (null si el acta no tiene nota). */
+export function aNotasFinales(datos: unknown): ReadonlyMap<string, number | null> {
+  return new Map(
+    parsearOrigen('DOCENTE', ResultadosAlumno, datos).map((r) => [
+      idOpaco(r.courseId),
+      r.grade ?? null,
+    ]),
+  );
 }

@@ -2,7 +2,7 @@ import { Bell, BookX, CalendarClock, GraduationCap, type LucideIcon } from 'luci
 
 /** Variante visual por `type`. Un tipo que no conocemos usa la genérica. */
 const VARIANTES: Record<string, { etiqueta: string; icono: LucideIcon; clases: string }> = {
-  EXAM_RESULT_PUBLISHED: {
+  TEACHER_EXAM_RESULT_PUBLISHED: {
     etiqueta: 'Nota publicada',
     icono: GraduationCap,
     clases: 'bg-examen/10 text-examen',

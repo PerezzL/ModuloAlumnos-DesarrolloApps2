@@ -3,47 +3,52 @@ import { fixture } from '../fixtures.js';
 import { enviarProblema } from '../problema.js';
 import { ALUMNO_DEMO } from './comun.js';
 
-interface Nota {
-  examId: string;
+interface Resultado {
+  courseId: string | number;
 }
 
 /**
- * Módulo 2. No hay contrato: rutas y respuestas son nuestra suposición (los schemas
- * `Asistencia` y `NotaResumen`/`NotaDetalle` de openapi.yaml). Cada nota se identifica por el
- * `examId` que llega en el `actionUrl` de la notificación de examen.
+ * Módulo 2, con las rutas por alumno de su OpenAPI (`teacher-service`). Los `courseId` de las
+ * fixtures son los de las fixtures académicas: en el Módulo 2 son enteros, pero el id es el
+ * mismo que en el Módulo 9.
  */
 export function moduloDocente() {
   const router = Router();
-  const base = '/api/v1/cursos/:cursoId/alumnos/:alumnoId';
+  const base = '/api/v1/students/:studentId/courses/:courseId';
 
-  /** Datos del curso para el alumno, o undefined si no hay */
-  const delCurso = <T>(archivo: string, req: Request) => {
-    if (req.params.alumnoId !== ALUMNO_DEMO) return undefined;
-    const porCurso = fixture<Record<string, T>>(archivo);
-    const cursoId = String(req.params.cursoId);
-    return Object.hasOwn(porCurso, cursoId) ? porCurso[cursoId] : undefined;
+  /** Respuesta del curso para el alumno, o undefined si no cursa ahí */
+  const delCurso = (archivo: string, req: Request) => {
+    if (req.params.studentId !== ALUMNO_DEMO) return undefined;
+    const porCurso = fixture<Record<string, unknown>>(archivo);
+    const courseId = String(req.params.courseId);
+    return Object.hasOwn(porCurso, courseId) ? porCurso[courseId] : undefined;
   };
   const noInscripto = (res: Response) =>
     enviarProblema(res, 404, 'NOT_FOUND', 'El alumno no cursa ese curso');
 
-  router.get(`${base}/asistencia`, (req, res) => {
-    const asistencia = delCurso('teacher/asistencia.provisional.json', req);
+  router.get(`${base}/attendance`, (req, res) => {
+    const asistencia = delCurso('teacher/attendance.json', req);
     if (!asistencia) return noInscripto(res);
     res.json(asistencia);
   });
 
-  router.get(`${base}/notas`, (req, res) => {
-    const notas = delCurso<Nota[]>('teacher/notas.provisional.json', req);
+  router.get(`${base}/grades`, (req, res) => {
+    const notas = delCurso('teacher/grades.json', req);
     if (!notas) return noInscripto(res);
     res.json(notas);
   });
 
-  router.get(`${base}/notas/:notaId`, (req, res) => {
-    const nota = delCurso<Nota[]>('teacher/notas.provisional.json', req)?.find(
-      (n) => n.examId === req.params.notaId,
+  /** Resultados de actas del alumno; `courseId` los filtra. Sin resultados, lista vacía. */
+  router.get('/api/v1/students/:studentId/results', (req, res) => {
+    const porAlumno = fixture<Record<string, Resultado[]>>('teacher/results.json');
+    const { studentId } = req.params;
+    const resultados = Object.hasOwn(porAlumno, studentId) ? porAlumno[studentId]! : [];
+    const { courseId } = req.query;
+    res.json(
+      courseId === undefined
+        ? resultados
+        : resultados.filter((r) => String(r.courseId) === String(courseId)),
     );
-    if (!nota) return enviarProblema(res, 404, 'NOT_FOUND', 'Nota inexistente');
-    res.json(nota);
   });
 
   return router;

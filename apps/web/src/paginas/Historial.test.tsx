@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { cursadasBase } from '@/test/cursadas';
 import { renderApp } from '@/test/render';
 import { BFF, reiniciarCore, servidor } from '@/test/servidor';
 
@@ -71,9 +72,32 @@ describe('historial académico', () => {
   });
 
   it('sin cursadas, estado vacío', async () => {
-    servidor.use(http.get(`${BFF}/cursadas`, () => HttpResponse.json({ items: [] })));
+    servidor.use(
+      http.get(`${BFF}/cursadas`, () => HttpResponse.json({ items: [], fuentesConError: [] })),
+    );
     renderApp('/mis-cursos');
     expect(await screen.findByText('Todavía no cursaste materias')).toBeInTheDocument();
+  });
+
+  it('si Docente no responde, el historial sale igual con un aviso y sin notas finales', async () => {
+    servidor.use(
+      http.get(`${BFF}/cursadas`, () =>
+        HttpResponse.json({
+          items: cursadasBase().map((c) => ({ ...c, notaFinal: null })),
+          fuentesConError: ['DOCENTE'],
+        }),
+      ),
+    );
+    renderApp('/mis-cursos');
+    const tabla = await screen.findByRole('table', { name: 'Historial académico' });
+    expect(screen.getByRole('alert')).toHaveTextContent('No pudimos cargar las notas finales');
+    expect(within(tabla).getAllByLabelText('Sin nota')).toHaveLength(3);
+  });
+
+  it('sin fallas, no hay aviso', async () => {
+    renderApp('/mis-cursos');
+    await screen.findByRole('table', { name: 'Historial académico' });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('si Gestión Académica no responde, error con reintento', async () => {

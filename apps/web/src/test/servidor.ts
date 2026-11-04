@@ -189,10 +189,10 @@ const notificacionesIniciales = (): NotificacionCore[] => [
   },
   {
     id: 'n-nota',
-    type: 'EXAM_RESULT_PUBLISHED',
+    type: 'TEACHER_EXAM_RESULT_PUBLISHED',
     title: 'Se publicó tu nota de Bases de Datos I',
     message: '1er parcial: 7 (aprobado)',
-    actionUrl: '/teacher/courses/curso-bd1/exams/exam-p1',
+    actionUrl: '/student/courses/curso-bd1/exams/exam-p1',
     readAt: '2026-09-16T10:00:00.000Z',
     createdAt: '2026-09-15T20:15:00.000Z',
   },
@@ -249,7 +249,9 @@ export const handlersNotificaciones = [
 export const handlersBff = [
   http.get(`${BFF}/calendario`, () => HttpResponse.json(calendarioOctubre)),
   http.get(`${BFF}/inscripcion/oferta`, () => HttpResponse.json(ofertaBase())),
-  http.get(`${BFF}/cursadas`, () => HttpResponse.json({ items: cursadasBase() })),
+  http.get(`${BFF}/cursadas`, () =>
+    HttpResponse.json({ items: cursadasBase(), fuentesConError: [] }),
+  ),
   http.get(`${BFF}/cursadas/:cursoId`, ({ params }) =>
     HttpResponse.json({ ...cursadaDetalleBase(), cursoId: params.cursoId }),
   ),

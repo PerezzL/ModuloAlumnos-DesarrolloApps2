@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixture } from '../../../test/fixtures';
 import { ProblemaError } from '../../comun/problema';
-import { aFicha, aListaSedes, aSedes } from './backoffice.mapper';
+import { aFicha, aListaSedes, aNombreCompleto, aSedes } from './backoffice.mapper';
 
 const usuarios = fixture<Record<string, Record<string, unknown>>>(
   'backoffice/users.provisional.json',
@@ -141,5 +141,18 @@ describe('catálogo de sedes → ListaSedes', () => {
         { id: 's-2', nombre: 'Sede Recoleta' },
       ],
     });
+  });
+});
+
+describe('mapper de Backoffice → nombre de un usuario', () => {
+  const docente = usuarios['7c1d9e2a-3b4f-4a5c-9d6e-8f7a0b1c2d3e']!;
+
+  it('nombre y apellido', () => {
+    expect(aNombreCompleto(docente)).toBe('Laura Gómez');
+  });
+
+  it('con uno solo de los dos, ese; sin ninguno, null', () => {
+    expect(aNombreCompleto({ ...docente, firstName: undefined })).toBe('Gómez');
+    expect(aNombreCompleto({ ...docente, firstName: undefined, lastName: undefined })).toBeNull();
   });
 });

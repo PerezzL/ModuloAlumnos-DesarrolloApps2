@@ -2,12 +2,23 @@ import type { NotaResumen } from '@uadenet/api-types';
 import { FileText } from 'lucide-react';
 import { Link } from 'react-router';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
-import { INSTANCIA, notaLegible, resultadoLegible, rutaNota } from './examen';
+import { instanciaLegible, notaLegible, resultadoLegible, rutaNota } from './examen';
 import { fechaLarga } from './formato';
 import { Seccion } from './Seccion';
 
-/** Notas de parciales, recuperatorios y finales (4.5). Cada una lleva a su detalle (4.7). */
-export function SeccionNotas({ cursoId, notas }: { cursoId: string; notas: NotaResumen[] }) {
+/**
+ * Notas de parciales, recuperatorios, trabajos integradores y finales (4.5). Cada una lleva a
+ * su detalle (4.7). El promedio se muestra solo si el Módulo 2 lo informa.
+ */
+export function SeccionNotas({
+  cursoId,
+  notas,
+  promedio,
+}: {
+  cursoId: string;
+  notas: NotaResumen[];
+  promedio?: number | null;
+}) {
   return (
     <Seccion id="titulo-notas" titulo="Notas">
       {notas.length === 0 ? (
@@ -47,11 +58,11 @@ export function SeccionNotas({ cursoId, notas }: { cursoId: string; notas: NotaR
                       to={rutaNota(cursoId, n.notaId)}
                       className="font-semibold text-primario-oscuro hover:underline"
                     >
-                      {n.titulo ?? INSTANCIA[n.instancia]}
+                      {n.titulo}
                     </Link>
                   </td>
-                  <td className="py-3 pr-4">{INSTANCIA[n.instancia]}</td>
-                  <td className="py-3 pr-4">{n.fecha ? fechaLarga(n.fecha) : '—'}</td>
+                  <td className="py-3 pr-4">{instanciaLegible(n.instancia)}</td>
+                  <td className="py-3 pr-4">{fechaLarga(n.fecha)}</td>
                   <td className="py-3 pr-4 text-right font-semibold tabular-nums">
                     {notaLegible(n.nota)}
                   </td>
@@ -60,6 +71,11 @@ export function SeccionNotas({ cursoId, notas }: { cursoId: string; notas: NotaR
               ))}
             </tbody>
           </table>
+          {promedio != null && (
+            <p className="pt-3 text-right text-sm text-etiqueta">
+              Promedio: <span className="font-semibold tabular-nums">{notaLegible(promedio)}</span>
+            </p>
+          )}
         </div>
       )}
     </Seccion>

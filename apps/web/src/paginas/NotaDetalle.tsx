@@ -6,7 +6,7 @@ import { Cargando } from '@/componentes/Cargando';
 import { ErrorCarga } from '@/componentes/ErrorCarga';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { useNota } from '@/cursadas/consultas';
-import { INSTANCIA, notaLegible, resultadoLegible } from '@/cursadas/examen';
+import { instanciaLegible, notaLegible, resultadoLegible } from '@/cursadas/examen';
 import { fechaLarga } from '@/cursadas/formato';
 
 const Volver = ({ cursoId }: { cursoId: string }) => (
@@ -20,8 +20,9 @@ const Volver = ({ cursoId }: { cursoId: string }) => (
 );
 
 /**
- * Detalle de la nota de un examen (4.7). Se llega desde la notificación `EXAM_RESULT_PUBLISHED`
- * o desde las notas del detalle de cursada. Las observaciones se muestran solo si vienen.
+ * Detalle de la nota de un examen (4.7). Se llega desde la notificación
+ * `TEACHER_EXAM_RESULT_PUBLISHED` o desde las notas del detalle de cursada. El docente se
+ * muestra solo si viene.
  */
 export function NotaDetalle() {
   const { cursoId = '', notaId = '' } = useParams();
@@ -59,7 +60,7 @@ export function NotaDetalle() {
       >
         <div>
           <h2 id="titulo-nota" className="text-lg font-semibold">
-            {data.titulo ?? INSTANCIA[data.instancia]}
+            {data.titulo}
           </h2>
           <p className="text-sm text-texto-suave">
             {[data.asignatura.nombre, data.comision && `Comisión ${data.comision}`]
@@ -73,24 +74,14 @@ export function NotaDetalle() {
             {notaLegible(data.nota)}
           </Dato>
           <Dato titulo="Resultado">{resultadoLegible(data.resultado)}</Dato>
-          <Dato titulo="Instancia">{INSTANCIA[data.instancia]}</Dato>
-          <Dato titulo="Fecha">{data.fecha ? fechaLarga(data.fecha) : '—'}</Dato>
+          <Dato titulo="Instancia">{instanciaLegible(data.instancia)}</Dato>
+          <Dato titulo="Fecha">{fechaLarga(data.fecha)}</Dato>
         </dl>
 
-        {(data.docente || data.observaciones) && (
-          <dl className="flex flex-col gap-3 border-t border-borde-suave pt-4 text-sm">
-            {data.docente && (
-              <div>
-                <dt className="text-xs text-texto-suave">Docente</dt>
-                <dd>{data.docente}</dd>
-              </div>
-            )}
-            {data.observaciones && (
-              <div>
-                <dt className="text-xs text-texto-suave">Observaciones del docente</dt>
-                <dd className="whitespace-pre-line">{data.observaciones}</dd>
-              </div>
-            )}
+        {data.docente && (
+          <dl className="border-t border-borde-suave pt-4 text-sm">
+            <dt className="text-xs text-texto-suave">Docente</dt>
+            <dd>{data.docente}</dd>
           </dl>
         )}
       </section>
