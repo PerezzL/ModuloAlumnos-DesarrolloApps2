@@ -17,7 +17,7 @@ export const ALUMNO = 'alumno-opaco-1';
  * BFF completo para tests e2e: JWKS de prueba y Gateway simulado con msw. Cada test agrega
  * los handlers de los módulos que necesita con `server.use(...)`; un pedido sin handler falla.
  */
-export function prepararE2E() {
+export function prepararE2E(opciones: { claims?: Record<string, unknown> } = {}) {
   let jwks: { keys: object[] } = { keys: [] };
   const server = setupServer(http.get(envDePrueba.JWKS_URL, () => HttpResponse.json(jwks)));
   const ctx = {
@@ -43,7 +43,7 @@ export function prepararE2E() {
   beforeAll(async () => {
     aplicarEnvDePrueba();
     const emisor = await EmisorDePrueba.crear();
-    ctx.token = await emisor.firmar({ sub: ALUMNO });
+    ctx.token = await emisor.firmar({ sub: ALUMNO, claims: opciones.claims });
     jwks = { keys: [emisor.jwk] };
     // supertest le habla al BFF por localhost: eso pasa; un módulo sin handler, falla
     server.listen({

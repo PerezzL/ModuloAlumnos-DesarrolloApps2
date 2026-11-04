@@ -17,6 +17,7 @@ export interface ClaimsUsuario extends JWTPayload {
   email: string;
   roles: string[];
   permissions: string[];
+  careerIds: string[];
 }
 
 interface Sesion {
@@ -55,6 +56,7 @@ export class Tokens {
       email: usuario.email,
       roles: usuario.roles,
       permissions: usuario.permissions,
+      careerIds: usuario.careerIds,
     })
       .setProtectedHeader({ alg: 'RS256', kid: this.jwk.kid })
       .setSubject(usuario.id)

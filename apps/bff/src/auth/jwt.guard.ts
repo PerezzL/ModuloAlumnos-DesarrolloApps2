@@ -15,6 +15,18 @@ import { ES_PUBLICO } from './publico.decorator';
 const noAutenticado = () => new ProblemaError(401, 'AUTH_TOKEN_INVALID', 'No autenticado');
 
 /**
+ * Claim `careerIds` del token de CORE → ids opacos. PROVISIONAL: CORE lo devuelve en el login
+ * y en `/auth/me`, pero no confirmó que viaje en el JWT. Un claim ausente o con otra forma se
+ * ignora (undefined): la carrera sale entonces de Backoffice.
+ */
+export function idsDeCarrera(claim: unknown): string[] | undefined {
+  if (!Array.isArray(claim)) return undefined;
+  return claim
+    .filter((id): id is string | number => typeof id === 'string' || typeof id === 'number')
+    .map(String);
+}
+
+/**
  * Valida localmente el JWT de CORE en cada request (defensa en profundidad: el Gateway ya lo
  * validó). Firma RS256 contra el JWKS, issuer, audience y expiración. Las claves se cachean
  * sin vencimiento y solo se vuelven a pedir ante un `kid` desconocido.
@@ -48,6 +60,7 @@ export class JwtGuard implements CanActivate {
 
     let sub: string | undefined;
     let email: unknown;
+    let carreraIds: string[] | undefined;
     try {
       const { payload } = await jwtVerify(header.slice(7), this.jwks, {
         algorithms: ['RS256'],
@@ -57,6 +70,7 @@ export class JwtGuard implements CanActivate {
       });
       sub = payload.sub;
       email = payload.email;
+      carreraIds = idsDeCarrera(payload.careerIds);
     } catch (error) {
       this.logger.debug({ err: error }, 'Token rechazado');
       throw noAutenticado();
@@ -67,7 +81,11 @@ export class JwtGuard implements CanActivate {
     const xUserId = req.header('x-user-id');
     if (xUserId !== undefined && xUserId !== sub) throw noAutenticado();
 
-    req.alumno = { id: sub, ...(typeof email === 'string' && { email }) };
+    req.alumno = {
+      id: sub,
+      ...(typeof email === 'string' && { email }),
+      ...(carreraIds && { carreraIds }),
+    };
     return true;
   }
 }

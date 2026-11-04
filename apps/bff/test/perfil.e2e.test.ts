@@ -110,6 +110,44 @@ describe('GET /me · nombre de la carrera', () => {
   });
 });
 
+// Token de CORE con `careerIds`: la carrera sale de ahí y Backoffice queda de respaldo
+describe('GET /me · carrera del token', () => {
+  const e2e = prepararE2E({ claims: { careerIds: [3] } });
+
+  it('usa la carrera del token aunque Backoffice informe otra primero', async () => {
+    e2e.server.use(
+      http.get(USUARIO, () =>
+        HttpResponse.json({
+          ...datos,
+          careers: [
+            { careerId: '99', planId: '50' },
+            { careerId: '3', planId: '12' },
+          ],
+        }),
+      ),
+      carreras(),
+    );
+    const res = await e2e.get('/me');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ carrera: 'Ingeniería en Informática', planId: '12' });
+    expect(contrato.validar('get', '/me', 200, res.body).errores).toEqual([]);
+  });
+
+  it('si Backoffice no conoce al alumno, la carrera sale igual del token', async () => {
+    e2e.server.use(
+      http.get(USUARIO, () => HttpResponse.json({}, { status: 404 })),
+      carreras(),
+    );
+    const res = await e2e.get('/me');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      id: ALUMNO,
+      email: 'v.moreno@uade.edu.ar',
+      carrera: 'Ingeniería en Informática',
+    });
+  });
+});
+
 describe('GET /me · caché de carreras', () => {
   const e2e = prepararE2E();
 

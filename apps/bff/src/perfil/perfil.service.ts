@@ -6,8 +6,9 @@ import { BackofficeAdapter } from '../modulos/backoffice/backoffice.adapter';
 
 /**
  * `GET /me`: identidad de CORE (el token) + ficha de Backoffice + nombre de la carrera del
- * Módulo 9 (Backoffice solo da el id). Si el nombre no se puede resolver, el perfil sale
- * igual sin `carrera`: es un dato provisional y de presentación.
+ * Módulo 9. El id de la carrera sale del token (`careerIds`) y, si no lo trae, de Backoffice.
+ * Si el nombre no se puede resolver, el perfil sale igual sin `carrera`: es un dato
+ * provisional y de presentación.
  */
 @Injectable()
 export class PerfilService {

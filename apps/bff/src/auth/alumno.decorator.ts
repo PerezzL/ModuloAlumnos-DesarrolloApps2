@@ -5,6 +5,11 @@ export interface Alumno {
   /** Id opaco del alumno (claim `sub`). No parsear ni asumir formato. */
   id: string;
   email?: string;
+  /**
+   * Carreras del alumno según el token (claim `careerIds` de CORE, ids del Módulo 9 como
+   * texto). Ausente si el token no las trae: entonces se usan las de Backoffice.
+   */
+  carreraIds?: string[];
 }
 
 export interface RequestConAlumno extends Request {
