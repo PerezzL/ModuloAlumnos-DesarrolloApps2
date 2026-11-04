@@ -150,12 +150,12 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 | | |
 | --- | --- |
-| Falta confirmar | Todo: endpoints y respuesta de asistencia y notas, formato del `actionUrl`, límite de inasistencias, ids compartidos con el Módulo 9 |
-| Fixtures | `packages/fixtures/teacher/asistencia.provisional.json`, `notas.provisional.json` |
-| Adaptador | `apps/bff/src/modulos/docente/`. Lo usa `apps/bff/src/cursadas/` (detalle de cursada y de nota) |
-| Front | `apps/web/src/notificaciones/destino.ts` (único lugar que conoce el `actionUrl`); `apps/web/src/cursadas/IndicadorFaltas.tsx` (umbral de la alerta) |
-| Contrato | `Asistencia`, `NotaResumen`, `InstanciaExamen`, `ResultadoExamen` y `NotaDetalle`: suposición nuestra; es lo más probable que cambie |
-| Decisiones | **12**: el `examId` del `actionUrl` es el `notaId`; un 404 del Módulo 2 cuenta como falla de `DOCENTE`; asistencia y notas fallan por separado; alerta con 1 o 0 faltas restantes |
+| Falta confirmar | La ruta del `actionUrl` de `TEACHER_EXAM_RESULT_PUBLISHED` (les propusimos `/cursadas/{courseId}/notas/{examId}`) y el acceso con el token del alumno (con CORE) |
+| Fixtures | `packages/fixtures/teacher/attendance.json`, `grades.json`, `results.json` (confirmadas; los `courseId` siguen los de las fixtures académicas) |
+| Adaptador | `apps/bff/src/modulos/docente/`. Lo usa `apps/bff/src/cursadas/` (historial, detalle de cursada y de nota) |
+| Front | `apps/web/src/notificaciones/destino.ts` (único lugar que conoce el `actionUrl`: cuando confirmen la ruta, dejar una sola); `apps/web/src/cursadas/IndicadorCondicion.tsx` (margen de la alerta) |
+| Contrato | `Asistencia`, `NotaResumen`, `NotaDetalle` y la nota final del historial: confirmados |
+| Decisiones | **12**: el `examId` es el `notaId`; un 404 del Módulo 2 cuenta como falla de `DOCENTE`; cada llamada falla por separado; la nota final sale del Módulo 2 y no del 9; el nombre del docente sale de Backoffice con `gradedBy` |
 | Pruebas y demo | [`pruebas.md`](pruebas.md) "Detalle de cursada y de nota"; [`demo-guide.md`](demo-guide.md) pasos 6 y 7 |
 | Trello | "[Módulo 2 · Docente]…", "[Módulos 2 y 9] Fuente única de la nota final" e "[Integración] Módulo 2" |
 

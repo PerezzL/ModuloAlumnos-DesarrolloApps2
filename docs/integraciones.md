@@ -26,7 +26,7 @@ bajo `/api/v1`. En el BFF, prefijos y rutas son configuración; el CORE falso y 
 
 | Módulo | Ruta informada por el módulo | Ruta pública que usamos |
 | --- | --- | --- |
-| 2 | (sin contrato) | `/api/v1/teacher/cursos/{cursoId}/alumnos/{alumnoId}/asistencia` · `/notas` · `/notas/{notaId}` |
+| 2 | `GET /api/v1/students/{studentId}/courses/{courseId}/attendance` · `/grades` · `/api/v1/students/{studentId}/results` | `/api/v1/teacher/students/{studentId}/courses/{courseId}/attendance` · `/grades` · `/api/v1/teacher/students/{studentId}/results` |
 | 4 | `GET /api/v1/dining/calendar/me` (ruta pública) | `/api/v1/dining/calendar/me` |
 | 5 | `GET /api/v1/store/orders/me` · `/api/v1/store/orders/{id}` (ruta pública) | `/api/v1/store/orders/me` · `/api/v1/store/orders/{id}` |
 | 6 | `GET /api/v1/eventos` · `/api/v1/eventos/{id}` | `/api/v1/events/eventos` · `/api/v1/events/eventos/{id}` |
@@ -82,7 +82,7 @@ Pendiente (la fixture `core/notificaciones.provisional.json` sigue provisional p
 
 | Tema | Suposición |
 | --- | --- |
-| `actionUrl` de `EXAM_RESULT_PUBLISHED` | `/teacher/courses/{courseId}/exams/{examId}` (pendiente con el Módulo 2) |
+| `actionUrl` de `TEACHER_EXAM_RESULT_PUBLISHED` | `/student/courses/{courseId}/exams/{examId}`, provisorio del Módulo 2; les propusimos `/cursadas/{courseId}/notas/{examId}` |
 | `actionUrl` de `LIBRARY_PENALTY_APPLIED` | `/library/{loanId}/penalty` (pendiente con el Módulo 3) |
 | `actionUrl` de `EVENT_REMINDER` | `/events/{eventoId}`, relativa (ejemplo de la sección 8.1) |
 | Paginación de `/notifications` | El OpenAPI solo documenta `read` y devuelve `nextCursor`; seguimos mandando `limit` y `cursor` |
@@ -90,10 +90,10 @@ Pendiente (la fixture `core/notificaciones.provisional.json` sigue provisional p
 Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/destino.ts`, el
 único lugar que conoce su formato):
 
-- `EXAM_RESULT_PUBLISHED` → pantalla propia `/cursadas/{cursoId}/notas/{notaId}`. Suponemos que
-  el `examId` del `actionUrl` es el `notaId` de nuestro contrato (pendiente con el Módulo 2): el
-  adaptador de Docente usa el `examId` de cada nota como `notaId`, así que el listado de notas y
-  la notificación llevan a la misma pantalla.
+- `TEACHER_EXAM_RESULT_PUBLISHED` → pantalla propia `/cursadas/{cursoId}/notas/{notaId}`. Se
+  aceptan la ruta provisoria del Módulo 2 y la que les propusimos; cuando confirmen, queda una.
+  El `examId` es el `notaId` de nuestro contrato (confirmado), así que el listado de notas y la
+  notificación llevan a la misma pantalla.
 - `LIBRARY_PENALTY_APPLIED` y `EVENT_REMINDER` → portal de Biblioteca o de Eventos, con la URL
   base de `VITE_BIBLIOTECA_URL` y `VITE_EVENTOS_URL`. La de Biblioteca es un valor de ejemplo
   hasta que el Módulo 3 confirme la suya.
@@ -102,47 +102,60 @@ Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/d
 
 ## Módulo 2 — Docente
 
+OpenAPI de `teacher-service` y respuestas a nuestras consultas (noviembre 2026).
+
 | Tema | Estado |
 | --- | --- |
-| Servicio de asistencia y notas parciales por alumno y curso | Confirmado; faltan endpoints y respuesta |
-| Eventos de nota parcial y de nota final | Confirmado; falta payload |
-| Formato del `actionUrl` e identificadores (`examId`, `subjectId`) | Pendiente |
-| Quién calcula la situación final | Pendiente |
-| Uso del mismo `cursoId` y `alumnoId` que el Módulo 9 | Pendiente |
-| Límite de inasistencias para quedar libre | Pendiente |
-| Que persistan ellos mismos notas y actas | Pendiente |
-| Fuente única de la nota final (con el Módulo 9) | Pendiente |
+| `GET /api/v1/students/{studentId}/courses/{courseId}/attendance` | Confirmado (agregado a pedido nuestro) |
+| `GET /api/v1/students/{studentId}/courses/{courseId}/grades` | Confirmado (agregado a pedido nuestro) |
+| `GET /api/v1/students/{studentId}/results?courseId=` (nota final) | Confirmado |
+| Mismos ids que el Módulo 9 (`courseId`, `studentId` = `sub`) | Confirmado; `courseId` y `examId` son enteros |
+| Condición por asistencia | Confirmado: la calculan ellos con `threshold` |
+| Catálogo de tipos de examen (`category`) | Confirmado; puede crecer |
+| `gradedBy` | Confirmado: UUID del docente, el mismo de Backoffice |
+| Notificación `TEACHER_EXAM_RESULT_PUBLISHED` | Confirmado |
+| Ruta del `actionUrl` de esa notificación | Provisoria; esperan que les digamos cuál |
+| Acceso con el token del alumno | Pendiente; lo vemos con CORE |
 
-- Publica `teacher.exam-result.published.v1` hacia CORE; nosotros recibimos la notificación
-  `EXAM_RESULT_PUBLISHED`.
-- La notificación no trae el detalle completo del examen: para la página de detalle hay que
-  consultar la API del Módulo 2 con los identificadores del `actionUrl`.
-- **Los schemas `Asistencia`, `NotaResumen` y `NotaDetalle` del [`openapi.yaml`](../openapi.yaml) son una
-  suposición nuestra.** No hay contrato del Módulo 2.
-- Las fixtures (`teacher/*.provisional.json`) y las rutas del CORE falso siguen esa
-  suposición. Rutas supuestas, detrás de `PREFIJO_DOCENTE`:
-  `/cursos/{cursoId}/alumnos/{alumnoId}/asistencia`, `.../notas` y `.../notas/{examId}`.
-- Cada nota se identifica por `examId` (el único id que trae el `actionUrl`) y trae además
-  `docente` y `observaciones`, que solo van en el detalle. Mientras no tiene nota, `nota` y
-  `resultado` vienen en null.
+- **Asistencia:** `threshold` es el porcentaje mínimo para quedar `REGULAR` (hoy 75).
+  Porcentaje = (presentes + justificadas) / clases registradas × 100, sin redondear; la falta
+  justificada cuenta como asistencia. `condition` es `REGULAR` o `LIBRE`. Cada clase trae
+  `date`, `status` (`PRESENTE`, `AUSENTE`, `JUSTIFICADO` o null) y `note`. No informan cuántas
+  faltas quedan.
+- **Notas:** `passingGrade`, `average` y por examen `examId`, `type`, `name`, `category`
+  (`PARCIAL`, `RECUPERATORIO`, `INTEGRADOR`, `FINAL`), `date`, `status` (`PROGRAMADO`,
+  `CANCELADO`), `phase`, `grade`, `absent`, `passed`, `gradedAt`, `gradedBy`. Para la lógica se
+  usa `category`, no `type` (TP_3, etc.). No hay observaciones.
+- **Nota final:** vive en sus actas y se consulta en `/results` (`grade`, `result`, `actaType`,
+  `actaNumber`, `resultDate`…). El evento `teacher.course-result-published.v1` va solo para
+  APROBADO o DESAPROBADO y no genera notificación al alumno.
+- **Eventos:** `teacher.grade-published.v1` (por carga, solo notas nuevas o modificadas) y
+  `teacher.course-result-published.v1`. No los consumimos: no tenemos broker.
 
-Cómo lo usa el BFF (adaptador en `apps/bff/src/modulos/docente/`, detalle en
+Fixtures confirmadas: `teacher/attendance.json` y `teacher/grades.json` (por curso) y
+`teacher/results.json` (por alumno). Sus `courseId` son los de las fixtures académicas, que
+todavía usan ids de texto: en el Módulo 2 son enteros, pero es el mismo id.
+
+Cómo lo usa el BFF (adaptador en `apps/bff/src/modulos/docente/`, servicio en
 `apps/bff/src/cursadas/`):
 
-- Detalle de cursada: pide en paralelo las inscripciones del alumno (Módulo 9), la asistencia
-  y las notas (Módulo 2). Si el curso no está entre las inscripciones, es 404
-  `CURSADA_NO_ENCONTRADA`, responda lo que responda el Módulo 2. Si falla el Módulo 9, falla
-  todo el detalle.
-- Si falla el Módulo 2 (caído, timeout, respuesta inválida o un 404 para un curso que el
-  Módulo 9 sí tiene), la cursada sale igual con lo que no cargó en null y `DOCENTE` en
-  `fuentesConError`. Asistencia y notas son llamadas distintas: si falla una sola, solo esa
-  queda en null.
-- Límite de inasistencias y faltas restantes pasan tal como llegan. Si no vienen, quedan en
-  null y el portal no las calcula a partir de las ausencias; la pantalla no muestra el
-  indicador. La alerta de "quedan pocas" (1 o 0) es una constante del front.
-- Detalle de nota: pide en paralelo las inscripciones (materia, comisión y confirmación de que
-  el curso es del alumno) y la nota. Curso ajeno o nota inexistente: 404
-  `NOTA_NO_ENCONTRADA`. Si falla el Módulo 2, falla la pantalla.
+- **Detalle de cursada:** pide en paralelo las inscripciones (Módulo 9), la asistencia, las
+  notas y la nota final de ese curso (Módulo 2). Si el curso no está entre las inscripciones,
+  es 404 `CURSADA_NO_ENCONTRADA`. Si falla el Módulo 9, falla todo el detalle. Si falla una
+  llamada al Módulo 2 (caído, timeout, respuesta inválida o un 404 para un curso que el Módulo 9
+  sí tiene), solo esa parte queda en null y `DOCENTE` va en `fuentesConError`.
+- **Asistencia:** porcentaje, mínimo y condición pasan tal como llegan; el portal no calcula ni
+  la condición ni las faltas restantes. La alerta "cerca del mínimo" (5 puntos) es una
+  constante del front.
+- **Notas:** los exámenes cancelados no se listan. `instancia` sale de `category`; una que no
+  conocemos queda en null y la pantalla muestra solo el nombre. Resultado: `absent` →
+  `AUSENTE`, `passed` → `APROBADO`/`DESAPROBADO`; si no viene, no se informa.
+- **Detalle de nota:** sale de las notas del curso (no hay ruta por examen para el alumno). El
+  nombre del docente se busca en Backoffice con `gradedBy` y se cachea una hora; si Backoffice
+  falla o no lo conoce, `docente` va en null y la pantalla sale igual.
+- **Historial:** la nota final sale de `/results` en un solo pedido, cruzado por curso; la
+  situación sigue saliendo del Módulo 9. Si falla el Módulo 2, el historial sale sin notas
+  finales y con `DOCENTE` en `fuentesConError`.
 
 ## Módulo 3 — Biblioteca
 
@@ -364,7 +377,8 @@ que mande solo un `siteId`; hoy, Comedor y el filtro por sede de Compras):
 
 ## Módulo 9 — Gestión Académica y Planificación
 
-Dueño de la cursada (entidad Curso), de la inscripción y del historial.
+Dueño de la cursada (entidad Curso), de la inscripción y del historial. La nota final la
+tomamos del Módulo 2 (ver arriba), aunque las inscripciones también traen `notaFinal`.
 
 | Tema | Estado |
 | --- | --- |
@@ -429,5 +443,6 @@ Cómo lo usa el BFF (oferta, inscripción e historial, adaptador en
 
 ## Lo más urgente
 
-1. Documentación de endpoints del Módulo 2.
+1. Responderle al Módulo 2 la ruta del `actionUrl` y confirmar el acceso con el token del
+   alumno con CORE.
 2. Qué datos devuelve el endpoint de usuarios del Módulo 8.

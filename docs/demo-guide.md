@@ -16,7 +16,7 @@ Esta guía es un recorrido. El catálogo completo de casos, usuarios y fallas es
 | 3 | RF1 | Home y perfil con datos de Backoffice |
 | 4 | RF7 | Calendario unificado y **falla parcial** con un módulo apagado |
 | 5 | RF2 | Oferta con estados, correlativa faltante, sin cupo, inscripción y rechazo |
-| 6 | RF3 | Historial, detalle de cursada con asistencia, faltas restantes y notas; Docente caído |
+| 6 | RF3 | Historial, detalle de cursada con asistencia, condición y notas; Docente caído |
 | 7 | RF4, RF5, RF6 | **Notificación en tiempo real** y destino de cada tipo |
 | 8 | RF8 | Historial y detalle de compras |
 | 9 | RF9 | Saldo y carga aprobada, rechazada y pendiente |
@@ -134,15 +134,19 @@ Inscribirse:
 ### 6. Historial y detalle de cursada (RF3)
 
 1. Ir a **Mis Cursos**: arriba las cursadas en curso (ahora incluye Sistemas Operativos),
-   abajo el historial con materia, cuatrimestre, nota y situación. Filtrar por período.
-2. Abrir **Bases de Datos I**: 5 de 8 clases (62,5 %), listado por fecha y **alerta: le
-   queda 1 falta** antes de quedar libre.
-3. Abrir **Desarrollo de Aplicaciones I**: asistencia completa, sin indicador (el Módulo 2
-   no informa límite) y notas parciales: 1er parcial 4 (desaprobado), recuperatorio pendiente.
-4. Abrir el **1er parcial**: detalle de la nota con docente y observaciones.
+   abajo el historial con materia, cuatrimestre, nota y situación. Filtrar por período. La
+   nota final sale de las actas del Módulo 2; la situación, del Módulo 9.
+2. Abrir **Bases de Datos I**: 75 % de asistencia con una falta justificada, listado por
+   fecha y **alerta: cerca del mínimo** de 75 % que informa el Módulo 2. Notas: Parcial 1,
+   TP1 (integrador) y Parcial 2 pendiente, con el promedio.
+3. Abrir **Desarrollo de Aplicaciones I**: asistencia completa ("al día") y notas: Parcial 1
+   desaprobado, recuperatorio aprobado y una exposición oral ausente. El TP cancelado no
+   aparece.
+4. Abrir el **Recuperatorio Parcial 1**: detalle de la nota con el docente que la cargó
+   (el nombre sale de Backoffice).
 5. *Opcional:* alumno libre. Desde Mis Cursos solo enlazan las cursadas en curso, así que
    se entra por URL: http://localhost:5173/alumnos/cursos/curso-ayed-2025-2-a. Se ve
-   "Quedaste libre" en lugar del indicador.
+   "Quedaste libre".
 6. **Apagar Docente** (Módulo 2):
 
    ```bash
@@ -158,8 +162,8 @@ Inscribirse:
 
    Reintentar desde la pantalla: vuelven asistencia y notas.
 
-Aclarar: todo lo del Módulo 2 es una suposición nuestra, porque todavía no publicó contrato.
-El impacto de cuando lo publique queda en su adaptador y su fixture.
+Aclarar: el Módulo 2 publicó su contrato y agregó las rutas por alumno a pedido nuestro,
+para que el portal no reciba los datos del resto de la comisión.
 
 ### 7. Notificaciones en tiempo real (RF4, RF5, RF6)
 
@@ -167,12 +171,13 @@ El impacto de cuando lo publique queda en su adaptador y su fixture.
 2. Con el portal a la vista, **disparar una nota** desde la terminal:
 
    ```bash
-   curl -X POST localhost:4000/__falso/notificaciones -H 'content-type: application/json' -d '{"tipo":"EXAM_RESULT_PUBLISHED"}'
+   curl -X POST localhost:4000/__falso/notificaciones -H 'content-type: application/json' -d '{"tipo":"TEACHER_EXAM_RESULT_PUBLISHED"}'
    ```
 
    Llega **sin recargar**: sube el contador y aparece el aviso.
-3. Tocar la nota → **detalle de la nota** de Bases de Datos I (nota 7). Remarcar que la
-   notificación solo trae el `actionUrl`; el detalle se pide al Módulo 2 por el BFF.
+3. Tocar la nota → **detalle de la nota** (recuperatorio de Desarrollo de Aplicaciones I,
+   nota 8). Remarcar que la notificación solo trae el `actionUrl`; el detalle se pide al
+   Módulo 2 por el BFF.
 4. Tocar la **sanción de biblioteca** → avisa que sale del portal y abre el portal de
    Biblioteca (RF5). Tocar el **recordatorio de evento** → portal de Eventos (RF6).
    En la demo, esas URLs son de ejemplo (`*.uadenet.example`) y no cargan: lo que se

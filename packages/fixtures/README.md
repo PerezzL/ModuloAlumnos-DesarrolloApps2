@@ -30,10 +30,8 @@ corrige la fixture, falla el test del adaptador y se ve exactamente qué ajustar
 
 Una fixture se llama `*.provisional.json` cuando **la forma de la respuesta no está
 confirmada** por el módulo dueño: algunos nombres de campo, tipos o estructuras son
-suposición nuestra. Pasa por tres motivos:
+suposición nuestra. Pasa por dos motivos:
 
-- **El módulo no tiene contrato.** El Módulo 2 (Docente) no publicó endpoints: rutas y
-  campos son todos supuestos, alineados con lo que supusimos en [`openapi.yaml`](../../openapi.yaml).
 - **El módulo informó qué datos trae, pero no con qué nombres o forma.** Backoffice adelantó
   `careers` con el `planId`, pero todavía no lo publicó.
 - **El endpoint existe, pero no tenemos la respuesta.** Varios endpoints del Módulo 9 están
@@ -44,7 +42,8 @@ Además, las rutas detrás del Gateway están sin confirmar para los módulos 4,
 usamos una suposición ("prefijo + recurso"). Todo eso está detallado, módulo por módulo, en
 [`docs/integraciones.md`](../../docs/integraciones.md).
 
-La única fixture confirmada hoy es `events/eventos.json`: el Módulo 6 documentó todos sus
+Las fixtures del Módulo 2 (`teacher/*.json`) están confirmadas por su OpenAPI. También
+`events/eventos.json`: el Módulo 6 documentó todos sus
 campos.
 
 **Qué implica para el código** (regla de [`AGENTS.md`](../../AGENTS.md)): fuera del adaptador de cada módulo,
@@ -93,8 +92,9 @@ Cuando un módulo confirma o cambia su respuesta:
 | `academic/cursos.provisional.json` | `GET /api/v1/planificacion/cursos?periodoId=&planId=` |
 | `academic/correlatividades.provisional.json` | `GET /api/v1/academica/asignaturas/{id}/correlatividades`, por asignatura |
 | `academic/inscripciones-alumno.provisional.json` | `GET /api/v1/planificacion/alumnos/{alumnoId}/inscripciones` |
-| `teacher/asistencia.provisional.json` | `GET /api/v1/cursos/{cursoId}/alumnos/{alumnoId}/asistencia`, por curso |
-| `teacher/notas.provisional.json` | `GET /api/v1/cursos/{cursoId}/alumnos/{alumnoId}/notas`, por curso |
+| `teacher/attendance.json` | `GET /api/v1/students/{studentId}/courses/{courseId}/attendance`, por curso |
+| `teacher/grades.json` | `GET /api/v1/students/{studentId}/courses/{courseId}/grades`, por curso |
+| `teacher/results.json` | `GET /api/v1/students/{studentId}/results`, por alumno |
 | `core/notificaciones.provisional.json` | Semilla de `GET /api/v1/notifications` |
 | `core/wallet-me.json` | `GET /api/v1/wallets/me` |
 | `core/transacciones.json` | Semilla de `GET /api/v1/wallets/me/transactions` |
