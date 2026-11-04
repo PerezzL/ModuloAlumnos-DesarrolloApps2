@@ -17,10 +17,10 @@ async function abrirPanel(ruta = '/') {
 
 const nueva = {
   id: 'n-nueva',
-  type: 'EXAM_RESULT_PUBLISHED',
+  type: 'TEACHER_EXAM_RESULT_PUBLISHED',
   title: 'Se publicó tu nota de Física I',
   message: '2do parcial: 9 (aprobado)',
-  actionUrl: '/teacher/courses/curso-fis1/exams/exam-p2',
+  actionUrl: '/student/courses/curso-fis1/exams/exam-p2',
   readAt: null as string | null,
   createdAt: '2026-10-04T15:00:00.000Z',
 };

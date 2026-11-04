@@ -12,7 +12,7 @@ const dato = (titulo: string) => screen.getByText(titulo).nextSibling;
 describe('detalle de la nota de un examen (H27)', () => {
   beforeEach(() => reiniciarCore(true));
 
-  it('materia, comisión, instancia, fecha, nota, resultado y observaciones', async () => {
+  it('materia, comisión, instancia, fecha, nota, resultado y docente', async () => {
     renderApp('/cursadas/curso-desa1/notas/exam-desa1-p1');
     expect(await screen.findByRole('heading', { name: '1er parcial' })).toBeInTheDocument();
     expect(
@@ -22,17 +22,25 @@ describe('detalle de la nota de un examen (H27)', () => {
     expect(dato('Resultado')).toHaveTextContent('Desaprobado');
     expect(dato('Instancia')).toHaveTextContent('Parcial');
     expect(dato('Fecha')).toHaveTextContent('23 de septiembre de 2026');
-    expect(dato('Docente')).toHaveTextContent('Lic. Martín Sosa');
-    expect(dato('Observaciones del docente')).toHaveTextContent('Revisar normalización.');
+    expect(dato('Docente')).toHaveTextContent('Martín Sosa');
   });
 
-  it('sin observaciones, no se muestra esa parte', async () => {
-    servidor.use(
-      http.get(NOTA, () => HttpResponse.json({ ...notaDetalleBase(), observaciones: null })),
-    );
+  it('sin docente, no se muestra esa parte', async () => {
+    servidor.use(http.get(NOTA, () => HttpResponse.json({ ...notaDetalleBase(), docente: null })));
     renderApp('/cursadas/curso-desa1/notas/exam-desa1-p1');
     await screen.findByRole('heading', { name: '1er parcial' });
-    expect(screen.queryByText('Observaciones del docente')).not.toBeInTheDocument();
+    expect(screen.queryByText('Docente')).not.toBeInTheDocument();
+  });
+
+  it('una instancia que no conocemos se muestra con un guion', async () => {
+    servidor.use(
+      http.get(NOTA, () =>
+        HttpResponse.json({ ...notaDetalleBase(), instancia: null, titulo: 'Exposición oral' }),
+      ),
+    );
+    renderApp('/cursadas/curso-desa1/notas/exam-desa1-p1');
+    await screen.findByRole('heading', { name: 'Exposición oral' });
+    expect(dato('Instancia')).toHaveTextContent('—');
   });
 
   it('un examen sin nota todavía figura pendiente', async () => {

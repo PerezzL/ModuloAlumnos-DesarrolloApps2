@@ -1,15 +1,26 @@
 import { useQuery } from '@tanstack/react-query';
-import type { CursadaDetalle, CursadaResumen, NotaDetalle } from '@uadenet/api-types';
+import type {
+  CursadaDetalle,
+  CursadaResumen,
+  ModuloExterno,
+  NotaDetalle,
+} from '@uadenet/api-types';
 import { api } from '@/api/cliente';
 import { datosDe } from '@/api/errores';
 
 export const CLAVE_CURSADAS = ['cursadas'] as const;
 
+export interface Historial {
+  items: CursadaResumen[];
+  /** Si incluye DOCENTE, las notas finales no cargaron */
+  fuentesConError: ModuloExterno[];
+}
+
 /** Historial completo del alumno. Consulta en vivo: el portal no lo guarda. */
 export function useCursadas() {
   return useQuery({
     queryKey: CLAVE_CURSADAS,
-    queryFn: async (): Promise<CursadaResumen[]> => (await datosDe(api.GET('/cursadas'))).items,
+    queryFn: (): Promise<Historial> => datosDe(api.GET('/cursadas')),
   });
 }
 

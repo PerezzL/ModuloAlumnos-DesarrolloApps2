@@ -1,13 +1,13 @@
 import type { Asistencia } from '@uadenet/api-types';
-import { CalendarClock, CircleCheck, CircleX } from 'lucide-react';
+import { CalendarClock, CircleCheck, CircleDashed, CircleX, FileCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EstadoVacio } from '@/componentes/EstadoVacio';
 import { fechaLarga, formatearPorcentaje } from './formato';
 import { Seccion } from './Seccion';
 
 /**
- * Asistencia en la cursada (4.5). Los datos son del Módulo 2 y su forma es una suposición
- * nuestra (`x-provisional`): sin clases dictadas se muestra un estado vacío, no un 0 %.
+ * Asistencia en la cursada (4.5), tal como la informa el Módulo 2: sin clases dictadas se
+ * muestra un estado vacío, no un 0 %. Las faltas justificadas cuentan como asistencia.
  */
 export function SeccionAsistencia({
   asistencia,
@@ -27,31 +27,31 @@ export function SeccionAsistencia({
         />
       ) : (
         <>
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <Dato titulo="Clases dictadas" valor={asistencia.clasesDictadas} />
             <Dato titulo="Presentes" valor={asistencia.presentes} />
+            <Dato titulo="Justificadas" valor={asistencia.justificadas} />
             <Dato titulo="Ausentes" valor={asistencia.ausentes} />
             <Dato titulo="Porcentaje" valor={formatearPorcentaje(asistencia.porcentaje)} />
           </dl>
           {children}
-          {asistencia.clases && asistencia.clases.length > 0 && (
+          {asistencia.clases.length > 0 && (
             <ul aria-label="Clases" className="divide-y divide-borde-suave text-sm">
-              {asistencia.clases.map((c) => (
-                <li key={c.fecha} className="flex items-center justify-between gap-3 py-2">
-                  <span>{fechaLarga(c.fecha)}</span>
-                  {c.presente ? (
-                    <span className="flex items-center gap-1 font-semibold text-exito">
-                      <CircleCheck className="size-4" aria-hidden />
-                      Presente
+              {asistencia.clases.map((c) => {
+                const { texto, icono: Icono, clases } = ESTADO_CLASE[c.estado ?? 'SIN_REGISTRO'];
+                return (
+                  <li key={c.fecha} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+                    <span className="flex-1">{fechaLarga(c.fecha)}</span>
+                    <span className={`flex items-center gap-1 font-semibold ${clases}`}>
+                      <Icono className="size-4" aria-hidden />
+                      {texto}
                     </span>
-                  ) : (
-                    <span className="flex items-center gap-1 font-semibold text-peligro-texto">
-                      <CircleX className="size-4" aria-hidden />
-                      Ausente
-                    </span>
-                  )}
-                </li>
-              ))}
+                    {c.comentario && (
+                      <span className="w-full text-xs text-texto-suave">{c.comentario}</span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </>
@@ -59,6 +59,14 @@ export function SeccionAsistencia({
     </Seccion>
   );
 }
+
+/** Cómo se ve cada estado de una clase. Sin estado: la clase no tiene registro del alumno. */
+const ESTADO_CLASE = {
+  PRESENTE: { texto: 'Presente', icono: CircleCheck, clases: 'text-exito' },
+  JUSTIFICADO: { texto: 'Justificada', icono: FileCheck, clases: 'text-aviso-texto' },
+  AUSENTE: { texto: 'Ausente', icono: CircleX, clases: 'text-peligro-texto' },
+  SIN_REGISTRO: { texto: 'Sin registrar', icono: CircleDashed, clases: 'text-texto-suave' },
+};
 
 function Dato({ titulo, valor }: { titulo: string; valor: ReactNode }) {
   return (

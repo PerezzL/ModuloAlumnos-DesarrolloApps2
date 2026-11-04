@@ -14,7 +14,8 @@ import { pedirCore } from './http';
  * (docs/integraciones.md). El resto de la app usa `Notificacion`.
  */
 
-export type TipoConocido = 'EXAM_RESULT_PUBLISHED' | 'LIBRARY_PENALTY_APPLIED' | 'EVENT_REMINDER';
+export type TipoConocido =
+  'TEACHER_EXAM_RESULT_PUBLISHED' | 'LIBRARY_PENALTY_APPLIED' | 'EVENT_REMINDER';
 
 export interface Notificacion {
   id: string;
