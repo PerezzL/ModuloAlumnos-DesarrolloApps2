@@ -47,6 +47,9 @@ const CONCEPTOS: Record<string, string> = {
   LIBRARY_FINE: 'Multa de biblioteca',
   EVENT_REGISTRATION: 'Inscripción a evento',
   SCHOLARSHIP: 'Beca',
+  PAYROLL: 'Liquidación de haberes',
+  ADJUSTMENT: 'Ajuste',
+  REFUND: 'Reintegro',
 };
 
 export function aMovimiento(t: TransaccionCore): Movimiento {
