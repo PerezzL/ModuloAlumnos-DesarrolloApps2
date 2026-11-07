@@ -264,6 +264,8 @@ Cómo lo usa el BFF (calendario, adaptador en `apps/bff/src/modulos/comedor/`):
 ## Módulo 5 — Tienda
 
 Documento de endpoints de consulta de la Tienda y respuesta a nuestras consultas (octubre 2026).
+OpenAPI publicado (noviembre 2026): <https://modulo5daa2-production.up.railway.app/docs-json>
+(Swagger UI en `/docs`). Coincide con lo de abajo.
 
 | Tema | Estado |
 | --- | --- |
@@ -271,8 +273,10 @@ Documento de endpoints de consulta de la Tienda y respuesta a nuestras consultas
 | `GET /api/v1/store/orders/{id}` (404 si la orden es de otro usuario) | Confirmado |
 | Campos de la orden (listado y detalle traen la misma orden completa) | Confirmado |
 | Filtros por estado, sede y fecha | Confirmado |
-| Ruta definitiva | Resuelto: es la ruta pública, detrás del Gateway, con el token del usuario |
-| Que `siteId` sea el mismo id de sede de Backoffice | Suposición nuestra; falta preguntarles |
+| Ruta definitiva | Resuelto: el módulo sirve `/api/v1/orders/*` y el Gateway expone `/api/v1/store/*` (confirmado en su OpenAPI) |
+| Que `siteId` sea el mismo id de sede de Backoffice | Suposición nuestra; falta preguntarles. Su `GET /api/v1/sites` dice "mock hasta integrar Backoffice" y hoy usa ids propios |
+| Que `quantity` sea entero | Suposición nuestra; su OpenAPI la declara `number` (mínimo 1). El BFF exige entero |
+| Autenticación con el JWT de CORE | Pendiente; su demo usa `X-Demo-Role` y `X-Demo-User-Id` (`MOCK_AUTH=true`) hasta integrar CORE |
 
 Listado:
 
@@ -283,7 +287,9 @@ Listado:
 - Filtros opcionales y combinables: `status` (`PENDING_PAYMENT`, `COMPLETED`, `COMPENSATING`,
   `FAILED`), `siteId` (uuid), `from` y `to` (ISO 8601, inclusive, sobre `createdAt`).
 - Siempre de la orden más reciente a la más vieja (`createdAt desc, id desc`).
-- Errores en `application/problem+json`.
+- Errores en `application/problem+json` con `code` estable: 400 `VALIDATION_ERROR` (con
+  `fields`), 401 `AUTH_INVALID_IDENTITY`, 404 si la orden no existe o es ajena, 503 si su base
+  o una integración no está disponible. El BFF decide por status, no por `code`.
 
 Orden: `id`, `siteId`, `status`, `createdAt`, `completedAt` (o null), `total` y `balanceAfter`
 (string con 2 decimales, o null), `currency`, `failureCode` (o null) e `items[]`. Cada ítem:
