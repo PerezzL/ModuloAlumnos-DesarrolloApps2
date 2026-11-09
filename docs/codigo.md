@@ -89,8 +89,7 @@ Cada módulo externo (`academico` = 9, `docente` = 2, `comedor` = 4, `eventos` =
 | `*.module.ts` | Módulo de Nest que exporta el adaptador |
 
 `modulos/comun.ts` tiene lo compartido: validar contra el schema de origen y normalizar ids
-opacos. Cuando un módulo confirma su contrato, se tocan su `origen`, su `mapper` y su fixture
-(ver [`integracion-real.md`](integracion-real.md)).
+opacos. Cuando un módulo confirma su contrato, se tocan su `origen`, su `mapper` y su fixture.
 
 Biblioteca (Módulo 3) no tiene adaptador: el portal solo la ve por sus notificaciones.
 
@@ -130,7 +129,7 @@ Cómo encajan:
   CORE falso. Si un test de adaptador pasa, el CORE falso sirve exactamente esa respuesta.
 - **Misma topología que producción.** En local el navegador le habla al CORE falso como si
   fuera el Gateway real, y el BFF llama a los módulos por ese mismo Gateway. Pasar al CORE real
-  es cambiar URLs, no código ([`integracion-real.md`](integracion-real.md)).
+  es cambiar URLs, no código.
 - **Provisional por defecto.** Casi todas las fixtures se llaman `*.provisional.json` porque
   el módulo no confirmó su contrato. El estado de cada uno está en
   [`integraciones.md`](integraciones.md).

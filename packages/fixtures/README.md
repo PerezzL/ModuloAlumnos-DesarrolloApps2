@@ -55,8 +55,7 @@ en [`openapi.yaml`](../../openapi.yaml) vengan vacíos o null.
 
 Cuando un módulo confirma o cambia su respuesta:
 
-1. Se actualiza [`docs/integraciones.md`](../../docs/integraciones.md) y se comenta en su tarjeta de Trello de "Esperando
-   a otros módulos".
+1. Se actualiza [`docs/integraciones.md`](../../docs/integraciones.md).
 2. Se corrige la fixture con la forma real y se le quita `.provisional` del nombre
    (y se actualizan las referencias en el CORE falso y en los tests).
 3. Se ajusta el adaptador hasta que su test pase.

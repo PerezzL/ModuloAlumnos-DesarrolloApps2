@@ -1,7 +1,5 @@
 # Arquitectura del Módulo 1
 
-Extraído del documento técnico v4.2 (3 de octubre de 2026).
-
 ## Enfoque
 
 El Portal del Estudiante es un Frontend + BFF (Backend For Frontend) que agrega información:
@@ -113,7 +111,7 @@ Comportamiento:
 `/api/academica/...`) son las de cada servicio. Falta confirmar cómo quedan publicadas
 detrás del prefijo del Gateway. Mientras tanto suponemos **prefijo + recurso** (por ejemplo
 `/api/v1/academic/planificacion/cursos`); la tabla completa está
-en [`integraciones.md`](integraciones.md). Backoffice sale de la sección 6 de [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
+en [`integraciones.md`](integraciones.md).
 
 **El JWT sí llega al BFF.** Según el contrato de CORE, `Authorization: Bearer <jwt>` viaja
 siempre (salvo login, refresh, health y JWKS) y los headers `X-User-*` se suman a ese token,
@@ -121,25 +119,82 @@ no lo reemplazan. Por eso el BFF puede validar la firma y reenviar el token al M
 
 ## Stack
 
-| Capa | Tecnología |
+Un solo lenguaje (TypeScript 5.9, sobre Node 24) de punta a punta. Las tablas listan todas
+las herramientas del repo y qué aporta cada una.
+
+### Frontend (`apps/web`)
+
+| Herramienta | Qué aporta |
 | --- | --- |
-| Frontend | React con Vite y TypeScript |
-| UI | Tailwind CSS + shadcn/ui |
-| BFF | Node.js con TypeScript y NestJS |
-| Ruteo y datos (front) | React Router + TanStack Query |
-| HTTP, logs y config (BFF) | `fetch` nativo, `nestjs-pino`, zod |
-| Tiempo real | `socket.io-client` contra CORE |
-| Contrato | OpenAPI 3.0 ([`openapi.yaml`](../openapi.yaml)) + Swagger UI |
-| Contenedores | Docker + docker-compose |
+| React 19 | Interfaz armada por componentes |
+| Vite 7 | Servidor de desarrollo con recarga instantánea y build de archivos estáticos |
+| React Router 7 | Navegación de la SPA y rutas protegidas por sesión |
+| TanStack Query 5 | Caché de las respuestas del servidor, estados de carga y error, invalidación después de inscribirse o cargar saldo. Las escrituras no se reintentan |
+| openapi-fetch | Cliente HTTP tipado con los tipos generados del contrato: si el contrato cambia, el front no compila |
+| socket.io-client | Conexión en tiempo real con CORE para recibir notificaciones |
+| Tailwind CSS 4 | Estilos con clases utilitarias, coherentes con el Figma |
+| shadcn/ui (Radix Slot, class-variance-authority, clsx, tailwind-merge) | Componentes base copiados al repo (botones, cards, chips) con variantes, sin depender de una librería cerrada |
+| lucide-react | Íconos |
+| Inter (`@fontsource-variable/inter`) | Tipografía servida desde el propio front |
 
-Base de datos (PostgreSQL) y caché (Redis) figuran en el documento como propuesta, pero
-todavía no hay nada que persistir: no se levantan hasta que aparezca un caso de uso.
+### BFF (`apps/bff`)
 
-La caché de datos de baja variación (correlatividades, nombres de asignatura) es en memoria,
-con TTL y por instancia. No contradice que el BFF no guarde estado entre requests: es una
-copia descartable de datos ajenos, ningún request depende de que esté, y perderla solo cuesta
-una llamada más al módulo de origen. Redis se evalúa si aparecen varias instancias y la
-latencia lo justifica.
+| Herramienta | Qué aporta |
+| --- | --- |
+| NestJS 11 (sobre Express) | Módulos, inyección de dependencias, guards, filtros e interceptores (ver abajo por qué) |
+| `fetch` nativo de Node | Llamadas al Gateway con timeout (`AbortSignal.timeout`), sin cliente HTTP extra |
+| zod | Valida la configuración de entorno al arrancar (si falta una variable, no levanta) y la forma de cada respuesta de los módulos externos en los adaptadores |
+| jose | Valida el JWT RS256 contra el JWKS de CORE, con caché de claves |
+| nestjs-pino, pino, pino-http | Logs en JSON con el `X-Correlation-Id` de cada pedido; `pino-pretty` los hace legibles en desarrollo |
+| swagger-ui-express + yaml | Sirve la documentación de la API en `/docs` a partir de [`openapi.yaml`](../openapi.yaml) |
+| rxjs, reflect-metadata | Requeridas por NestJS |
+| SWC (`@swc/core`, `unplugin-swc`) | Compila los decoradores de Nest rápido al correr los tests |
+
+### CORE falso (`apps/core-falso`, solo desarrollo y demo)
+
+| Herramienta | Qué aporta |
+| --- | --- |
+| Express 5 | Gateway, auth, saldo, notificaciones y rutas de los módulos externos |
+| socket.io | Namespace `/notifications`, igual al de CORE |
+| jose | Firma los tokens RS256 y publica el JWKS |
+| cookie-parser, cors | Cookie de refresh y CORS, como CORE |
+| tsx | Corre TypeScript directo, sin compilar, en desarrollo |
+
+### Contrato y tipos
+
+| Herramienta | Qué aporta |
+| --- | --- |
+| OpenAPI 3.0 ([`openapi.yaml`](../openapi.yaml)) | Fuente de verdad de la API entre front y BFF |
+| openapi-typescript | Genera los tipos de TypeScript del contrato (`packages/api-types`), que usan front y BFF |
+| Redocly CLI | Valida el contrato (lint) |
+| Prism | Mock del BFF armado con los ejemplos del contrato, para trabajar el front sin esperar al BFF |
+| ajv + ajv-formats (`packages/contrato`) | En los tests e2e, valida cada respuesta del BFF contra el contrato |
+| openapi-to-postmanv2 | Exporta una colección de Postman del contrato |
+
+### Calidad y tests
+
+| Herramienta | Qué aporta |
+| --- | --- |
+| Vitest 3 | Corre los tests de los tres proyectos con un solo comando |
+| Testing Library (react, user-event, jest-dom) + happy-dom | Tests de pantallas como las usa una persona, sin navegador |
+| MSW | Simula respuestas HTTP en los tests del front y del cliente del Gateway |
+| Supertest | Tests e2e por HTTP del BFF y del CORE falso |
+| ESLint 9 (typescript-eslint, react-hooks) y Prettier | Reglas de código y formato uniformes |
+| GitHub Actions | En cada PR corre `npm run verify` y levanta el stack de Docker con un smoke test |
+
+### Entorno
+
+| Herramienta | Qué aporta |
+| --- | --- |
+| npm workspaces | Monorepo: tres apps y tres paquetes compartidos con una sola instalación |
+| concurrently | `npm run dev` levanta front, BFF y CORE falso en una terminal |
+| Docker + docker compose | Un `Dockerfile` por app; levanta todo con un comando. El front se sirve con nginx |
+
+No hay base de datos: el portal no persiste nada propio (ver [Decisiones](#decisiones)).
+La caché de datos de baja variación (correlatividades, nombres de asignatura y de sedes) es
+en memoria, con TTL y por instancia. No contradice que el BFF no guarde estado entre
+requests: es una copia descartable de datos ajenos, ningún request depende de que esté, y
+perderla solo cuesta una llamada más al módulo de origen.
 
 El criterio común es un solo lenguaje (TypeScript) y un solo contrato ([`openapi.yaml`](../openapi.yaml)) de
 punta a punta. Las alternativas también servían; se eligió por ajuste al problema: un BFF
@@ -193,7 +248,12 @@ rutas de API propias, que duplicarían el rol del BFF).
 | Notificaciones del alumno | CORE | Muestra y marca como leídas |
 
 Todos los módulos usan el mismo id de alumno y el mismo `cursoId`.
-El portal persiste solo lo propio: preferencias y caché.
+El portal no persiste datos: solo mantiene una caché en memoria.
+
+No hay integraciones con servicios de terceros fuera de UADEnet (almacenamiento de archivos,
+pagos, correo): todo pasa por CORE o por los módulos del sistema. El medio de pago de la
+carga de saldo lo simula CORE (`paymentMethodToken`). Las imágenes de los productos de las
+compras son URLs que entrega la Tienda.
 
 ## Autenticación e identidad
 
@@ -340,28 +400,5 @@ del Gateway, sin tocar código.
 
 - Un `Dockerfile` por app y un `docker-compose.yml` en la raíz que levanta web, BFF,
   core-falso y Prism con un comando.
-- Sirve para tener el mismo entorno en todas las máquinas, para la demo, para el README de
-  la entrega final y como formato de despliegue.
+- Sirve para tener el mismo entorno en todas las máquinas y levantar todo sin instalar Node.
 - El desarrollo diario no depende de Docker: se trabaja con `npm run dev`.
-
-## Despliegue
-
-Todavía no se eligió proveedor; no hace falta hasta la entrega final (la segunda entrega
-se muestra en local con compose).
-
-- **BFF:** se puede hostear en cualquier lado; a CORE se le pasa la URL para
-  `STUDENT_SERVICE_URL`. Tiene que responder dentro del timeout de 10 s del Gateway
-  (ojo con planes que duermen el servicio).
-- **Frontend:** archivos estáticos. El proveedor es libre, pero el dominio no: la cookie de
-  refresh es `SameSite=Lax` y la define CORE, así que el navegador solo la envía si el front
-  está bajo el mismo sitio que CORE. Si no, la sesión se pierde al recargar.
-- **Red interna:** CORE pide que el módulo no sea accesible desde afuera. No se arma red
-  privada; el riesgo se cubre con la validación local del JWT.
-
-Lo que se respeta desde ya para no atarse a ningún proveedor: toda URL es configuración
-(Gateway, JWKS, issuer, audience, WebSocket), el BFF no guarda estado y expone
-`GET /health/live` y `GET /health/ready`.
-
-**Pendiente con CORE:** bajo qué dominio se sirven los portales, si esperan URL pública o
-red compartida, y si habrá ambiente de pruebas. Plan B para la cookie: regla de reescritura
-en el hosting del front para login, refresh y logout.

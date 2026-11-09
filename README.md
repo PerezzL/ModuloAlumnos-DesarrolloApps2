@@ -3,62 +3,86 @@
 Frontend (SPA) y BFF del Portal del Estudiante de UADEnet, el sistema de gestión de campus
 que construyen 10 grupos en Desarrollo de Aplicaciones II (UADE, 2° cuatrimestre 2026).
 
+**Integrantes:** _(completar)_
+
 El portal no es dueño de datos académicos: consulta y agrega información de los demás
-módulos a través del Gateway de CORE.
+módulos a través del Gateway de CORE. Los 9 requisitos funcionales están implementados.
 
-## Estado
+## Cómo correrlo
 
-Los 9 requisitos funcionales están implementados y funcionan contra el CORE falso, que
-simula CORE y los módulos externos (bloques A a E, ver [`docs/plan.md`](docs/plan.md)). La integración con
-los módulos reales depende de que confirmen sus contratos (ver [`docs/integraciones.md`](docs/integraciones.md)).
-Para mostrar el portal de punta a punta: [`docs/demo-guide.md`](docs/demo-guide.md).
+Como los demás módulos todavía no están integrados, el portal se levanta junto con un
+**CORE falso** (`apps/core-falso`): hace de Gateway, login, notificaciones y saldo, y responde
+como los módulos externos con datos de prueba. Con un solo comando quedan corriendo las tres
+piezas: portal, BFF y CORE falso.
 
-## Stack
+### Opción A: Docker (no hace falta instalar Node)
 
-- **Frontend:** React con Vite y TypeScript.
-- **BFF:** Node.js con TypeScript y NestJS.
-- **Contrato:** [`openapi.yaml`](openapi.yaml) (OpenAPI 3.0), fuente de verdad de la API entre front y BFF.
+Con Docker Desktop (o OrbStack) abierto, en la carpeta del proyecto:
 
-## Por dónde empezar
+```bash
+docker compose up --build
+```
 
-Para entender la app, en este orden: [`docs/arquitectura.md`](docs/arquitectura.md) (cómo
-funciona), [`docs/codigo.md`](docs/codigo.md) (dónde está cada cosa y cómo son los mocks),
-[`docs/instalacion.md`](docs/instalacion.md) (cómo levantarla) y [`docs/pruebas.md`](docs/pruebas.md)
-(cómo probarla). El resto se consulta cuando hace falta.
+La primera vez tarda unos minutos porque descarga imágenes y compila. Para bajar todo:
+`Ctrl+C` y después `docker compose down`.
 
-| Archivo | Para qué |
-| --- | --- |
-| [`openapi.yaml`](openapi.yaml) | Contrato entre el front y el BFF (fuente de verdad de la API propia) |
-| [`docs/instalacion.md`](docs/instalacion.md) | Cómo instalar y levantar el proyecto desde cero |
-| [`docs/plan.md`](docs/plan.md) | Decisiones tomadas, pasos de armado y pendientes |
-| [`docs/pruebas.md`](docs/pruebas.md) | Usuarios de prueba, fallas simuladas y casos por pantalla |
-| [`docs/demo-guide.md`](docs/demo-guide.md) | Guion para la demo de la segunda entrega |
-| [`docs/arquitectura.md`](docs/arquitectura.md) | Capas, recorrido de un pedido, auth, mocks, despliegue |
-| [`docs/codigo.md`](docs/codigo.md) | Mapa del código: qué hay en cada app y paquete, y todas las piezas de mock |
-| [`docs/requisitos.md`](docs/requisitos.md) | Los 9 requisitos funcionales |
-| [`docs/pantallas.md`](docs/pantallas.md) | Pantallas y de qué endpoint sale cada una |
-| [`docs/integraciones.md`](docs/integraciones.md) | Qué expone cada módulo y qué falta confirmar |
-| [`docs/integracion-real.md`](docs/integracion-real.md) | Cómo conectar al CORE real y qué tocar cuando un módulo confirma |
-| [`docs/core/CORE_INTEGRACION.md`](docs/core/CORE_INTEGRACION.md) | Contrato de integración de CORE |
-| [`packages/fixtures/README.md`](packages/fixtures/README.md) | Qué son las fixtures y por qué casi todas son provisionales |
-| [`AGENTS.md`](AGENTS.md) | Reglas para trabajar en el repo, con o sin asistentes de IA |
-
-## Instalar y ejecutar
-
-**Guía completa desde cero (Mac y Windows), Node vs. Docker y qué es Prism:
-[`docs/instalacion.md`](docs/instalacion.md).**
-
-Resumen, con Node 24 instalado:
+### Opción B: Node 24
 
 ```bash
 npm install
-cp .env.example .env   # Windows: Copy-Item .env.example .env
+cp .env.example .env
 npm run dev
 ```
 
-O con Docker: `docker compose up --build`.
+En Windows (PowerShell), el segundo comando es `Copy-Item .env.example .env`.
+`npm run dev` deja corriendo los tres procesos en la misma terminal; se cortan con `Ctrl+C`.
 
-Portal en http://localhost:5173 · usuario de prueba `v.moreno@uade.edu.ar` / `uade2026`.
+### Entrar
 
-Antes de subir cambios: `npm run verify` (lo mismo que corre el CI). Con el stack de Docker
-levantado, `scripts/smoke-docker.sh` corre los chequeos del job `docker`.
+Abrir **http://localhost:5173** (con `localhost`, no `127.0.0.1`: la cookie de sesión y el
+CORE falso dependen de ese nombre).
+
+| Usuario | Contraseña | Para qué |
+| --- | --- | --- |
+| `v.moreno@uade.edu.ar` | `uade2026` | Alumna con datos en todos los módulos |
+| `j.perez@uade.edu.ar` | `uade2026` | Alumno sin datos: muestra los estados vacíos |
+| `suspendido@uade.edu.ar` | `uade2026` | Cuenta suspendida: el login lo rechaza |
+
+| Servicio | URL |
+| --- | --- |
+| Portal | http://localhost:5173 |
+| BFF (documentación de la API, Swagger UI) | http://localhost:3000/docs |
+| CORE falso (Gateway) | http://localhost:4000 |
+
+Para simular la caída de un módulo, disparar una notificación en tiempo real o probar la
+carga de saldo, ver [`docs/pruebas.md`](docs/pruebas.md). Si algo no levanta, la sección
+"Problemas comunes" de [`docs/instalacion.md`](docs/instalacion.md).
+
+## Stack
+
+- **Frontend:** React con Vite y TypeScript (`apps/web`).
+- **BFF:** Node.js con TypeScript y NestJS (`apps/bff`).
+- **Contrato:** [`openapi.yaml`](openapi.yaml) (OpenAPI 3.0), fuente de verdad de la API entre front y BFF.
+- **CORE falso:** Express y socket.io (`apps/core-falso`), solo para desarrollo y demo.
+
+## Documentación
+
+| Archivo | Para qué |
+| --- | --- |
+| [`docs/arquitectura.md`](docs/arquitectura.md) | Capas, recorrido de un pedido, seguridad, resiliencia, integraciones y stack |
+| [`docs/codigo.md`](docs/codigo.md) | Mapa del código: qué hay en cada app y paquete, y las piezas de mock |
+| [`docs/instalacion.md`](docs/instalacion.md) | Instalación detallada (Mac y Windows), Node vs. Docker, problemas comunes |
+| [`docs/pruebas.md`](docs/pruebas.md) | Usuarios de prueba, fallas simuladas y casos preparados por pantalla |
+| [`docs/requisitos.md`](docs/requisitos.md) | Los 9 requisitos funcionales |
+| [`docs/pantallas.md`](docs/pantallas.md) | Pantallas y de qué endpoint sale cada una |
+| [`docs/integraciones.md`](docs/integraciones.md) | Qué consume el portal de cada módulo y qué está confirmado |
+| [`packages/fixtures/README.md`](packages/fixtures/README.md) | Las respuestas de ejemplo de los módulos externos |
+| [`AGENTS.md`](AGENTS.md) | Reglas técnicas del repo, para personas y asistentes de IA |
+
+## Comandos útiles
+
+| Comando | Qué hace |
+| --- | --- |
+| `npm run verify` | Genera los tipos, typecheck, ESLint, valida el contrato y corre los tests (lo mismo que el CI) |
+| `npm test` | Solo los tests |
+| `npm run mock` | Prism en :4010: un mock del BFF armado con los ejemplos de [`openapi.yaml`](openapi.yaml) |

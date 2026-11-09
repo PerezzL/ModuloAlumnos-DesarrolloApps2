@@ -1,6 +1,6 @@
 # Guía de instalación desde cero
 
-Para quien clona el repo por primera vez. Al final de esta guía tenés el portal corriendo en
+Para quien levanta el proyecto por primera vez. Al final de esta guía tenés el portal corriendo en
 http://localhost:5173 y podés entrar con un usuario de prueba.
 
 Hay **dos formas** de levantar todo: con Node (a mano) o con Docker. Para programar se usa
@@ -11,7 +11,6 @@ La sección [Node o Docker](#node-o-docker-qué-cambia) explica la diferencia.
 
 | Herramienta | Para qué | Mac | Windows |
 | --- | --- | --- | --- |
-| **Git** | Clonar el repo | Viene con las Command Line Tools: `xcode-select --install` | [Git for Windows](https://git-scm.com/download/win) o `winget install Git.Git` |
 | **Node.js 24** | Correr y desarrollar el proyecto | `brew install node@24` o [nodejs.org](https://nodejs.org) (versión 24 LTS) | `winget install OpenJS.NodeJS.LTS` o [nodejs.org](https://nodejs.org) |
 | **Docker** (opcional) | Levantar todo con un comando | [OrbStack](https://orbstack.dev) (`brew install --cask orbstack`) o Docker Desktop | [Docker Desktop](https://www.docker.com/products/docker-desktop/) (pide activar WSL 2; aceptar y reiniciar) |
 | **Editor** | — | VS Code recomendado | VS Code recomendado |
@@ -21,7 +20,6 @@ Si no tenés Homebrew en Mac: https://brew.sh.
 Comprobar en una terminal nueva (en Windows, PowerShell):
 
 ```bash
-git --version
 node --version   # tiene que decir v24.x (o mayor)
 npm --version
 docker --version # solo si instalaste Docker
@@ -30,14 +28,10 @@ docker --version # solo si instalaste Docker
 Si `node --version` muestra otra versión y usás `nvm`, en la carpeta del repo alcanza con
 `nvm use` (lee `.nvmrc`).
 
-## 2. Clonar el repo
+## 2. Abrir el proyecto
 
-Necesitás acceso al repo en GitHub (pedíselo a quien lo administra).
-
-```bash
-git clone https://github.com/PerezzL/ModuloAlumnos-DesarrolloApps2.git
-cd ModuloAlumnos-DesarrolloApps2
-```
+Descomprimir el código y abrir una terminal en esa carpeta (la que tiene `package.json` y
+`docker-compose.yml`). Todos los comandos de abajo se corren ahí.
 
 ## 3A. Levantar con Node (para desarrollar)
 
@@ -90,15 +84,14 @@ Para bajar todo: `Ctrl+C` y después `docker compose down`.
 Si cambiaste código, hay que volver a correr `docker compose up --build`: Docker no recarga
 solo.
 
-## 4. Antes de subir cambios
+## 4. Verificar
 
 ```bash
 npm run verify
 ```
 
-Revisa tipos, lint, el contrato y corre todos los tests. Es lo mismo que corre el CI en
-cada PR: si pasa local, pasa en GitHub. Cómo se trabaja (ramas, commits, PR) está en
-[`AGENTS.md`](../AGENTS.md).
+Genera los tipos, revisa tipos y lint, valida el contrato y corre todos los tests. Es lo
+mismo que corre el CI en cada PR.
 
 ## Node o Docker: qué cambia
 
@@ -119,11 +112,8 @@ desde el navegador. Cambia cómo corren:
 
 - **Mismo entorno en todas las máquinas.** No importa si tenés Mac o Windows ni qué versión
   de Node: el contenedor siempre es igual. Evita el "en mi máquina anda".
-- **Demo y entrega.** La segunda entrega se muestra en local: con Docker, cualquiera del
-  equipo levanta el portal completo con un comando.
 - **Se parece a producción.** Corre las versiones compiladas, como se desplegarían. Si un
   Dockerfile se rompe, lo detecta el CI (job `docker`).
-- **Formato de despliegue.** Cuando se elija dónde hostear, las imágenes ya están listas.
 
 El desarrollo diario no depende de Docker: es más rápido programar con `npm run dev`.
 

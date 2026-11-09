@@ -111,11 +111,9 @@ Gateway, por ejemplo `/api/v1/academic/planificacion/cursos`). Las de nuestro BF
 
 ## 4. Casos por pantalla
 
-Las pantallas llegan por bloques (ver [`plan.md`](plan.md)): C (Home, Calendario, Saldo,
-Notificaciones), D (Inscripción, Historial, Compras) y E (detalle de cursada y de nota).
-Los datos ya están para todas. Salvo que se diga otro usuario, los casos son con `v.moreno`.
+Salvo que se diga otro usuario, los casos son con `v.moreno`.
 
-### Login y sesión (bloque A)
+### Login y sesión
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
@@ -127,7 +125,7 @@ Los datos ya están para todas. Salvo que se diga otro usuario, los casos son co
 | Refresh | `CORE_ACCESS_TTL_S=30` en el `.env` y esperar | La sesión sigue sin pedir login |
 | Logout | Cerrar sesión y volver atrás | Pide login, no muestra datos |
 
-### Home y perfil (bloque C)
+### Home y perfil
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
@@ -135,7 +133,7 @@ Los datos ya están para todas. Salvo que se diga otro usuario, los casos son co
 | Sin datos | `j.perez` | Estados vacíos en todos los resúmenes |
 | Backoffice caído | Falla `backoffice: caido` | `GET /me` responde 503 `UPSTREAM_UNAVAILABLE` (así está en el contrato) |
 
-### Calendario (bloque C)
+### Calendario
 
 Datos de octubre de 2026:
 
@@ -155,7 +153,7 @@ Datos de octubre de 2026:
 | Rango largo | Pedir más de 62 días | 400 `RANGO_INVALIDO` |
 | Sin datos | `j.perez` | Sin turnos de comedor ni eventos inscriptos. Los turnos de examen son ventanas generales, iguales para todos |
 
-### Saldo (bloque C)
+### Saldo
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
@@ -167,7 +165,7 @@ Datos de octubre de 2026:
 | Reintento | Repetir la misma carga con la misma `Idempotency-Key` | Misma respuesta, no acredita dos veces |
 | Cada intento nuevo | Dos cargas desde la pantalla | Cada una lleva su propia key y las dos acreditan |
 
-### Notificaciones (bloque C)
+### Notificaciones
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
@@ -179,7 +177,7 @@ Datos de octubre de 2026:
 | Destino de cada tipo | Abrir cada una | Nota → detalle de nota; sanción → portal de Biblioteca; evento → portal de Eventos. Los `actionUrl` son provisionales |
 | Sin notificaciones | `j.perez` | Estado vacío |
 
-### Inscripción (bloque D)
+### Inscripción
 
 Pantalla **Académico** (`/academico`). La oferta es del 1° cuatrimestre de 2027, con la
 inscripción abierta del 28/09 al 19/12/2026. La arma el BFF cruzando cursos, correlatividades
@@ -206,10 +204,10 @@ e historial.
 El CORE falso no simula `SIN_REGULARIDAD`; `FUERA_DE_FECHA`, solo con la inscripción cerrada simulada. Después de probar, hacé
 `POST /__falso/reset` para deshacer las inscripciones.
 
-### Historial de cursadas (bloque D)
+### Historial de cursadas
 
 Pantalla **Mis Cursos** (`/mis-cursos`): arriba las cursadas en curso, con enlace al detalle
-(`/alumnos/cursos/{cursoId}`, en construcción hasta el bloque E); abajo el resto del historial,
+(`/alumnos/cursos/{cursoId}`); abajo el resto del historial,
 con filtro por período.
 
 | Asignatura | Período | Estado |
@@ -221,7 +219,7 @@ con filtro por período.
 | Bases de Datos I | 2° cuat. 2026 | Cursando (tiene detalle) |
 | Desarrollo de Aplicaciones I | 2° cuat. 2026 | Cursando (tiene detalle) |
 
-### Historial de compras (bloque D)
+### Historial de compras
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
@@ -234,7 +232,7 @@ con filtro por período.
 | Sin compras | `j.perez` | Estado vacío |
 | Tienda caída | Falla `store: caido` | Error de servicio no disponible |
 
-### Detalle de cursada y de nota (bloque E)
+### Detalle de cursada y de nota
 
 Con el contrato confirmado del Módulo 2 (fixtures `teacher/*.json`).
 

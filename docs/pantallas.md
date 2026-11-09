@@ -1,6 +1,6 @@
 # Pantallas
 
-Extraído del documento técnico v4.1 (sección 4). "Origen" indica de dónde saca los datos
+Qué muestra cada pantalla y de dónde saca los datos. "Origen" indica de dónde saca los datos
 el frontend: el BFF ([`openapi.yaml`](../openapi.yaml)) o CORE directo.
 
 | # | Pantalla | RF | Origen de datos |

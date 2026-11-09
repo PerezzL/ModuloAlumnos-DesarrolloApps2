@@ -1,6 +1,6 @@
 # Requisitos funcionales
 
-Extraído del documento técnico v4.1. El detalle de cada módulo externo está en
+Los requisitos funcionales del Módulo 1. El detalle de cada módulo externo está en
 [`integraciones.md`](integraciones.md); acá va qué hay que construir.
 
 | RF | Requisito | Módulos |

@@ -1,10 +1,8 @@
 # Integraciones con otros módulos
 
-Extraído del documento técnico v4.1 (1 de octubre de 2026).
-**Este archivo se actualiza primero cada vez que un módulo confirma o cambia algo.**
-Qué tocar después (fixtures, adaptador, contrato, decisiones), módulo por módulo: [`integracion-real.md`](integracion-real.md).
-Las respuestas de ejemplo de cada módulo están en `packages/fixtures/`; su [`README.md`](../README.md)
-explica qué son y cuándo dejan de ser provisionales.
+Qué consume el portal de cada módulo, qué está confirmado y cómo lo usa el BFF.
+Las respuestas de ejemplo de cada módulo están en `packages/fixtures/`; su
+[`README.md`](../packages/fixtures/README.md) explica qué son y cuándo dejan de ser provisionales.
 
 Estados: **Resuelto / Confirmado** (contrato firme) · **Implementado** (ya disponible) ·
 **Comprometido** (acordado, todavía no disponible; se mockea) · **Propuesto** ·
@@ -33,8 +31,6 @@ bajo `/api/v1`. En el BFF, prefijos y rutas son configuración; el CORE falso y 
 | 8 | `GET /api/v1/backoffice/users/{userId}` · `/sites` | `/api/v1/backoffice/users/{userId}` · `/api/v1/backoffice/sites` |
 | 9 | `/api/planificacion/...` · `/api/academica/...` | `/api/v1/academic/planificacion/...` · `/api/v1/academic/academica/...` |
 
-Backoffice usa el prefijo `/api/v1/backoffice/*` de la sección 6 de [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md).
-
 Errores del Gateway (OpenAPI de CORE), que el CORE falso reproduce:
 
 | Status | `code` | Cuándo |
@@ -51,8 +47,7 @@ respuesta inválida. El CORE falso simula un módulo caído siempre como 503.
 
 ## CORE — Resuelto
 
-Contrato completo en [`docs/core/CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md) y en su OpenAPI
-publicado: <https://core-api-production-e458.up.railway.app/docs-json> (Swagger UI en `/docs`). Ese JSON manda sobre las formas de
+Contrato de integración de CORE (documento de la cátedra) y su OpenAPI publicado: <https://core-api-production-e458.up.railway.app/docs-json> (Swagger UI en `/docs`). Ese JSON manda sobre las formas de
 las respuestas; no guardamos una copia.
 
 - Auth: `POST /api/v1/auth/login`, `/auth/refresh`, `/auth/logout`, `GET /api/v1/auth/me`,
@@ -70,15 +65,14 @@ Novedades del 4 de noviembre de 2026 (PDF "CORE G10 · Novedades" y OpenAPI de p
 CORE aclara que todo es compatible: no se quitaron rutas, campos, roles ni permisos.
 
 - **En producción:** `https://core-api-production-e458.up.railway.app` (JWKS en
-  `/.well-known/jwks.json`, `kid` `dev-key-1`). Valores de configuración en
-  [`integracion-real.md`](integracion-real.md).
+  `/.well-known/jwks.json`, `kid` `dev-key-1`).
 - **`iss` nuevo:** pasó de `http://localhost:3000` a la URL de Railway; `aud` sigue `uadenet`.
   El BFF lo lee de `JWT_ISSUER`: no hay que tocar código.
 - **`careerIds`:** la identidad trae `careerIds` en el `user` del login y del refresh y en
   `GET /auth/me` (el refresh ahora también devuelve `user`). El BFF toma la carrera del claim
   `careerIds` del JWT y usa Backoffice solo de respaldo (ver Módulo 8). Que viaje en el JWT
-  no está confirmado: `/auth/me` dice devolver lo que trae el token, pero la lista de claims de
-  [`CORE_INTEGRACION.md`](core/CORE_INTEGRACION.md) no lo incluye.
+  no está confirmado: `/auth/me` dice devolver lo que trae el token, pero la lista de claims del
+  contrato de CORE no lo incluye.
 - **Roles y permisos:** roles nuevos de Backoffice (`BACKOFFICE_VIEWER`, `PAYROLL_ADMIN`) y
   permisos `backoffice:*`. STUDENT y TEACHER siguen con solo la wallet propia. Al portal no le
   cambia nada: no autoriza por rol. Un usuario TEACHER puede entrar al portal del alumno.
@@ -112,7 +106,7 @@ Pendiente (la fixture `core/notificaciones.provisional.json` sigue provisional p
 | Paginación de `/notifications` | El OpenAPI solo documenta `read` y devuelve `nextCursor`; seguimos mandando `limit` y `cursor` |
 | Paginación de `/wallets/me/transactions` | El OpenAPI solo documenta `limit` ("a lo sumo 100") y devuelve `nextCursor`; seguimos mandando `cursor` |
 | `careerIds` en el JWT | Lo damos por hecho; si no viene, la carrera sale de Backoffice |
-| Límite de 100 pedidos por minuto en el proxy | Pendiente: todo lo del BFF sale de una sola IP (ver [`integracion-real.md`](integracion-real.md)) |
+| Límite de 100 pedidos por minuto en el proxy | Pendiente: todo lo del BFF sale de una sola IP |
 | Cookie de refresh con el front en otro sitio | `SameSite=Lax`: desde otro sitio (incluso `localhost`) no viajaría en el refresh. Probar con un usuario real |
 
 Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/destino.ts`, el
@@ -373,7 +367,7 @@ obliga a cambiar `planId` por una lista en el adaptador (`backoffice.mapper.ts`)
 filtro de la oferta (`InscripcionService` y `AcademicoAdapter.cursos`) y en `Perfil` del
 [`openapi.yaml`](../openapi.yaml).
 
-Sin `planId` no se puede filtrar la oferta de RF2. Decisión del bloque D: si Backoffice no lo
+Sin `planId` no se puede filtrar la oferta de RF2. Decisión nuestra: si Backoffice no lo
 devuelve (`careers` vacío, null o ausente) o no responde, el BFF pide la oferta sin `planId`
 y la marca con `filtradaPorPlan: false`; la pantalla avisa que puede incluir materias de
 otros planes. Queda registrado con un warning en el log.
@@ -390,7 +384,7 @@ Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/` 
   `careers`.
 - **Plan:** solo lo da Backoffice. Es el de la carrera elegida dentro de `careers`; si
   Backoffice no tiene la carrera del token, `planId` es null y la oferta sale sin filtrar por
-  plan (decisión del bloque D, abajo).
+  plan (ver abajo).
 - El nombre de la carrera sale de `GET /academica/carreras` del Módulo 9, cacheado en memoria
   una hora. Si el Módulo 9 falla o no conoce la carrera, el perfil sale igual, sin `carrera`.
 - Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale con id, mail y, si
@@ -480,11 +474,3 @@ Cómo lo usa el BFF (oferta, inscripción e historial, adaptador en
   entiende, es `INSCRIPCION_RECHAZADA`.
 - Historial: ordena por la fecha de inscripción, de la más reciente a la más antigua (los ids
   de período son opacos y no se ordenan); `enCurso` es `INSCRIPTO` o `CURSANDO`.
-
-## Lo más urgente
-
-1. Responderle al Módulo 2 la ruta del `actionUrl` y confirmar el acceso con el token del
-   alumno con CORE.
-2. Qué datos devuelve el endpoint de usuarios del Módulo 8.
-3. Con CORE: credenciales de los usuarios de prueba, si el límite de 100 pedidos por minuto
-   aplica al proxy del BFF, si `careerIds` viaja en el JWT y la URL del WebSocket.
