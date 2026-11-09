@@ -29,3 +29,6 @@ npm-debug.log*
 
 # Colección Postman (se genera con `npm run postman`)
 postman/
+
+# Material de la entrega generado localmente (zip, PDF, capturas)
+/entrega/

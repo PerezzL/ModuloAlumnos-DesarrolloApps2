@@ -2,3 +2,13 @@
 # rompería scripts de bash y archivos que se copian a las imágenes de Docker)
 * text=auto eol=lf
 *.png binary
+
+# Fuera del comprimido de la entrega (`git archive`): documentos de trabajo interno del
+# equipo y configuración de herramientas. Siguen en el repo.
+docs/plan.md export-ignore
+docs/demo-guide.md export-ignore
+docs/integracion-real.md export-ignore
+docs/core export-ignore
+.github/pull_request_template.md export-ignore
+.claude export-ignore
+docs/equipo.md export-ignore

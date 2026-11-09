@@ -235,3 +235,25 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | Pendiente propio | T16 (Backlog): simular `SIN_REGULARIDAD` y `FUERA_DE_FECHA` en el CORE falso; conviene hacerlo con los códigos reales |
 | Pruebas y demo | [`pruebas.md`](pruebas.md) "Inscripción" e "Historial"; [`demo-guide.md`](demo-guide.md) pasos 5 y 6 |
 | Trello | "[Módulo 9 · Gestión Académica]…", "[Módulos 2 y 9] Fuente única de la nota final" e "[Integración] Módulo 9" |
+
+## Anexo: despliegue (movido de arquitectura.md)
+
+Todavía no se eligió proveedor; no hace falta hasta la entrega final (la segunda entrega
+se muestra en local con compose).
+
+- **BFF:** se puede hostear en cualquier lado; a CORE se le pasa la URL para
+  `STUDENT_SERVICE_URL`. Tiene que responder dentro del timeout de 10 s del Gateway
+  (ojo con planes que duermen el servicio).
+- **Frontend:** archivos estáticos. El proveedor es libre, pero el dominio no: la cookie de
+  refresh es `SameSite=Lax` y la define CORE, así que el navegador solo la envía si el front
+  está bajo el mismo sitio que CORE. Si no, la sesión se pierde al recargar.
+- **Red interna:** CORE pide que el módulo no sea accesible desde afuera. No se arma red
+  privada; el riesgo se cubre con la validación local del JWT.
+
+Lo que se respeta desde ya para no atarse a ningún proveedor: toda URL es configuración
+(Gateway, JWKS, issuer, audience, WebSocket), el BFF no guarda estado y expone
+`GET /health/live` y `GET /health/ready`.
+
+**Pendiente con CORE:** bajo qué dominio se sirven los portales, si esperan URL pública o
+red compartida, y si habrá ambiente de pruebas. Plan B para la cookie: regla de reescritura
+en el hosting del front para login, refresh y logout.

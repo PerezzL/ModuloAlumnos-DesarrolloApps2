@@ -18,13 +18,10 @@ agrega información de otros módulos a través del Gateway de CORE.
 | [`docs/arquitectura.md`](docs/arquitectura.md) | Capas, Gateway, fuentes de verdad, auth, decisiones tomadas. |
 | [`docs/codigo.md`](docs/codigo.md) | Mapa del código y de las piezas de mock (fixtures, CORE falso, Prism, tests). |
 | [`docs/integraciones.md`](docs/integraciones.md) | Qué expone cada módulo externo y qué está confirmado o pendiente. |
-| [`docs/integracion-real.md`](docs/integracion-real.md) | Qué tocar cuando un módulo confirma su contrato y cómo conectar al CORE real. |
 | [`docs/pruebas.md`](docs/pruebas.md) | Cómo probar en local: usuarios, fallas simuladas y casos preparados por pantalla. |
 | [`packages/fixtures/README.md`](packages/fixtures/README.md) | Qué son las fixtures, para qué sirven y por qué casi todas son provisionales. |
-| [`docs/plan.md`](docs/plan.md) | Decisiones tomadas, pasos de armado y pendientes. |
 | [`docs/requisitos.md`](docs/requisitos.md) | Los 9 requisitos funcionales (RF1–RF9). |
 | [`docs/pantallas.md`](docs/pantallas.md) | Pantallas, qué muestran y de qué endpoint salen. |
-| [`docs/core/CORE_INTEGRACION.md`](docs/core/CORE_INTEGRACION.md) | Contrato de integración de CORE (auth, notificaciones, saldo, Gateway). |
 
 ## Stack y estructura
 
@@ -37,7 +34,7 @@ agrega información de otros módulos a través del Gateway de CORE.
 - Front: React Router y TanStack Query. BFF: `fetch` nativo, `nestjs-pino`, config validada con zod.
 - Monorepo con npm workspaces. Un `Dockerfile` por app y `docker-compose.yml` en la raíz.
 - No usar los decoradores de `@nestjs/swagger` como fuente del contrato: el YAML manda.
-- El porqué de cada elección está en [`docs/arquitectura.md`](docs/arquitectura.md); los pasos de armado, en [`docs/plan.md`](docs/plan.md).
+- El porqué de cada elección está en [`docs/arquitectura.md`](docs/arquitectura.md).
 
 ## Comandos
 
@@ -133,45 +130,8 @@ Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
 - Lógica de negocio del saldo (cobros, acreditaciones).
 - Vistas propias para sanción de biblioteca o detalle de evento: son redirecciones a otros portales.
 
-## Tablero de Trello
-
-Tablero: https://trello.com/b/zenfbiBW/uadenet-alumnos
-
-Trello es un reflejo del trabajo, no lo dirige: sirve para mostrar cómo se organiza el
-equipo y para ver qué falta. Se sincroniza al cerrar cada bloque, no tarea por tarea.
-
-Cada tarjeta lleva la épica entre corchetes y un código (`T` tarea técnica, `H` historia,
-`E` entrega) que se cita en los commits. El color de la etiqueta es el riesgo del contrato:
-verde firme, amarillo provisional, rojo supuesto.
-
-- **Al planear un bloque:** leer las tarjetas que incluye. Sus criterios de aceptación son
-  la especificación de cada tarea.
-- **Al cerrar un bloque:** mover sus tarjetas a "En revisión (PR abierto)", comentar el link
-  del PR y lo que haya surgido, y crear en "Backlog" las tarjetas de trabajo nuevo.
-- **Si un módulo externo confirma o cambia algo:** comentarlo en su tarjeta de
-  "Esperando a otros módulos" además de actualizar [`docs/integraciones.md`](docs/integraciones.md).
-
-Si tenés acceso a Trello desde tu herramienta, hacé la sincronización. Si no, avisale a la
-persona para que la haga a mano; no la des por hecha.
-
-Límites:
-
-- No mover tarjetas a "Terminado": lo hace una persona después de revisar el PR.
-- No modificar la historia ni los criterios de aceptación de una tarjeta. Si parecen
-  incorrectos o incompletos, comentarlo y preguntar.
-- No archivar ni borrar tarjetas, ni reordenar el Backlog.
-- "Terminado" significa que funciona contra el CORE falso. La conexión al módulo real se
-  sigue en las tarjetas de "Integración real".
-
 ## Forma de trabajo
 
-- Se trabaja por bloques grandes (ver [`docs/plan.md`](docs/plan.md)). Un plan por bloque, revisado con la
-  persona antes de arrancar; después se avanza sin frenar entre tarjetas.
-- Una rama `bloque/<nombre>` y un PR por bloque. Adentro, un commit por tarjeta con su código
-  en el título (`T07: guard JWT`). Se mergea sin squash.
-- Si el bloque anterior todavía no está mergeado, la rama nueva sale de la rama de ese bloque
-  y su PR apunta a ella (no a `main`). Si el bloque anterior recibe cambios, se traen con
-  `git merge`. Cuando se mergea a `main`, se cambia la base del PR nuevo a `main`.
 - Al instalar dependencias, no filtrar la salida de `npm install`: los errores de peers
   (ERESOLVE) pasan inadvertidos y el paquete no queda instalado.
 - Tests de adaptadores antes que el adaptador.
@@ -181,5 +141,7 @@ Límites:
   (`cursada`, `inscripcion`, `comision`). No traducirlos.
 - Cuando un módulo externo confirma o cambia algo: actualizar [`docs/integraciones.md`](docs/integraciones.md),
   el fixture, el adaptador y, si corresponde, quitar `x-provisional` del contrato.
-  Qué archivos y decisiones toca cada módulo: [`docs/integracion-real.md`](docs/integracion-real.md).
 - Cuando el agente se equivoque en algo repetible, agregar la regla acá.
+
+La organización del equipo (ramas, PRs, Trello, plan por bloques y qué tocar módulo por
+módulo en la integración real) está en `docs/equipo.md`, que no forma parte de la entrega.
