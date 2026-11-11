@@ -3,7 +3,16 @@
 Frontend (SPA) y BFF del Portal del Estudiante de UADEnet, el sistema de gestión de campus
 que construyen 10 grupos en Desarrollo de Aplicaciones II (UADE, 2° cuatrimestre 2026).
 
-**Integrantes:** _(completar)_
+**Integrantes:** 
+- Penalva, Santiago Nicolás - 1182245
+- Alvarez Russo, Matias - 1127552
+- Artimiak, Jonathan - 1187099 
+- Pérez Márquez, Lucas - 1148703
+- Martinez Blanco, Abril - 1156495
+- Cóceres Antun, José Ignacio - 1131108
+
+
+
 
 El portal no es dueño de datos académicos: consulta y agrega información de los demás
 módulos a través del Gateway de CORE. Los 9 requisitos funcionales están implementados.
