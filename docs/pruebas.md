@@ -72,7 +72,8 @@ curl -X PUT localhost:4000/__falso/inscripcion -H 'content-type: application/jso
 ```
 
 El período con la inscripción abierta pasa a abrir dentro de una semana, y el POST de
-inscripción responde 409 `FUERA_DE_FECHA`. Con `{"cerrada":false}` o `POST /__falso/reset`
+inscripción responde 422 `BUSINESS_RULE_VIOLATION` con "La inscripción del período no está
+abierta" (el BFF lo devuelve como 409 `INSCRIPCION_RECHAZADA` con ese detalle). Con `{"cerrada":false}` o `POST /__falso/reset`
 vuelve a la normalidad; `GET /__falso/inscripcion` muestra el estado. En la pantalla de
 Inscripción hay un botón que hace lo mismo, visible solo con `npm run dev`.
 
@@ -180,28 +181,31 @@ Datos de octubre de 2026:
 ### Inscripción
 
 Pantalla **Académico** (`/academico`). La oferta es del 1° cuatrimestre de 2027, con la
-inscripción abierta del 28/09 al 19/12/2026. La arma el BFF cruzando cursos, correlatividades
-e historial.
+inscripción abierta del 28/09 al 18/12/2026 inclusive. La arma el BFF cruzando los cursos del
+período con las materias del plan, las correlatividades y el historial. No aparecen
+Contabilidad I (es de otro plan) ni la comisión B de Sistemas Operativos (está cancelada).
 
 | Asignatura (comisión) | Qué se espera |
 | --- | --- |
 | Sistemas Operativos (A) | Se puede inscribir: correlativas cumplidas y con cupo |
 | Algoritmos y Estructuras de Datos (B) | Se puede inscribir (la recursa: quedó libre en 2025) |
-| Algoritmos y Estructuras de Datos (A) | Sin cupo (40/40) → `SIN_CUPO` |
+| Algoritmos y Estructuras de Datos (A) | Sin cupo (40/40) |
 | Desarrollo de Aplicaciones II | Bloqueada: le falta regularizar Desarrollo de Aplicaciones I (la está cursando) |
 | Bases de Datos II | Bloqueada: le falta aprobar Bases de Datos I |
 
 | Caso | Cómo | Qué se espera |
 | --- | --- | --- |
 | Inscripción correcta | Sistemas Operativos | Confirmación; el cupo pasa de 10 a 11 y aparece en Mis Cursos |
-| Ya inscripto | Con dos pestañas abiertas, inscribirse en las dos | La segunda muestra "Ya estás inscripto" (`YA_INSCRIPTO`) |
-| Sin cupo al enviar | Llenar la comisión desde otra pestaña antes de confirmar | "La comisión se quedó sin cupo" (`SIN_CUPO`) |
-| Sin plan | `j.perez` (`careers: []`) | Aviso de que no se pudo confirmar el plan y oferta de todos los planes (`filtradaPorPlan: false`) |
+| Ya inscripto | Con dos pestañas abiertas, inscribirse en las dos | La segunda muestra "No pudimos inscribirte" con el motivo del Módulo 9: "El alumno ya está inscripto en la asignatura" |
+| Sin cupo al enviar | Llenar la comisión desde otra pestaña antes de confirmar | "No pudimos inscribirte" con "La comisión no tiene cupo disponible" |
+| Sin plan | `j.perez` (`careers: []` y sin carrera) | Aviso de que no se pudo confirmar el plan, sin oferta (`filtradaPorPlan: false`, `materias: []`) |
 | Inscripción cerrada | Botón "Simular inscripción cerrada" en la pantalla (solo en desarrollo), o `PUT /__falso/inscripcion` | Pantalla "El período de inscripción no está abierto" con la fecha en que abre, sin la oferta; "Quitar la simulación" la vuelve a abrir |
-| Período ya cerrado | `GET /inscripcion/oferta?periodoId=2026-2` | `inscripcionAbierta: false` |
+| Período ya cerrado | `GET /inscripcion/oferta?periodoId=3` | `inscripcionAbierta: false` |
 | Módulo 9 caído | Falla `academic: caido` | Error de servicio no disponible; el POST no se reintenta solo |
 
-El CORE falso no simula `SIN_REGULARIDAD`; `FUERA_DE_FECHA`, solo con la inscripción cerrada simulada. Después de probar, hacé
+El Módulo 9 responde los rechazos con códigos genéricos (`BUSINESS_RULE_VIOLATION`,
+`DATA_CONFLICT`) y el motivo en `detail`, y el CORE falso hace lo mismo: el portal muestra
+siempre "No pudimos inscribirte" con ese motivo. Después de probar, hacé
 `POST /__falso/reset` para deshacer las inscripciones.
 
 ### Historial de cursadas
@@ -240,13 +244,13 @@ Con el contrato confirmado del Módulo 2 (fixtures `teacher/*.json`).
 | --- | --- | --- |
 | Asistencia en el mínimo | Bases de Datos I | 5 presentes, 1 justificada ("Certificado médico") y 2 ausentes de 8 (75 %); alerta: cerca del mínimo de 75 % |
 | Asistencia completa | Desarrollo de Aplicaciones I | 8 de 8 clases (100 %); "Tu asistencia está al día" |
-| Alumno libre | Algoritmos y Estructuras de Datos, entrando por URL: `/alumnos/cursos/curso-ayed-2025-2-a` (desde Mis cursos solo enlazan las cursadas en curso) | "Quedaste libre" (68,75 %); Parcial 1 ausente y Parcial 2 desaprobado |
+| Alumno libre | Algoritmos y Estructuras de Datos, entrando por URL: `/alumnos/cursos/1003` (desde Mis cursos solo enlazan las cursadas en curso) | "Quedaste libre" (68,75 %); Parcial 1 ausente y Parcial 2 desaprobado |
 | Notas | Bases de Datos I | Parcial 1: 7, TP1 (Integrador): 9, Parcial 2 pendiente; promedio 8 |
 | Notas con ausente e instancia desconocida | Desarrollo de Aplicaciones I | Parcial 1: 3,5 desaprobado, recuperatorio 8 aprobado, "Exposición oral" ausente con instancia "—"; el TP1 cancelado no aparece |
 | Detalle de nota | Abrir el recuperatorio de Desarrollo de Aplicaciones I | Nota 8, aprobado, docente Carla Ruiz; enlace para volver a la cursada |
 | Nota desde la notificación | Tocar "Se publicó tu nota de Bases de Datos I" en la campana | Detalle del Parcial 1: nota 7, docente Laura Gómez |
 | Nota final en el historial | Mis cursos | Programación I 8 y Matemática Discreta 7 (del Módulo 2); Algoritmos sin nota |
-| Curso o nota ajenos | `/alumnos/cursos/no-existe` o `/cursadas/curso-bd1-2026-2-a/notas/no-existe` | "No encontramos esa cursada" / "esa nota" |
+| Curso o nota ajenos | `/alumnos/cursos/no-existe` o `/cursadas/1005/notas/no-existe` | "No encontramos esa cursada" / "esa nota" |
 | Módulo 2 caído | Falla `teacher: caido` | El detalle sale con el encabezado y un aviso con reintento en asistencia y en notas (`DOCENTE` en `fuentesConError`); el historial sale sin notas finales y con aviso; el detalle de nota muestra error |
 | Backoffice caído en el detalle de nota | Falla `backoffice: caido` | La nota sale igual, sin docente (si su nombre no estaba en caché) |
 

@@ -481,42 +481,41 @@ lista los endpoints y formatos que van a exponer, pero CORE todavía no lo confi
 - El Módulo 2 obtiene el listado de inscriptos directamente del Módulo 9; el Módulo 1 no lo entrega.
 - Lo que no está implementado se trabaja con mock hasta que esté disponible.
 
-Fixtures (`academic/*.provisional.json`): **todavía siguen las suposiciones anteriores al
-documento del Módulo 9**, igual que el adaptador. Pasarlas a las formas de arriba (incluidas
-las del pedido a CORE de noviembre 2026) es trabajo pendiente. Suposiciones vigentes en el código:
-
-- Períodos: `id`, `nombre`, `fechaInicio`, `fechaFin`, `inscripcionDesde`, `inscripcionHasta`.
-- Turnos de examen: los campos informados más un `id`; fechas sin hora. No suponemos que
-  acepte filtros de fecha: el BFF pide todos y se queda con los que se solapan con el rango
-  (adaptador en `apps/bff/src/modulos/academico/`).
-- Cursos: `id`, `comision`, `periodoId`, `sede`, `cupoMaximo`, `inscriptosActivos`,
-  `asignatura` anidada y `horarios` (pedido, puede faltar).
-- Correlatividades: `[{ asignaturaId, nombre, tipo }]`.
-- Inscripciones del alumno: `id`, `cursoId`, `comision`, `asignatura`, `periodo`,
-  `notaFinal`, `estado`, `fecha`.
-- POST de inscripción: 201 `{ id, cursoId, alumnoId, estado, fecha }`
-  (`academic/inscripcion-creada.provisional.json`). Los rechazos son 409 problem+json con los
-  `code` de nuestro [`openapi.yaml`](../openapi.yaml) (`YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE` con
-  `correlativasFaltantes`, `SIN_REGULARIDAD`, `FUERA_DE_FECHA`), uno por motivo en
-  `academic/inscripcion-rechazos.provisional.json`. El CORE falso no simula
-  `SIN_REGULARIDAD` ni `FUERA_DE_FECHA`.
+Fixtures (`academic/*.provisional.json`): siguen las formas de arriba, con ids numéricos. Son
+provisionales porque CORE todavía no confirmó el pedido del Módulo 9. Las materias del plan
+están en `planes-asignaturas.provisional.json` (por `planId`) y el catálogo de carreras trae
+`ultimoPlanActivo`. El status de los rechazos es una suposición nuestra: `DATA_CONFLICT` con
+409 y `BUSINESS_RULE_VIOLATION` con 422 (`inscripcion-rechazos.provisional.json`).
 
 Cómo lo usa el BFF (oferta, inscripción e historial, adaptador en
 `apps/bff/src/modulos/academico/`):
 
-- Oferta: pide en paralelo el `planId` (Backoffice), los períodos y todas las inscripciones
-  del alumno; elige el período vigente (el de inscripción abierta, si no el próximo en abrir,
-  si no el último que cerró); pide los cursos de ese período y plan y las correlatividades de
-  cada asignatura. Las correlatividades se cachean en memoria una hora; si el Módulo 9 no
-  conoce una asignatura (404), se toma como sin correlativas. Si fallan, falla la oferta: no
-  se ofrece una materia sin validar sus correlativas.
+- Período: el nombre se arma con `numero` y `anio` ("1° cuatrimestre 2027"). La ventana va
+  desde las 00:00 de `inscripcionDesde` hasta las 23:59:59.999 de `inscripcionHasta`, en hora
+  de Argentina.
+- Oferta: pide en paralelo el plan del alumno, los períodos y todas las inscripciones del
+  alumno; elige el período vigente (el de inscripción abierta, si no el próximo en abrir, si
+  no el último que cerró); pide los cursos del período y las materias del plan, y se queda con
+  los cursos de esas materias (de ahí salen nombre y código). Las comisiones `CANCELADO` y
+  `FINALIZADO` no se ofrecen.
+- Plan del alumno: el de Backoffice para su carrera y, si no lo da, el plan activo de la
+  carrera (`/academica/carreras/con-ultimo-plan-activo`). Sin plan, la oferta sale sin
+  materias y con `filtradaPorPlan: false` (decisión 11 de [`plan.md`](plan.md)).
+- Correlatividades: se aplanan las `condiciones` (una correlativa por materia, con su tipo).
+  Si el Módulo 9 no conoce una asignatura (404), se toma como sin correlativas. Si fallan,
+  falla la oferta: no se ofrece una materia sin validar sus correlativas.
+- Caché en memoria por una hora: correlatividades, materias del plan y catálogo de carreras.
 - Estado por comisión: `INSCRIPTO` si hay una inscripción del alumno en ese curso que no sea
   `BAJA`; si no, `BLOQUEADA` si falta una correlativa; si no, `CON_CUPO` o `SIN_CUPO`.
-- Horarios con un día fuera de `LUNES`–`SABADO` o una hora que no sea `HH:MM` invalidan la
-  respuesta (502). Si no vienen horarios o sede, la comisión sale con `horarios: []` y
-  `sede: null`.
-- Rechazos: la traducción de los códigos del Módulo 9 a los nuestros está en un solo lugar
-  (`academico.mapper.ts`). Hoy es identidad; un código que no reconoce, o un cuerpo que no se
-  entiende, es `INSCRIPCION_RECHAZADA`.
-- Historial: ordena por la fecha de inscripción, de la más reciente a la más antigua (los ids
-  de período son opacos y no se ordenan); `enCurso` es `INSCRIPTO` o `CURSANDO`.
+- Horario: el único del curso pasa a `horarios` con el día en español, las horas en `HH:MM`
+  y el aula de `aulaNombre`. Un día fuera de lunes a sábado invalida la respuesta (502). Sin
+  horario o sin sede, la comisión sale con `horarios: []` y `sede: null`.
+- POST: el 201 no trae el curso, así que el `cursoId` es el del pedido.
+- Rechazos: la traducción está en un solo lugar (`academico.mapper.ts`). `BUSINESS_RULE_VIOLATION`
+  y `DATA_CONFLICT` (con 400, 409 o 422) son 409 `INSCRIPCION_RECHAZADA` con el `detail` del
+  Módulo 9, que el front muestra. Un 409 siempre es un rechazo. Otro 4xx (por ejemplo, un
+  `VALIDATION_ERROR`) es 502. Si el Módulo 9 agrega códigos por motivo, se mapean a los
+  nuestros en la misma tabla.
+- Historial: ordena por inicio del período y, dentro del mismo período, por fecha de
+  inscripción, de la más reciente a la más antigua (los ids son opacos y no se ordenan);
+  `enCurso` es `INSCRIPTO` o `CURSANDO`.

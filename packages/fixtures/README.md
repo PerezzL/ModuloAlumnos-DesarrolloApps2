@@ -34,9 +34,11 @@ suposición nuestra. Pasa por dos motivos:
 
 - **El módulo informó qué datos trae, pero no con qué nombres o forma.** Backoffice adelantó
   `careers` con el `planId`, pero todavía no lo publicó.
-- **El endpoint existe, pero no tenemos la respuesta.** Varios endpoints del Módulo 9 están
-  implementados, pero solo conocemos la ruta. Lo mismo con partes de CORE (`wallets/me`, el
-  ítem de notificación), porque no tenemos su `contracts/openapi.yaml`.
+- **El módulo publicó la forma, pero falta que se confirme.** Las del Módulo 9 siguen su
+  documento y el pedido de alta que le mandó a CORE (noviembre 2026), que CORE todavía no
+  confirmó; el status de sus rechazos es suposición nuestra.
+- **El endpoint existe, pero no tenemos la respuesta.** Partes de CORE (el ítem de
+  notificación), porque no tenemos su `contracts/openapi.yaml`.
 
 Además, las rutas detrás del Gateway están sin confirmar para los módulos 4, 5, 8 y 9 y
 usamos una suposición ("prefijo + recurso"). Todo eso está detallado, módulo por módulo, en
@@ -85,12 +87,15 @@ Cuando un módulo confirma o cambia su respuesta:
 | `store/orders-me.json` | `GET /api/v1/orders/me?status=&siteId=&from=&to=&limit=&cursor=` (y cada ítem, `GET /api/v1/orders/{id}`) |
 | `backoffice/users.provisional.json` | `GET /api/v1/users/{userId}`, por id |
 | `backoffice/sites.json` | `GET /api/v1/sites` (y cada ítem, `GET /api/v1/sites/{siteId}`) |
-| `academic/carreras.provisional.json` | `GET /api/v1/academica/carreras` |
+| `academic/carreras.provisional.json` | `GET /api/v1/academica/carreras` y `/carreras/con-ultimo-plan-activo` |
 | `academic/periodos.provisional.json` | `GET /api/v1/planificacion/periodos` |
 | `academic/turnos-examen.provisional.json` | `GET /api/v1/planificacion/turnos-examen` |
-| `academic/cursos.provisional.json` | `GET /api/v1/planificacion/cursos?periodoId=&planId=` |
+| `academic/cursos.provisional.json` | `GET /api/v1/planificacion/cursos?periodoId=` (no filtra por plan) |
+| `academic/planes-asignaturas.provisional.json` | `GET /api/v1/academica/planes/{planId}/asignaturas`, por plan |
 | `academic/correlatividades.provisional.json` | `GET /api/v1/academica/asignaturas/{id}/correlatividades`, por asignatura |
 | `academic/inscripciones-alumno.provisional.json` | `GET /api/v1/planificacion/alumnos/{alumnoId}/inscripciones` |
+| `academic/inscripcion-creada.provisional.json` | 201 de `POST /api/v1/planificacion/cursos/{cursoId}/inscripciones` |
+| `academic/inscripcion-rechazos.provisional.json` | Rechazos de ese POST (códigos genéricos), por caso |
 | `teacher/attendance.json` | `GET /api/v1/students/{studentId}/courses/{courseId}/attendance`, por curso |
 | `teacher/grades.json` | `GET /api/v1/students/{studentId}/courses/{courseId}/grades`, por curso |
 | `teacher/results.json` | `GET /api/v1/students/{studentId}/results`, por alumno |

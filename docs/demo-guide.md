@@ -198,8 +198,8 @@ API, que duplicarían el BFF).
 
 ### 5. Inscripción (RF2)
 
-Ir a **Académico**. Es la oferta del 1° cuatrimestre de 2027, armada por el BFF cruzando
-cursos, correlatividades e historial.
+Ir a **Académico**. Es la oferta del 1° cuatrimestre de 2027, armada por el BFF cruzando los
+cursos del período con las materias del plan, las correlatividades y el historial.
 
 | Mostrar | Qué se espera |
 | --- | --- |
@@ -215,7 +215,9 @@ Inscribirse:
 2. En la primera, inscribirse en **Sistemas Operativos (A)**: confirmación, el cupo pasa de
    10 a 11.
 3. En la segunda pestaña (que todavía muestra el estado viejo), intentar la misma
-   inscripción: **"Ya estás inscripto"** (`YA_INSCRIPTO`, devuelto por el Módulo 9).
+   inscripción: **"No pudimos inscribirte"** con el motivo que devuelve el Módulo 9 ("El
+   alumno ya está inscripto en la asignatura"). El Módulo 9 solo da códigos genéricos, así
+   que el portal muestra su motivo tal cual.
 4. Remarcar: el portal no guarda la inscripción, la comanda al Módulo 9 y refleja el
    resultado; el POST nunca se reintenta solo.
 
@@ -233,7 +235,7 @@ Inscribirse:
 4. Abrir el **Recuperatorio Parcial 1**: detalle de la nota con el docente que la cargó
    (el nombre sale de Backoffice).
 5. *Opcional:* alumno libre. Desde Mis Cursos solo enlazan las cursadas en curso, así que
-   se entra por URL: http://localhost:5173/alumnos/cursos/curso-ayed-2025-2-a. Se ve
+   se entra por URL: http://localhost:5173/alumnos/cursos/1003. Se ve
    "Quedaste libre".
 6. **Apagar Docente** (Módulo 2):
 
