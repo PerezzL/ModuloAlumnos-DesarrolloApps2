@@ -2,7 +2,7 @@
 
 Guion para mostrar el Portal del Estudiante de punta a punta en la segunda entrega: los 9
 requisitos funcionales, una falla parcial y una notificación en tiempo real, todo contra el
-CORE falso. Dura unos 20 minutos; los pasos marcados como *opcional* se saltean si falta tiempo.
+CORE falso. Dura unos 25 minutos; los pasos marcados como *opcional* se saltean si falta tiempo.
 
 Esta guía es un recorrido. El catálogo completo de casos, usuarios y fallas está en
 [`pruebas.md`](pruebas.md); cómo instalar, en [`instalacion.md`](instalacion.md).
@@ -11,7 +11,7 @@ Esta guía es un recorrido. El catálogo completo de casos, usuarios y fallas es
 
 | Paso | Requisito | Qué se ve |
 | --- | --- | --- |
-| 1 | — | Arquitectura: los tres caminos (BFF, CORE directo, tiempo real) |
+| 1 | — | Arquitectura (los tres caminos, seguridad, resiliencia) y tecnologías elegidas |
 | 2 | RF1 | Login, dominio inválido, cuenta suspendida, sesión que sobrevive a la recarga |
 | 3 | RF1 | Home y perfil con datos de Backoffice |
 | 4 | RF7 | Calendario unificado y **falla parcial** con un módulo apagado |
@@ -54,17 +54,105 @@ datos iniciales (inscripciones, notificaciones, saldo y fallas), sin reiniciar n
 
 ## El recorrido
 
-### 1. Arquitectura en un minuto
+### 1. Arquitectura y tecnologías
 
-Qué contar, sin pantalla o con el diagrama de [`arquitectura.md`](arquitectura.md):
+Unos 5 minutos, antes de abrir el portal. Se apoya en el diagrama de
+[`arquitectura.md`](arquitectura.md) ("Cómo viaja un pedido"); el detalle y las alternativas
+descartadas también están ahí, por si preguntan.
 
-- El portal **no es dueño de datos**: consulta en vivo a los módulos 2, 4, 5, 6, 8 y 9.
-- El navegador solo conoce el **Gateway de CORE**. Hay tres caminos:
-  1. Lo que agrega o traduce el **BFF** (calendario, inscripción, historial, compras).
-  2. Lo que es de **CORE directo** (login, saldo, notificaciones).
-  3. **Tiempo real**: socket.io de CORE para las notificaciones.
-- Hoy, en lugar de CORE y de los módulos, corre el **CORE falso**, que sirve las mismas
-  fixtures que usan los tests. Pasar a lo real es cambiar URLs, no código.
+#### 1.1 Qué es el Módulo 1
+
+- Un **Frontend (SPA) + BFF** (Backend For Frontend). El portal **no es dueño de datos
+  académicos**: consulta en vivo a Docente (2), Comedor (4), Tienda (5), Eventos (6),
+  Backoffice (8) y Gestión Académica (9), y usa de CORE el login, el saldo y las notificaciones.
+- No persiste inscripciones, historial, calendario ni compras. Solo cachea en memoria, con
+  TTL, datos que casi no cambian (correlatividades, nombres de asignatura), y ningún pedido
+  depende de que estén cacheados.
+
+#### 1.2 Los tres caminos
+
+El navegador solo conoce **la URL del Gateway de CORE**; nunca llama al BFF directo.
+
+| Camino | Qué pasa por ahí | Recorrido |
+| --- | --- | --- |
+| 1. BFF | Calendario, oferta e inscripción, historial y detalle de cursada, compras, perfil | Front → Gateway → BFF → Gateway → módulos |
+| 2. CORE directo | Login, refresh, logout, saldo, listado de notificaciones | Front → Gateway → CORE |
+| 3. Tiempo real | Notificaciones nuevas | CORE → Front, por socket.io |
+
+Qué remarcar de cada uno:
+
+- **Camino 1:** el Gateway aparece dos veces, como entrada hacia el BFF y como salida hacia
+  los módulos. El BFF llama en paralelo, traduce cada respuesta con un **adaptador por
+  módulo** y devuelve un único JSON con la forma del [`openapi.yaml`](../openapi.yaml).
+  Ejemplo: el calendario junta Comedor, Eventos y Gestión Académica en un solo pedido.
+- **Camino 2:** son contratos de CORE que el front usa tal cual. Pasarlos por el BFF solo
+  sumaría un salto sin agregar nada.
+- **Camino 3:** el socket es una aceleración, no una garantía. Al conectar o reconectar el
+  front pide el listado por REST, así no se pierde nada si estuvo desconectado.
+
+#### 1.3 Identidad y seguridad
+
+- El alumno se identifica **solo por el token**. El Gateway inyecta `X-User-Id`; el id nunca
+  viaja en la URL ni en el body, así que no se puede pedir el historial de otro.
+- El BFF **valida el JWT otra vez** (RS256 contra el JWKS de CORE: firma, issuer, audience,
+  expiración). Es defensa en profundidad, pedida por CORE.
+- En el front el `accessToken` vive **solo en memoria**; al recargar se renueva con la cookie
+  de refresh de CORE (HttpOnly). Los refresh se serializan porque el token rota en cada uso.
+
+#### 1.4 Resiliencia
+
+- Errores en `application/problem+json` con un `code` estable, que el front traduce a un
+  mensaje propio.
+- El BFF maneja explícitamente las respuestas del Gateway: 503 (módulo caído), 502
+  (respuesta inválida) y 504 (timeout de 10 s). Corta antes, a los 8 s, para poder decir
+  qué módulo tardó.
+- **Falla parcial en lugar de pantalla en blanco:** el calendario responde con lo que pudo
+  cargar y el detalle de cursada se ve aunque el Módulo 2 esté caído. Se muestra en vivo en
+  los pasos 4 y 6.
+- El POST de inscripción **no se reintenta solo**; las cargas de saldo llevan un
+  `Idempotency-Key` por intento para no cobrar dos veces.
+
+#### 1.5 Tecnologías y por qué
+
+El criterio común: **un solo lenguaje (TypeScript) y un solo contrato (`openapi.yaml`) de
+punta a punta**.
+
+| Capa | Tecnología | Por qué |
+| --- | --- | --- |
+| Contrato | OpenAPI 3.0 + Swagger UI | Se escribe primero; de ahí salen los tipos del front y del BFF (`openapi-typescript`) y los tests validan las respuestas contra él |
+| Frontend | React + Vite + TypeScript | Todo está detrás del login: alcanza una SPA, sin renderizado en servidor. Vite da recarga rápida y genera archivos estáticos |
+| Datos y ruteo (front) | TanStack Query + React Router + `openapi-fetch` | Caché, reintentos y estados de carga/error resueltos; llamadas tipadas desde el contrato |
+| UI | Tailwind CSS + shadcn/ui | Componentes accesibles que quedan en el repo y se adaptan sin pelear con una librería |
+| Tiempo real | `socket.io-client` | Lo impone CORE; el portal no levanta servidor propio de WebSocket ni consume RabbitMQ |
+| BFF | NestJS (Node + TypeScript) | Es entrada y salida, no cómputo: el modelo asincrónico de Node resuelve las llamadas en paralelo. Un módulo de Nest por módulo externo, y lugares fijos para lo transversal: guard del JWT, filtro de problem+json, middleware del correlation id |
+| HTTP, logs, config (BFF) | `fetch` nativo, `nestjs-pino`, zod, `jose` | Sin dependencias de más; logs estructurados con `X-Correlation-Id`; la config se valida al arrancar y falla temprano |
+| Tests | Vitest | Adaptadores probados con fixtures (JSON del módulo externo → modelo propio) y e2e del BFF contra el contrato |
+| Entorno | npm workspaces + Docker Compose | Un repo con web, BFF, CORE falso y tipos; `docker compose up` levanta todo igual en cualquier máquina |
+
+Descartados, en una línea cada uno: **Spring Boot** (dos lenguajes y dos generadores de
+tipos para un BFF sin lógica propia), **Express o Fastify solos** (la estructura quedaría a
+criterio de cada uno) y **Next.js** (su fuerte es el renderizado en servidor y las rutas de
+API, que duplicarían el BFF).
+
+#### 1.6 Qué corre hoy en la demo
+
+- En lugar de CORE y los módulos corre el **CORE falso** (`apps/core-falso`): hace de
+  Gateway, auth (con claves RS256 propias y JWKS), notificaciones por socket.io, saldo y
+  módulos externos. La topología es la misma que en producción.
+- Los datos salen de **fixtures**: archivos JSON en `packages/fixtures/<modulo>/` con una
+  respuesta de ejemplo de cada módulo externo (por ejemplo, las reservas de comedor de
+  Valentina). Cada fixture se usa en dos lugares: el CORE falso la devuelve cuando el BFF le
+  pide algo a ese módulo, y el test del adaptador se la pasa como entrada para verificar que
+  la traduce bien al modelo del contrato. Al ser el mismo archivo, lo que se ve en la demo y
+  lo que prueban los tests no se pueden desalinear.
+- Las fixtures cuya forma el módulo dueño no confirmó se llaman `*.provisional.json`: son
+  suposición nuestra (por ejemplo, todas las de Gestión Académica). Las de Docente, Comedor,
+  Tienda, Eventos y el saldo de CORE ya siguen el contrato confirmado de cada módulo.
+- Permite **simular fallas en caliente** (`/__falso/fallas`) y disparar notificaciones; es
+  lo que se usa en los pasos 4, 6 y 7.
+- Pasar a lo real es **cambiar variables de entorno** (Gateway, JWKS, issuer, audience,
+  WebSocket) y, por cada módulo que confirme su contrato, ajustar su fixture y su adaptador.
+  El resto del BFF y el front no se tocan.
 
 ### 2. Login y sesión (RF1)
 
