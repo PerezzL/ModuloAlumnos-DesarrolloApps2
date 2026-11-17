@@ -37,9 +37,13 @@ y se inscribe en una comisión. La inscripción se registra en el Módulo 9.
 
 Flujo del BFF:
 
-1. Obtener el `planId` del alumno (Módulo 8) y el período vigente (`GET /api/planificacion/periodos`).
-2. Listar la oferta: `GET /api/planificacion/cursos?periodoId={id}&planId={id}`.
-3. Agrupar las comisiones por `asignaturaId`.
+1. Obtener el plan del alumno (Módulo 8 o, si no lo da, el plan activo de su carrera en
+   `GET /api/academica/carreras/con-ultimo-plan-activo`) y el período vigente
+   (`GET /api/planificacion/periodos`).
+2. Listar la oferta: `GET /api/planificacion/cursos?periodoId={id}` (no filtra por plan) y
+   quedarse con los cursos de las materias de `GET /api/academica/planes/{planId}/asignaturas`,
+   que dan el nombre y el código de cada una.
+3. Agrupar las comisiones por asignatura.
 4. Marcar el estado de cada comisión:
    - `INSCRIPTO`: según las inscripciones del alumno.
    - `CON_CUPO` / `SIN_CUPO`: `inscriptosActivos` contra `cupoMaximo`.
@@ -56,7 +60,8 @@ Notas:
 - El portal no guarda la inscripción: la comanda y refleja el resultado.
 - Correlatividades y nombres de asignatura se cachean en el BFF.
 - Rechazo: 409 con `code` `YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE`,
-  `SIN_REGULARIDAD` o `FUERA_DE_FECHA` (provisional hasta tener los códigos del Módulo 9).
+  `SIN_REGULARIDAD`, `FUERA_DE_FECHA` o `INSCRIPCION_RECHAZADA`. Hoy el Módulo 9 solo informa
+  códigos genéricos, así que todos llegan como `INSCRIPCION_RECHAZADA` con su `detail`.
 - Fuera de alcance: baja de inscripción.
 
 Pendiente: horarios anidados en el listado de cursos, códigos de error del POST,

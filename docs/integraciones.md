@@ -155,8 +155,8 @@ OpenAPI de `teacher-service` y respuestas a nuestras consultas (noviembre 2026).
   `teacher.course-result-published.v1`. No los consumimos: no tenemos broker.
 
 Fixtures confirmadas: `teacher/attendance.json` y `teacher/grades.json` (por curso) y
-`teacher/results.json` (por alumno). Sus `courseId` son los de las fixtures académicas, que
-todavía usan ids de texto: en el Módulo 2 son enteros, pero es el mismo id.
+`teacher/results.json` (por alumno). Sus `courseId` son enteros y coinciden con los cursos de
+las fixtures académicas.
 
 Cómo lo usa el BFF (adaptador en `apps/bff/src/modulos/docente/`, servicio en
 `apps/bff/src/cursadas/`):
@@ -364,27 +364,24 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 Suposiciones nuestras: la respuesta trae la ficha de arriba más `careers`, y **cada alumno
 tiene un solo plan**. Si `careers` trae varias, se toma la primera. Manejar varias carreras
 obliga a cambiar `planId` por una lista en el adaptador (`backoffice.mapper.ts`), en el
-filtro de la oferta (`InscripcionService` y `AcademicoAdapter.cursos`) y en `Perfil` del
-[`openapi.yaml`](../openapi.yaml).
+plan de la oferta (`InscripcionService`) y en `Perfil` del [`openapi.yaml`](../openapi.yaml).
 
-Sin `planId` no se puede filtrar la oferta de RF2. Decisión nuestra: si Backoffice no lo
-devuelve (`careers` vacío, null o ausente) o no responde, el BFF pide la oferta sin `planId`
-y la marca con `filtradaPorPlan: false`; la pantalla avisa que puede incluir materias de
-otros planes. Queda registrado con un warning en el log.
+Si Backoffice no da el plan (`careers` vacío, null o ausente) o no responde, la oferta usa el
+plan activo de la carrera del alumno en el Módulo 9. Sin carrera, sale sin materias y con
+`filtradaPorPlan: false` (decisión 11 de [`plan.md`](plan.md); ver Módulo 9).
 
 Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/` y
 `apps/bff/src/perfil/perfil.service.ts`):
 
 - El id y el mail salen del token de CORE; de Backoffice se toman `firstName`, `lastName` y
   `fileNumber` (→ `nombre`, `apellido`, `legajo`). Se ignoran `documentId`, `roles`,
-  `status`, `siteId` y el `careerId` suelto. Todos opcionales: si no vienen, el perfil sale
-  sin ellos.
+  `status` y `siteId`. Todos opcionales: si no vienen, el perfil sale sin ellos.
 - **Carrera:** la primera del claim `careerIds` del token de CORE. Backoffice es el
   respaldo: si el token no trae carreras (claim ausente o lista vacía), se usa la primera de
-  `careers`.
-- **Plan:** solo lo da Backoffice. Es el de la carrera elegida dentro de `careers`; si
-  Backoffice no tiene la carrera del token, `planId` es null y la oferta sale sin filtrar por
-  plan (ver abajo).
+  `careers` y, si no viene, el `careerId` suelto (confirmado).
+- **Plan:** el de Backoffice es el de la carrera elegida dentro de `careers`; si Backoffice
+  no la tiene, `planId` es null y la oferta usa el plan activo de la carrera en el Módulo 9
+  (ver arriba).
 - El nombre de la carrera sale de `GET /academica/carreras` del Módulo 9, cacheado en memoria
   una hora. Si el Módulo 9 falla o no conoce la carrera, el perfil sale igual, sin `carrera`.
 - Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale con id, mail y, si
