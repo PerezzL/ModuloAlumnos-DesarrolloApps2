@@ -412,32 +412,78 @@ que mande solo un `siteId`; hoy, Comedor y el filtro por sede de Compras):
 ## Módulo 9 — Gestión Académica y Planificación
 
 Dueño de la cursada (entidad Curso), de la inscripción y del historial. La nota final la
-tomamos del Módulo 2 (ver arriba), aunque las inscripciones también traen `notaFinal`.
+tomamos del Módulo 2 (ver arriba), aunque el Módulo 9 también la expone.
+Documento de integración del Módulo 9 y respuestas a nuestras consultas (octubre 2026), más
+el pedido de alta en el Gateway que el Módulo 9 le mandó a CORE (noviembre 2026). Ese pedido
+lista los endpoints y formatos que van a exponer, pero CORE todavía no lo confirmó.
 
 | Tema | Estado |
 | --- | --- |
-| `POST /api/planificacion/cursos/{cursoId}/inscripciones` con `{ "alumnoId" }` | Implementado |
-| `GET /api/academica/asignaturas/{asignaturaId}/correlatividades` | Implementado |
+| `POST /api/planificacion/cursos/{cursoId}/inscripciones` con `{ "alumnoId" }` | Implementado; listado para el Portal del Estudiante en el pedido a CORE |
+| `GET /api/academica/asignaturas/{asignaturaId}/correlatividades` | Implementado; la forma cambió y trae nombres (ver abajo) |
 | `GET /api/planificacion/turnos-examen` | Implementado |
 | `GET /api/planificacion/periodos` | Implementado |
-| Filtro `planId` en `GET /api/planificacion/cursos?periodoId=&planId=` | Comprometido |
-| `asignatura: { id, codigo, nombre }` anidada en el listado de cursos | Comprometido |
-| `GET /api/planificacion/alumnos/{alumnoId}/inscripciones?periodoId=` | Comprometido |
-| Horarios anidados en el listado de cursos | Pedido |
-| Códigos de error del POST | Pendiente |
-| Condiciones de regularidad | Pendiente |
-| Emisión de `academica.resultado.publicado` | Pendiente; DTO definido (`tipo`, `ocurridoEn`, `enlace`) |
-| Evento de reprogramación o cancelación de finales | Pendiente; no está en el catálogo de CORE |
+| `GET /api/planificacion/cursos?periodoId=` | Implementado |
+| `GET /api/academica/carreras` · `/carreras/{carreraId}/planes` · `/planes/{planId}/asignaturas` | Implementado |
+| `GET /api/planificacion/cursos/{cursoId}/notas/{alumnoId}` (nota final) | Implementado |
+| `GET /api/planificacion/alumnos/{alumnoId}/inscripciones?periodoId=` | Forma definida en el pedido a CORE: `InscripcionAlumno[]` (ver abajo) |
+| Nombre de sede y de aula en el listado de cursos | Resuelto en el pedido a CORE: `sedeNombre` y `aulaNombre` (puede ser null) |
+| Filtro `planId` y `asignatura` anidada en el listado de cursos | Propuesto, no previsto; no hace falta (ver abajo) |
+| Período anidado en las inscripciones del alumno | Lo habían rechazado, pero en el pedido a CORE viene anidado en `curso.periodo`. Confirmar cuál vale |
+| Códigos de error | `code` genéricos (ver abajo). Pendiente: cómo distinguir el motivo de un rechazo de inscripción |
+| Condiciones de regularidad | Expuestas en `GET /api/regularidad/cursos/{cursoId}`; el portal usa el `threshold` del Módulo 2 |
+| Acceso con el token del alumno | Pendiente; sus rutas piden `ROLE_ADMINISTRATIVO` o `ROLE_ACADEMIC_ADMIN`. Le propusieron a CORE `academic:read` y `academic:write` y le preguntaron qué roles va a emitir para estudiante y docente |
+| Reescritura de rutas en el Gateway | Pendiente: le preguntaron a CORE si reescribe `/api/v1/academic/{resto}` → `/api/{resto}` o si ellos pasan a servir `/api/v1`. Con cualquiera de las dos, la ruta pública que usamos no cambia |
+| `GET /api/planificacion/asignaturas/{id}/agenda?desde=&hasta=` | Listado para "Portales" en el pedido a CORE. Pendiente: qué representa una `Asignacion` (si son fechas de examen por materia, serviría para el calendario) |
+| Notificación de la nota final | Resuelto: no hay. El Módulo 2 no notifica la nota final y `resultado.publicado` va solo a Analítica |
+| Evento de reprogramación o cancelación de finales | Pendiente; no está en el catálogo de CORE. El Módulo 9 pidió publicar `academic.exam-scheduled.v1` y `academic.term-defined.v1`; falta saber si CORE los convierte en notificaciones al alumno |
 
-- Correlatividades: tipo `REGULAR` o `APROBADA`.
-- Turnos de examen: ventanas generales (`nombre`, `fechaInicio`, `fechaFin`,
-  `inscripcionDesde`, `inscripcionHasta`), sin fecha por asignatura.
-- Inscripciones por alumno: cada una con curso y asignatura, período, `notaFinal`, `estado`.
+- Ids de curso, asignatura, período, etc.: `Long`. El `alumnoId` es `String` y es el mismo id
+  de usuario de todo el sistema (`sub` de CORE).
+- Materias del plan: `GET /api/academica/planes/{planId}/asignaturas` da los ids, códigos y
+  nombres de las asignaturas del plan. Los cursos del plan son los de `/cursos` cuyo
+  `asignaturaId` está en esa lista. El `planId` del alumno sigue viniendo del Módulo 8.
+- Listado de cursos: `codigo` (la comisión), `asignaturaId`, `periodoId`, `sedeId`,
+  `modalidad`, `turno`, un solo horario (`diaSemana` en inglés, `horaInicio`/`horaFin`
+  `HH:MM:SS`, `aulaId`), `estado` (`PLANIFICADO`, `EN_CURSO`, `FINALIZADO`, `CANCELADO`),
+  `cupoMaximo`, `inscriptosActivos`, `fechaInicio`, `fechaFin`. Cursos viejos pueden traer
+  el horario en null. El pedido a CORE agrega `sedeNombre` y `aulaNombre` (puede ser null), y
+  detalla los valores de `turno` (`MAÑANA`, `TARDE`, `NOCHE`). `sedeId` va a ser el `siteId` de Backoffice; las
+  sedes y aulas del Módulo 9 son un mock local que no se expone.
+- Correlatividades: el GET devuelve
+  `{ asignaturaId, condiciones: [{ tipo, materiasCorrelativas: [{ id, codigo, nombre }] }] }`,
+  con tipo `REGULAR` o `APROBADA` (pedido a CORE de noviembre 2026). Trae los nombres: ya no
+  hace falta cruzarlas con las asignaturas del plan. `{ id, asignaturaId, correlativaId, tipo }`,
+  que es lo que anotamos en octubre, es la respuesta del POST (alta de una correlatividad).
+- Inscripciones del alumno (pedido a CORE): cada elemento es la inscripción
+  (`{ id, alumnoId, fechaInscripcion, estado, notaFinal, fechaResultado }`) más
+  `curso: CursoAcademico`, que es el curso del listado con `asignatura: { id, codigo, nombre }`
+  y `periodo` (el período completo) en lugar de `asignaturaId` y `periodoId`.
+- Errores: `application/problem+json` con `type`, `title`, `status`, `detail`, `instance`,
+  `code`, `correlationId` y, en los de validación, `errors` (un mensaje por campo). Los `code`
+  son genéricos: `RESOURCE_NOT_FOUND`, `BUSINESS_RULE_VIOLATION`, `VALIDATION_ERROR`,
+  `BAD_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `DATA_CONFLICT`, `DATA_ACCESS_ERROR` e
+  `INTERNAL_ERROR`. No hay uno por motivo de rechazo, así que el adaptador no puede pasarlos a
+  nuestros `code` (`SIN_CUPO`, `CORRELATIVIDAD_FALTANTE`, etc.) sin saber cómo distinguirlos.
+- Períodos: `id`, `anio`, `numero`, `fechaInicio`, `fechaFin`, `inscripcionDesde`,
+  `inscripcionHasta`, todas fechas sin hora. Sin `nombre`. **Suposición nuestra:**
+  `inscripcionHasta` incluye ese día completo, en hora de Argentina.
+- Turnos de examen: `id`, `nombre`, `fechaInicio`, `fechaFin`, `inscripcionDesde`,
+  `inscripcionHasta`. Ventanas generales, sin fecha por asignatura.
+- POST de inscripción: 201 `{ id, alumnoId, fechaInscripcion, estado, notaFinal, fechaResultado }`,
+  sin `cursoId`. Estados: `INSCRIPTO`, `CURSANDO`, `BAJA`, `REGULAR`, `LIBRE`, `APROBADO`,
+  `DESAPROBADO`.
+- Nota final: la carga el Módulo 2 y el Módulo 9 la expone en
+  `GET /cursos/{cursoId}/notas/{alumnoId}` (`{ alumnoId, notaFinal, estado, fechaResultado }`).
+  El portal no la usa: la toma de las actas del Módulo 2 (`/results`, ver arriba).
+- `resultado.publicado` se publica por RabbitMQ para Analítica; no llega a CORE ni genera
+  notificación al alumno.
 - El Módulo 2 obtiene el listado de inscriptos directamente del Módulo 9; el Módulo 1 no lo entrega.
-- Lo comprometido se trabaja con mock hasta que esté disponible.
+- Lo que no está implementado se trabaja con mock hasta que esté disponible.
 
-Fixtures (`academic/*.provisional.json`): aunque varios endpoints están implementados, no
-tenemos sus respuestas, así que todas son provisionales. Suposiciones:
+Fixtures (`academic/*.provisional.json`): **todavía siguen las suposiciones anteriores al
+documento del Módulo 9**, igual que el adaptador. Pasarlas a las formas de arriba (incluidas
+las del pedido a CORE de noviembre 2026) es trabajo pendiente. Suposiciones vigentes en el código:
 
 - Períodos: `id`, `nombre`, `fechaInicio`, `fechaFin`, `inscripcionDesde`, `inscripcionHasta`.
 - Turnos de examen: los campos informados más un `id`; fechas sin hora. No suponemos que

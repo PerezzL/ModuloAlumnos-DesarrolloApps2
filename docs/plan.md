@@ -128,6 +128,19 @@ Aplicadas (T03): ítem de comedor con `todoElDia: true` y sin hora; `GET /calend
 Pendiente para el front: el Módulo 2 espera que le digamos la ruta del `actionUrl` de la nota
 (propuesta: `/cursadas/{courseId}/notas/{examId}`); hasta entonces `destino.ts` acepta las dos.
 
+## Para sumar al calendario
+
+Datos que el Módulo 9 ya expone y RF7 no pide (mensaje de integración, octubre 2026). Se
+pueden agregar como ítems de Gestión Académica sin pedirle nada nuevo:
+
+- **Inscripción a finales:** `inscripcionDesde` / `inscripcionHasta` de cada turno de examen
+  (mismo endpoint que ya usamos para los turnos).
+- **Cuatrimestre:** inicio y fin de cursada (`fechaInicio` / `fechaFin`) y ventana de
+  inscripción a materias de cada período.
+- **Clases de cada cursada:** día y horario del curso, entre su `fechaInicio` y `fechaFin`.
+  Sale del endpoint de inscripciones del alumno, que trae el curso con su horario (forma
+  publicada en el pedido del Módulo 9 a CORE, noviembre 2026).
+
 ## Pendientes externos
 
 - **CORE:** dominio de los portales (por la cookie de refresh), URL pública o red compartida,
