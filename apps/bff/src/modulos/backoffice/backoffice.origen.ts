@@ -14,6 +14,8 @@ export const UsuarioBackoffice = z
     firstName: z.string().optional(),
     lastName: z.string().optional(),
     fileNumber: id.optional(),
+    /** Carrera del alumno (id del Módulo 9). Confirmado; null si no tiene. */
+    careerId: id.nullable().optional(),
     /** Ids del Módulo 9 (numéricos, mandados como texto). Un plan por carrera. */
     careers: z
       .array(z.object({ careerId: id, planId: id }).passthrough())

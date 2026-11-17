@@ -186,7 +186,10 @@ describe('GET /inscripcion/oferta', () => {
   });
 
   it.each([
-    ['Backoffice no informa carreras', HttpResponse.json({ ...USUARIO_CON_PLAN, careers: [] })],
+    [
+      'Backoffice no informa carreras',
+      HttpResponse.json({ ...USUARIO_CON_PLAN, careers: [], careerId: null }),
+    ],
     ['Backoffice no manda careers', HttpResponse.json({ email: 'v.moreno@uade.edu.ar' })],
     ['Backoffice está caído', new HttpResponse(null, { status: 503 })],
   ])(
@@ -207,6 +210,25 @@ describe('GET /inscripcion/oferta', () => {
       expect(contrato.validar('get', '/inscripcion/oferta', 200, res.body).errores).toEqual([]);
     },
   );
+
+  it('Backoffice sin plan pero con careerId: usa el plan activo de esa carrera', async () => {
+    let plan: unknown;
+    e2e.server.use(
+      http.get(RUTAS_ACADEMICO.USUARIO, () =>
+        HttpResponse.json({ ...USUARIO_CON_PLAN, careers: [], careerId: '3' }),
+      ),
+      http.get(RUTAS_ACADEMICO.ASIGNATURAS_PLAN, ({ params }) => {
+        plan = params.planId;
+      }),
+      ...academicoConFixtures(),
+    );
+    const res = await e2e.get('/inscripcion/oferta');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ filtradaPorPlan: true });
+    expect((res.body as OfertaInscripcion).materias).toHaveLength(4);
+    // Las materias del plan 12 ya pueden estar cacheadas: si se pidieron, fue ese plan
+    expect([undefined, '12']).toContain(plan);
+  });
 
   it.each([
     [503, 'UPSTREAM_UNAVAILABLE'],

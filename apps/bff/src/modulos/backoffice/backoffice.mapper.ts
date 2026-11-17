@@ -8,8 +8,9 @@ import { SedesBackoffice, UsuarioBackoffice } from './backoffice.origen';
  * Identidad de CORE (token) + datos personales de Backoffice → ficha. El id sale siempre
  * del token. Los campos que no vengan se omiten.
  *
- * Carrera: la primera de `careerIds` del token de CORE; Backoffice (`careers`) queda de
- * respaldo si el token no trae ninguna. El plan es el que Backoffice da para la carrera
+ * Carrera: la primera de `careerIds` del token de CORE. Si el token no trae ninguna, la de
+ * Backoffice: la primera de `careers` (comprometido, sin publicar) o, si no viene, el
+ * `careerId` suelto (confirmado). El plan es el que Backoffice da para la carrera
  * elegida, o null si no la tiene (la oferta usa entonces el plan activo de la carrera en el
  * Módulo 9).
  *
@@ -38,7 +39,10 @@ export function aFicha(alumno: Alumno, datos: unknown): FichaAlumno {
         planId: carrera ? idOpaco(carrera.planId) : null,
       }),
     },
-    carreraId: delToken ?? (carrera ? idOpaco(carrera.careerId) : null),
+    carreraId:
+      delToken ??
+      (carrera ? idOpaco(carrera.careerId) : null) ??
+      (usuario.careerId != null ? idOpaco(usuario.careerId) : null),
   };
 }
 
