@@ -133,10 +133,11 @@ describe('inscripción: oferta', () => {
     expect(await screen.findByText('No hay materias para inscribirte')).toBeInTheDocument();
   });
 
-  it('si la oferta no está filtrada por plan, lo avisa', async () => {
-    conOferta({ filtradaPorPlan: false });
+  it('sin plan, avisa que no puede mostrar la oferta (y no dice que el plan no tiene materias)', async () => {
+    conOferta({ filtradaPorPlan: false, materias: [] });
     renderApp('/academico');
     expect(await screen.findByText(/No pudimos confirmar tu plan/)).toBeInTheDocument();
+    expect(screen.queryByText('No hay materias para inscribirte')).not.toBeInTheDocument();
   });
 
   it('si Gestión Académica no responde, error con reintento', async () => {
