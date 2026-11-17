@@ -1,16 +1,129 @@
 {
-  "asig-prog1": [],
-  "asig-discreta": [],
-  "asig-prog2": [{ "asignaturaId": "asig-prog1", "nombre": "Programación I", "tipo": "APROBADA" }],
-  "asig-ayed": [{ "asignaturaId": "asig-prog1", "nombre": "Programación I", "tipo": "APROBADA" }],
-  "asig-bd1": [{ "asignaturaId": "asig-prog2", "nombre": "Programación II", "tipo": "REGULAR" }],
-  "asig-desa1": [{ "asignaturaId": "asig-prog2", "nombre": "Programación II", "tipo": "REGULAR" }],
-  "asig-so": [
-    { "asignaturaId": "asig-prog2", "nombre": "Programación II", "tipo": "REGULAR" },
-    { "asignaturaId": "asig-discreta", "nombre": "Matemática Discreta", "tipo": "APROBADA" }
-  ],
-  "asig-desa2": [
-    { "asignaturaId": "asig-desa1", "nombre": "Desarrollo de Aplicaciones I", "tipo": "REGULAR" }
-  ],
-  "asig-bd2": [{ "asignaturaId": "asig-bd1", "nombre": "Bases de Datos I", "tipo": "APROBADA" }]
+  "101": {
+    "asignaturaId": 101,
+    "condiciones": []
+  },
+  "102": {
+    "asignaturaId": 102,
+    "condiciones": []
+  },
+  "103": {
+    "asignaturaId": 103,
+    "condiciones": [
+      {
+        "tipo": "APROBADA",
+        "materiasCorrelativas": [
+          {
+            "id": 101,
+            "codigo": "3.4.069",
+            "nombre": "Programación I"
+          }
+        ]
+      }
+    ]
+  },
+  "104": {
+    "asignaturaId": 104,
+    "condiciones": [
+      {
+        "tipo": "APROBADA",
+        "materiasCorrelativas": [
+          {
+            "id": 101,
+            "codigo": "3.4.069",
+            "nombre": "Programación I"
+          }
+        ]
+      }
+    ]
+  },
+  "105": {
+    "asignaturaId": 105,
+    "condiciones": [
+      {
+        "tipo": "REGULAR",
+        "materiasCorrelativas": [
+          {
+            "id": 104,
+            "codigo": "3.4.071",
+            "nombre": "Programación II"
+          }
+        ]
+      }
+    ]
+  },
+  "106": {
+    "asignaturaId": 106,
+    "condiciones": [
+      {
+        "tipo": "REGULAR",
+        "materiasCorrelativas": [
+          {
+            "id": 104,
+            "codigo": "3.4.071",
+            "nombre": "Programación II"
+          }
+        ]
+      }
+    ]
+  },
+  "107": {
+    "asignaturaId": 107,
+    "condiciones": [
+      {
+        "tipo": "REGULAR",
+        "materiasCorrelativas": [
+          {
+            "id": 104,
+            "codigo": "3.4.071",
+            "nombre": "Programación II"
+          }
+        ]
+      },
+      {
+        "tipo": "APROBADA",
+        "materiasCorrelativas": [
+          {
+            "id": 102,
+            "codigo": "3.1.024",
+            "nombre": "Matemática Discreta"
+          }
+        ]
+      }
+    ]
+  },
+  "108": {
+    "asignaturaId": 108,
+    "condiciones": [
+      {
+        "tipo": "REGULAR",
+        "materiasCorrelativas": [
+          {
+            "id": 106,
+            "codigo": "3.4.207",
+            "nombre": "Desarrollo de Aplicaciones I"
+          }
+        ]
+      }
+    ]
+  },
+  "109": {
+    "asignaturaId": 109,
+    "condiciones": [
+      {
+        "tipo": "APROBADA",
+        "materiasCorrelativas": [
+          {
+            "id": 105,
+            "codigo": "3.4.072",
+            "nombre": "Bases de Datos I"
+          }
+        ]
+      }
+    ]
+  },
+  "201": {
+    "asignaturaId": 201,
+    "condiciones": []
+  }
 }

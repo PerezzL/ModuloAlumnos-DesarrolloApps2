@@ -169,7 +169,9 @@ paths:
           description: >
             La inscripción fue rechazada por una regla de negocio. `code` indica el motivo:
             `YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE`, `SIN_REGULARIDAD`,
-            `FUERA_DE_FECHA` o, si el motivo no se reconoce, `INSCRIPCION_RECHAZADA`.
+            `FUERA_DE_FECHA` o, si el motivo no se reconoce, `INSCRIPCION_RECHAZADA` con el
+            `detail` del Módulo 9. Hoy el Módulo 9 solo informa códigos genéricos, así que
+            todos los rechazos llegan como `INSCRIPCION_RECHAZADA`.
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/ProblemaInscripcion' }
@@ -577,7 +579,7 @@ components:
                 - INSCRIPCION_RECHAZADA
               description: >
                 `INSCRIPCION_RECHAZADA` es el rechazo del Módulo 9 con un motivo que el BFF no
-                reconoce; el frontend muestra un mensaje genérico.
+                reconoce; el frontend muestra el `detail` o un mensaje genérico.
               x-provisional: true
             correlativasFaltantes:
               type: array
@@ -639,8 +641,9 @@ components:
         filtradaPorPlan:
           type: boolean
           description: >
-            False si no se conoce el `planId` del alumno (Backoffice no lo devolvió o no
-            respondió): la oferta incluye las comisiones de todos los planes.
+            False si no se pudo determinar el plan del alumno: ni Backoffice ni el plan
+            activo de su carrera en el Módulo 9. La oferta sale entonces sin materias, porque
+            el Módulo 9 solo da el nombre de las materias por plan.
           x-provisional: true
         inscripcionDesde: { type: string, format: date-time }
         inscripcionHasta: { type: string, format: date-time }
@@ -719,7 +722,10 @@ components:
         cursoId: { type: string }
         asignatura: { $ref: '#/components/schemas/Asignatura' }
         estado: { $ref: '#/components/schemas/EstadoCursada' }
-        fecha: { type: string, format: date-time }
+        fecha:
+          type: string
+          format: date
+          description: Fecha de inscripción (`YYYY-MM-DD`), tal como la informa el Módulo 9
 
     EstadoCursada:
       type: string

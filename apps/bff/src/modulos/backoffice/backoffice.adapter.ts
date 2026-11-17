@@ -61,11 +61,6 @@ export class BackofficeAdapter {
     });
   }
 
-  /** Plan de estudios del alumno (el de su primera carrera), o null si no lo informa. */
-  async planId(alumno: Alumno): Promise<string | null> {
-    return (await this.ficha(alumno)).perfil.planId ?? null;
-  }
-
   /**
    * Nombre de cada sede por `siteId`, para cualquier módulo que mande solo el id. Incluye
    * las inactivas. Si Backoffice falla, lanza y no se cachea: cada llamador decide si sigue

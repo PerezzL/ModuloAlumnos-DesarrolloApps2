@@ -21,22 +21,22 @@ const inscripcion = (cursoId: string, cambios: Partial<InscripcionAlumno> = {}) 
 describe('historial académico', () => {
   const historial = aHistorial(inscripciones, notasFinales);
 
-  it('de la más reciente a la más antigua', () => {
+  it('del período más reciente al más antiguo; en el mismo día, en el orden en que llegaron', () => {
     expect(historial.map((c) => c.cursoId)).toEqual([
-      'curso-desa1-2026-2-a',
-      'curso-bd1-2026-2-a',
-      'curso-prog2-2026-1-a',
-      'curso-ayed-2025-2-a',
-      'curso-discreta-2025-2-a',
-      'curso-prog1-2025-2-a',
+      '1005',
+      '1006',
+      '1004',
+      '1001',
+      '1002',
+      '1003',
     ]);
   });
 
   it('cada cursada con materia, período, nota y situación', () => {
-    expect(historial.at(-1)).toEqual({
-      cursoId: 'curso-prog1-2025-2-a',
-      asignatura: { id: 'asig-prog1', codigo: '3.4.069', nombre: 'Programación I' },
-      periodo: { id: '2025-2', nombre: '2° cuatrimestre 2025' },
+    expect(historial.find((c) => c.cursoId === '1001')).toEqual({
+      cursoId: '1001',
+      asignatura: { id: '101', codigo: '3.4.069', nombre: 'Programación I' },
+      periodo: { id: '1', nombre: '2° cuatrimestre 2025' },
       notaFinal: 8,
       estado: 'APROBADO',
       enCurso: false,
@@ -45,7 +45,7 @@ describe('historial académico', () => {
 
   it('sin nota final queda null, no cero', () => {
     expect(historial.find((c) => c.estado === 'LIBRE')?.notaFinal).toBeNull();
-    expect(historial.find((c) => c.cursoId === 'curso-bd1-2026-2-a')?.notaFinal).toBeNull();
+    expect(historial.find((c) => c.cursoId === '1005')?.notaFinal).toBeNull();
   });
 
   it('sin notas finales (el Módulo 2 no respondió), todas en null', () => {
@@ -64,13 +64,24 @@ describe('historial académico', () => {
     expect(aHistorial([inscripcion('c', { estado })], null)[0]!.enCurso).toBe(enCurso);
   });
 
+  it('el período manda sobre la fecha de inscripción', () => {
+    const resultado = aHistorial(
+      [
+        inscripcion('anterior', { inicioPeriodo: '2026-03-16', fecha: '2026-08-01' }),
+        inscripcion('posterior', { inicioPeriodo: '2026-08-10', fecha: '2026-07-20' }),
+      ],
+      null,
+    );
+    expect(resultado.map((c) => c.cursoId)).toEqual(['posterior', 'anterior']);
+  });
+
   it('las que no tienen fecha van al final, en el orden en que llegaron', () => {
     const resultado = aHistorial(
       [
         inscripcion('sin-fecha-1'),
-        inscripcion('vieja', { fecha: '2025-01-01T00:00:00Z' }),
+        inscripcion('vieja', { fecha: '2025-01-01' }),
         inscripcion('sin-fecha-2'),
-        inscripcion('nueva', { fecha: '2026-01-01T00:00:00Z' }),
+        inscripcion('nueva', { fecha: '2026-01-01' }),
       ],
       null,
     );

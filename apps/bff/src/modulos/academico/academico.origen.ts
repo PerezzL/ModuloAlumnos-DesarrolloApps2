@@ -1,149 +1,139 @@
 import { z } from 'zod';
 
-const fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'se esperaba YYYY-MM-DD');
-
 /**
- * Respuesta de `GET /api/planificacion/turnos-examen` (Módulo 9). El endpoint está
- * implementado pero no tenemos la respuesta: los nombres de campo son PROVISIONALES
- * (fixture `academic/turnos-examen.provisional.json`). Hoy solo informa ventanas generales,
- * sin fecha por asignatura. Este tipo no sale de la carpeta del adaptador.
+ * Respuestas del Módulo 9 según su documento de integración (octubre 2026) y el pedido de
+ * alta en el Gateway que le mandó a CORE (noviembre 2026). CORE todavía no lo confirmó: las
+ * fixtures siguen siendo `academic/*.provisional.json`. Estos tipos no salen de la carpeta
+ * del adaptador.
+ *
+ * Los ids propios del Módulo 9 son numéricos (`Long`); se aceptan también como texto y se
+ * pasan a string opaco. Fechas `YYYY-MM-DD` y horas `HH:mm:ss`.
  */
-export const TurnosExamen = z.array(
-  z
-    .object({
-      id: z.union([z.string(), z.number()]),
-      nombre: z.string(),
-      fechaInicio: fecha,
-      fechaFin: fecha,
-    })
-    .passthrough(),
-);
 
 const id = z.union([z.string(), z.number()]);
-const instante = z.string().datetime({ offset: true });
+const fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'se esperaba YYYY-MM-DD');
+const hora = z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'se esperaba HH:mm:ss');
 
-const hora = z.string().regex(/^\d{2}:\d{2}$/, 'se esperaba HH:MM');
+const EstadoInscripcion = z.enum([
+  'INSCRIPTO',
+  'CURSANDO',
+  'BAJA',
+  'REGULAR',
+  'LIBRE',
+  'APROBADO',
+  'DESAPROBADO',
+]);
 
-const Horario = z
+/** `GET /api/planificacion/turnos-examen`: ventanas generales, sin fecha por asignatura. */
+export const TurnosExamen = z.array(
+  z.object({ id, nombre: z.string(), fechaInicio: fecha, fechaFin: fecha }).passthrough(),
+);
+
+const Periodo = z
   .object({
-    dia: z.enum(['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO']),
-    desde: hora,
-    hasta: hora,
-    aula: z.string().nullable().optional(),
+    id,
+    anio: z.number().int(),
+    numero: z.number().int(),
+    fechaInicio: fecha,
+    fechaFin: fecha,
+    inscripcionDesde: fecha.nullable().optional(),
+    inscripcionHasta: fecha.nullable().optional(),
   })
   .passthrough();
 
-const Asignatura = z
-  .object({ id, codigo: z.string().optional(), nombre: z.string() })
-  .passthrough();
+/** `GET /api/planificacion/periodos`. Sin `nombre`: lo arma el mapper con año y número. */
+export const Periodos = z.array(Periodo);
+
+const AsignaturaRef = z.object({ id, codigo: z.string(), nombre: z.string() }).passthrough();
 
 /**
- * Respuesta de `GET /api/planificacion/periodos`. Implementado, pero sin respuesta de ejemplo:
- * campos PROVISIONALES (fixture `academic/periodos.provisional.json`).
+ * Horario de un curso: uno solo, con el día en inglés. Cursos viejos pueden traerlo en null.
+ * Un día fuera de lunes a sábado invalida la respuesta.
  */
-export const Periodos = z.array(
+const camposHorario = {
+  diaSemana: z
+    .enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'])
+    .nullable()
+    .optional(),
+  horaInicio: hora.nullable().optional(),
+  horaFin: hora.nullable().optional(),
+  aulaNombre: z.string().nullable().optional(),
+};
+
+const camposCurso = {
+  id,
+  codigo: z.string(),
+  estado: z.enum(['PLANIFICADO', 'EN_CURSO', 'FINALIZADO', 'CANCELADO']),
+  sedeNombre: z.string().nullable().optional(),
+  cupoMaximo: z.number().int(),
+  inscriptosActivos: z.number().int(),
+  ...camposHorario,
+};
+
+/**
+ * `GET /api/planificacion/cursos?periodoId=`. Trae solo `asignaturaId`: el nombre sale de las
+ * asignaturas del plan. No filtra por plan.
+ */
+export const Cursos = z.array(z.object({ ...camposCurso, asignaturaId: id }).passthrough());
+
+/** `GET /api/academica/planes/{planId}/asignaturas`: las materias del plan. */
+export const AsignaturasPlan = z.array(AsignaturaRef);
+
+/**
+ * `GET /api/academica/carreras` y `/carreras/con-ultimo-plan-activo`. El segundo trae el plan
+ * activo cargado; el primero puede traerlo en null.
+ */
+export const Carreras = z.array(
   z
     .object({
       id,
       nombre: z.string(),
-      inscripcionDesde: instante.optional(),
-      inscripcionHasta: instante.optional(),
+      ultimoPlanActivo: z.object({ id }).passthrough().nullable().optional(),
     })
     .passthrough(),
 );
 
-/**
- * Respuesta de `GET /api/planificacion/cursos?periodoId=&planId=`. Comprometido: filtro
- * `planId` y `asignatura` anidada. Horarios pedidos, sin confirmar. Campos PROVISIONALES
- * (fixture `academic/cursos.provisional.json`).
- */
-export const Cursos = z.array(
-  z
-    .object({
-      id,
-      comision: z.string().optional(),
-      sede: z.string().nullable().optional(),
-      cupoMaximo: z.number().int(),
-      inscriptosActivos: z.number().int(),
-      asignatura: Asignatura,
-      horarios: z.array(Horario).optional(),
-    })
-    .passthrough(),
-);
+/** `GET /api/academica/asignaturas/{asignaturaId}/correlatividades`, agrupadas por tipo. */
+export const Correlatividades = z
+  .object({
+    asignaturaId: id,
+    condiciones: z.array(
+      z
+        .object({
+          tipo: z.enum(['REGULAR', 'APROBADA']),
+          materiasCorrelativas: z.array(AsignaturaRef),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough();
 
 /**
- * Respuesta de `GET /api/academica/carreras` (Módulo 9). Implementado, pero sin respuesta de
- * ejemplo: campos PROVISIONALES (fixture `academic/carreras.provisional.json`). Solo se usa
- * para el nombre de la carrera del perfil.
- */
-export const Carreras = z.array(z.object({ id, nombre: z.string() }).passthrough());
-
-/**
- * Respuesta de `GET /api/academica/asignaturas/{asignaturaId}/correlatividades`.
- * Implementado; forma PROVISIONAL (fixture `academic/correlatividades.provisional.json`).
- */
-export const Correlatividades = z.array(
-  z
-    .object({ asignaturaId: id, nombre: z.string(), tipo: z.enum(['REGULAR', 'APROBADA']) })
-    .passthrough(),
-);
-
-/**
- * Respuesta de `GET /api/planificacion/alumnos/{alumnoId}/inscripciones?periodoId=`.
- * Comprometido; forma PROVISIONAL (fixture `academic/inscripciones-alumno.provisional.json`).
+ * `GET /api/planificacion/alumnos/{alumnoId}/inscripciones?periodoId=`: cada inscripción con
+ * su curso, que trae la asignatura y el período anidados.
  */
 export const InscripcionesAlumno = z.array(
   z
     .object({
-      cursoId: id,
-      comision: z.string().optional(),
-      asignatura: Asignatura,
-      periodo: z.object({ id, nombre: z.string() }).passthrough(),
-      estado: z.enum([
-        'INSCRIPTO',
-        'CURSANDO',
-        'BAJA',
-        'REGULAR',
-        'LIBRE',
-        'APROBADO',
-        'DESAPROBADO',
-      ]),
-      fecha: instante.optional(),
+      id,
+      fechaInscripcion: fecha.nullable().optional(),
+      estado: EstadoInscripcion,
+      curso: z
+        .object({ ...camposCurso, asignatura: AsignaturaRef, periodo: Periodo })
+        .passthrough(),
     })
     .passthrough(),
 );
 
-/**
- * Respuesta 201 de `POST /api/planificacion/cursos/{cursoId}/inscripciones`. Implementado,
- * pero falta qué devuelve en caso de éxito: PROVISIONAL
- * (fixture `academic/inscripcion-creada.provisional.json`).
- */
+/** 201 de `POST /api/planificacion/cursos/{cursoId}/inscripciones`. No trae el `cursoId`. */
 export const InscripcionCreada = z
-  .object({
-    id: id.optional(),
-    cursoId: id,
-    estado: z.enum([
-      'INSCRIPTO',
-      'CURSANDO',
-      'BAJA',
-      'REGULAR',
-      'LIBRE',
-      'APROBADO',
-      'DESAPROBADO',
-    ]),
-    fecha: instante.optional(),
-  })
+  .object({ id, fechaInscripcion: fecha.nullable().optional(), estado: EstadoInscripcion })
   .passthrough();
 
 /**
- * Cuerpo del 409 del POST de inscripción. Los códigos de error del Módulo 9 están PENDIENTES:
- * suponemos problem+json con un `code` igual a los nuestros (fixture
- * `academic/inscripcion-rechazos.provisional.json`).
+ * Error del Módulo 9 (problem+json). Los `code` son genéricos (`BUSINESS_RULE_VIOLATION`,
+ * `DATA_CONFLICT`, ...): no hay uno por motivo de rechazo.
  */
-export const RechazoInscripcion = z
-  .object({
-    code: z.string().optional(),
-    detail: z.string().optional(),
-    correlativasFaltantes: Correlatividades.optional(),
-  })
+export const ProblemaModulo = z
+  .object({ code: z.string().optional(), detail: z.string().optional() })
   .passthrough();

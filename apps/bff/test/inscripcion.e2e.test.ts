@@ -16,11 +16,15 @@ describe('GET /inscripcion/oferta', () => {
   });
   afterAll(() => vi.useRealTimers());
 
-  it('arma la oferta del período vigente filtrada por plan, según el contrato', async () => {
+  it('arma la oferta del período vigente con los cursos del plan, según el contrato', async () => {
     let cursos: URL | undefined;
+    let plan: unknown;
     e2e.server.use(
       http.get(RUTAS_ACADEMICO.CURSOS, ({ request }) => {
         cursos = new URL(request.url);
+      }),
+      http.get(RUTAS_ACADEMICO.ASIGNATURAS_PLAN, ({ params }) => {
+        plan = params.planId;
       }),
       ...academicoConFixtures(),
     );
@@ -29,13 +33,33 @@ describe('GET /inscripcion/oferta', () => {
     expect(contrato.validar('get', '/inscripcion/oferta', 200, res.body).errores).toEqual([]);
     const oferta = res.body as OfertaInscripcion;
     expect(oferta).toMatchObject({
-      periodo: { id: '2027-1' },
+      periodo: { id: '4', nombre: '1° cuatrimestre 2027' },
+      inscripcionDesde: '2026-09-28T00:00:00-03:00',
+      inscripcionHasta: '2026-12-18T23:59:59.999-03:00',
       inscripcionAbierta: true,
       filtradaPorPlan: true,
     });
-    expect(oferta.materias).toHaveLength(4);
-    expect(cursos?.searchParams.get('periodoId')).toBe('2027-1');
-    expect(cursos?.searchParams.get('planId')).toBe('12');
+    // Sin la materia de otro plan (Contabilidad I) ni la comisión cancelada de Sistemas Operativos
+    expect(oferta.materias.map((m) => m.asignatura.nombre)).toEqual([
+      'Algoritmos y Estructuras de Datos',
+      'Bases de Datos II',
+      'Desarrollo de Aplicaciones II',
+      'Sistemas Operativos',
+    ]);
+    expect(oferta.materias.at(-1)!.comisiones).toEqual([
+      {
+        cursoId: '1009',
+        nombre: 'A - Noche',
+        sede: 'Sede Monserrat',
+        horarios: [{ dia: 'LUNES', desde: '18:30', hasta: '22:30', aula: 'Aula 501' }],
+        cupoMaximo: 45,
+        inscriptosActivos: 10,
+        estado: 'CON_CUPO',
+      },
+    ]);
+    expect(cursos?.searchParams.get('periodoId')).toBe('4');
+    expect(cursos?.searchParams.has('planId')).toBe(false);
+    expect(plan).toBe('12');
   });
 
   it('pide las inscripciones del alumno del token y marca dónde ya está inscripto', async () => {
@@ -46,7 +70,7 @@ describe('GET /inscripcion/oferta', () => {
       }),
       ...academicoConFixtures(),
     );
-    const res = await e2e.get('/inscripcion/oferta?periodoId=2026-2');
+    const res = await e2e.get('/inscripcion/oferta?periodoId=3');
     expect(alumno).toBe(ALUMNO);
     const estados = (res.body as OfertaInscripcion).materias.flatMap((m) =>
       m.comisiones.map((c) => c.estado),
@@ -57,29 +81,33 @@ describe('GET /inscripcion/oferta', () => {
   it('bloquea las materias con correlativas faltantes', async () => {
     e2e.server.use(...academicoConFixtures());
     const res = await e2e.get('/inscripcion/oferta');
-    const bloqueadas = (res.body as OfertaInscripcion).materias
-      .filter((m) => m.bloqueada)
-      .map((m) => m.asignatura.id);
-    expect(bloqueadas).toEqual(['asig-bd2', 'asig-desa2']);
+    const materias = (res.body as OfertaInscripcion).materias.filter((m) => m.bloqueada);
+    expect(materias.map((m) => m.asignatura.id)).toEqual(['109', '108']);
+    expect(materias[1]!.correlativasFaltantes).toEqual([
+      { asignaturaId: '106', nombre: 'Desarrollo de Aplicaciones I', tipo: 'REGULAR' },
+    ]);
     expect(contrato.validar('get', '/inscripcion/oferta', 200, res.body).errores).toEqual([]);
   });
 
-  // La caché vive mientras viva el BFF del test: cada caso usa una asignatura propia
-  const unCurso = (asignaturaId: string) =>
+  // La caché vive mientras viva el BFF del test: cada caso usa una asignatura del plan cuyas
+  // correlatividades todavía no se pidieron
+  const unCurso = (asignaturaId: number) =>
     http.get(RUTAS_ACADEMICO.CURSOS, () =>
       HttpResponse.json([
         {
-          id: `curso-${asignaturaId}`,
+          id: 9000 + asignaturaId,
+          codigo: 'Z',
+          asignaturaId,
+          estado: 'PLANIFICADO',
           cupoMaximo: 10,
           inscriptosActivos: 0,
-          asignatura: { id: asignaturaId, nombre: asignaturaId },
         },
       ]),
     );
 
   it('una asignatura que el Módulo 9 no conoce no tiene correlativas', async () => {
     e2e.server.use(
-      unCurso('asig-desconocida'),
+      unCurso(101),
       http.get(RUTAS_ACADEMICO.CORRELATIVIDADES, () => new HttpResponse(null, { status: 404 })),
       ...academicoConFixtures(),
     );
@@ -88,24 +116,29 @@ describe('GET /inscripcion/oferta', () => {
     expect((res.body as OfertaInscripcion).materias[0]).toMatchObject({ bloqueada: false });
   });
 
-  it('las correlatividades se cachean entre requests', async () => {
-    let pedidos = 0;
+  it('las correlatividades y las materias del plan se cachean entre requests', async () => {
+    let correlatividades = 0;
+    let planes = 0;
     e2e.server.use(
-      unCurso('asig-cacheada'),
+      unCurso(102),
       http.get(RUTAS_ACADEMICO.CORRELATIVIDADES, () => {
-        pedidos++;
-        return HttpResponse.json([]);
+        correlatividades++;
+        return HttpResponse.json({ asignaturaId: 102, condiciones: [] });
+      }),
+      http.get(RUTAS_ACADEMICO.ASIGNATURAS_PLAN, () => {
+        planes++;
       }),
       ...academicoConFixtures(),
     );
     await e2e.get('/inscripcion/oferta');
     await e2e.get('/inscripcion/oferta');
-    expect(pedidos).toBe(1);
+    expect(correlatividades).toBe(1);
+    expect(planes).toBe(0);
   });
 
   it('si fallan las correlatividades, falla la oferta (no se ofrece sin validar)', async () => {
     e2e.server.use(
-      unCurso('asig-sin-correlativas'),
+      unCurso(104),
       http.get(RUTAS_ACADEMICO.CORRELATIVIDADES, () => new HttpResponse(null, { status: 503 })),
       ...academicoConFixtures(),
     );
@@ -116,10 +149,10 @@ describe('GET /inscripcion/oferta', () => {
 
   it('fuera de la ventana devuelve la oferta con inscripcionAbierta false', async () => {
     e2e.server.use(...academicoConFixtures());
-    const res = await e2e.get('/inscripcion/oferta?periodoId=2026-2');
+    const res = await e2e.get('/inscripcion/oferta?periodoId=3');
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
-      inscripcionHasta: '2026-07-31T02:59:59.000Z',
+      inscripcionHasta: '2026-07-30T23:59:59.999-03:00',
       inscripcionAbierta: false,
     });
     expect((res.body as OfertaInscripcion).materias.length).toBeGreaterThan(0);
@@ -127,9 +160,9 @@ describe('GET /inscripcion/oferta', () => {
 
   it('con periodoId, la oferta de ese período', async () => {
     e2e.server.use(...academicoConFixtures());
-    const res = await e2e.get('/inscripcion/oferta?periodoId=2026-2');
+    const res = await e2e.get('/inscripcion/oferta?periodoId=3');
     expect(res.status).toBe(200);
-    expect((res.body as OfertaInscripcion).periodo.id).toBe('2026-2');
+    expect((res.body as OfertaInscripcion).periodo.id).toBe('3');
   });
 
   it('un período inexistente es 404 PERIODO_NO_ENCONTRADO', async () => {
@@ -140,25 +173,40 @@ describe('GET /inscripcion/oferta', () => {
     expect(contrato.validar('get', '/inscripcion/oferta', 404, cuerpo(res)).errores).toEqual([]);
   });
 
+  it('una respuesta con la forma vieja del Módulo 9 es 502 de GESTION_ACADEMICA', async () => {
+    e2e.server.use(
+      http.get(RUTAS_ACADEMICO.PERIODOS, () =>
+        HttpResponse.json([{ id: '2027-1', nombre: '1° cuatrimestre 2027' }]),
+      ),
+      ...academicoConFixtures(),
+    );
+    const res = await e2e.get('/inscripcion/oferta');
+    expect(res.status).toBe(502);
+    expect(cuerpo(res)).toMatchObject({ code: 'UPSTREAM_INVALID', modulo: 'GESTION_ACADEMICA' });
+  });
+
   it.each([
     ['Backoffice no informa carreras', HttpResponse.json({ ...USUARIO_CON_PLAN, careers: [] })],
     ['Backoffice no manda careers', HttpResponse.json({ email: 'v.moreno@uade.edu.ar' })],
     ['Backoffice está caído', new HttpResponse(null, { status: 503 })],
-  ])('%s: pide la oferta sin filtrar por plan y lo informa', async (_caso, respuesta) => {
-    let cursos: URL | undefined;
-    e2e.server.use(
-      http.get(RUTAS_ACADEMICO.USUARIO, () => respuesta),
-      http.get(RUTAS_ACADEMICO.CURSOS, ({ request }) => {
-        cursos = new URL(request.url);
-      }),
-      ...academicoConFixtures(),
-    );
-    const res = await e2e.get('/inscripcion/oferta');
-    expect(res.status).toBe(200);
-    expect((res.body as OfertaInscripcion).filtradaPorPlan).toBe(false);
-    expect(cursos?.searchParams.has('planId')).toBe(false);
-    expect(contrato.validar('get', '/inscripcion/oferta', 200, res.body).errores).toEqual([]);
-  });
+  ])(
+    '%s y el token no trae carrera: oferta sin materias y lo informa',
+    async (_caso, respuesta) => {
+      let cursos = 0;
+      e2e.server.use(
+        http.get(RUTAS_ACADEMICO.USUARIO, () => respuesta),
+        http.get(RUTAS_ACADEMICO.CURSOS, () => {
+          cursos++;
+        }),
+        ...academicoConFixtures(),
+      );
+      const res = await e2e.get('/inscripcion/oferta');
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ filtradaPorPlan: false, materias: [] });
+      expect(cursos).toBe(0);
+      expect(contrato.validar('get', '/inscripcion/oferta', 200, res.body).errores).toEqual([]);
+    },
+  );
 
   it.each([
     [503, 'UPSTREAM_UNAVAILABLE'],
@@ -173,5 +221,44 @@ describe('GET /inscripcion/oferta', () => {
     expect(res.status).toBe(status);
     expect(cuerpo(res)).toMatchObject({ code, modulo: 'GESTION_ACADEMICA' });
     expect(contrato.validar('get', '/inscripcion/oferta', status, cuerpo(res)).errores).toEqual([]);
+  });
+});
+
+// Token de CORE con `careerIds`: si Backoffice no da el plan, se usa el plan activo de la carrera
+describe('GET /inscripcion/oferta con la carrera en el token', () => {
+  const e2e = prepararE2E({ claims: { careerIds: [3] } });
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-04T15:00:00Z'));
+  });
+  afterAll(() => vi.useRealTimers());
+
+  // Va primero: el catálogo de carreras queda cacheado después del primer pedido que funciona
+  it('si el catálogo de carreras falla, la oferta sale sin materias en lugar de fallar', async () => {
+    e2e.server.use(
+      http.get(RUTAS_ACADEMICO.USUARIO, () =>
+        HttpResponse.json({ ...USUARIO_CON_PLAN, careers: [] }),
+      ),
+      http.get(RUTAS_ACADEMICO.CARRERAS_CON_PLAN, () => new HttpResponse(null, { status: 503 })),
+      ...academicoConFixtures(),
+    );
+    const res = await e2e.get('/inscripcion/oferta');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ filtradaPorPlan: false, materias: [] });
+  });
+
+  it.each([
+    ['Backoffice no informa el plan', HttpResponse.json({ ...USUARIO_CON_PLAN, careers: [] })],
+    ['Backoffice está caído', new HttpResponse(null, { status: 503 })],
+  ])('%s: usa el plan activo de la carrera en el Módulo 9', async (_caso, respuesta) => {
+    e2e.server.use(
+      http.get(RUTAS_ACADEMICO.USUARIO, () => respuesta),
+      ...academicoConFixtures(),
+    );
+    const res = await e2e.get('/inscripcion/oferta');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ filtradaPorPlan: true });
+    // Las cuatro materias del plan 12 (el activo de la carrera 3) en el período
+    expect((res.body as OfertaInscripcion).materias).toHaveLength(4);
   });
 });

@@ -7,7 +7,9 @@ import { fixture } from './fixtures';
 
 const contrato = new Contrato();
 const creada = fixture<object>('academic/inscripcion-creada.provisional.json');
-const rechazos = fixture<Record<string, object>>('academic/inscripcion-rechazos.provisional.json');
+const rechazos = fixture<Record<string, { status: number; detail: string }>>(
+  'academic/inscripcion-rechazos.provisional.json',
+);
 
 describe('POST /inscripciones', () => {
   const e2e = prepararE2E();
@@ -24,12 +26,18 @@ describe('POST /inscripciones', () => {
         return HttpResponse.json(creada, { status: 201 });
       }),
     );
-    const res = await e2e.post('/inscripciones', { cursoId: 'curso-so-2027-1-a' });
+    const res = await e2e.post('/inscripciones', { cursoId: '1009' });
     expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({ cursoId: 'curso-so-2027-1-a', estado: 'INSCRIPTO' });
+    // El 201 del Módulo 9 no trae el curso: es el que se pidió
+    expect(res.body).toEqual({
+      id: '5007',
+      cursoId: '1009',
+      estado: 'INSCRIPTO',
+      fecha: '2026-10-04',
+    });
     expect(contrato.validar('post', '/inscripciones', 201, res.body).errores).toEqual([]);
     expect(pedido).toEqual({
-      cursoId: 'curso-so-2027-1-a',
+      cursoId: '1009',
       body: { alumnoId: ALUMNO },
       auth: `Bearer ${e2e.token}`,
     });
@@ -59,27 +67,41 @@ describe('POST /inscripciones', () => {
   });
 
   it.each(Object.keys(rechazos))(
-    '409 del Módulo 9 (%s) → 409 según el contrato',
-    async (motivo) => {
+    'rechazo del Módulo 9 (%s) → 409 INSCRIPCION_RECHAZADA con su detalle, según el contrato',
+    async (caso) => {
+      const rechazo = rechazos[caso]!;
       e2e.server.use(
         http.post(RUTAS_ACADEMICO.INSCRIBIR, () =>
-          HttpResponse.json(rechazos[motivo], { status: 409 }),
+          HttpResponse.json(rechazo, { status: rechazo.status }),
         ),
       );
       const res = await e2e.post('/inscripciones', { cursoId: 'c' });
       expect(res.status).toBe(409);
       expect(res.type).toBe('application/problem+json');
       expect(cuerpo(res)).toMatchObject({
-        code: motivo === 'DESCONOCIDO' ? 'INSCRIPCION_RECHAZADA' : motivo,
+        code: 'INSCRIPCION_RECHAZADA',
+        detail: rechazo.detail,
+        modulo: 'GESTION_ACADEMICA',
       });
       expect(contrato.validar('post', '/inscripciones', 409, cuerpo(res)).errores).toEqual([]);
     },
   );
 
+  it('un 400 de validación del Módulo 9 no es un rechazo: es 502', async () => {
+    e2e.server.use(
+      http.post(RUTAS_ACADEMICO.INSCRIBIR, () =>
+        HttpResponse.json({ code: 'VALIDATION_ERROR', status: 400 }, { status: 400 }),
+      ),
+    );
+    const res = await e2e.post('/inscripciones', { cursoId: 'c' });
+    expect(res.status).toBe(502);
+    expect(cuerpo(res)).toMatchObject({ modulo: 'GESTION_ACADEMICA' });
+  });
+
   it('una comisión inexistente es 404 CURSO_NO_ENCONTRADO', async () => {
     e2e.server.use(
       http.post(RUTAS_ACADEMICO.INSCRIBIR, () =>
-        HttpResponse.json({ code: 'NOT_FOUND' }, { status: 404 }),
+        HttpResponse.json({ code: 'RESOURCE_NOT_FOUND' }, { status: 404 }),
       ),
     );
     const res = await e2e.post('/inscripciones', { cursoId: 'no-existe' });

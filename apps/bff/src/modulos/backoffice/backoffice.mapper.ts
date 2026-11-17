@@ -9,12 +9,13 @@ import { SedesBackoffice, UsuarioBackoffice } from './backoffice.origen';
  * del token. Los campos que no vengan se omiten.
  *
  * Carrera: la primera de `careerIds` del token de CORE; Backoffice (`careers`) queda de
- * respaldo si el token no trae ninguna. El plan solo lo da Backoffice: es el de la carrera
- * elegida, o null si Backoffice no la tiene (la oferta sale entonces sin filtrar por plan).
+ * respaldo si el token no trae ninguna. El plan es el que Backoffice da para la carrera
+ * elegida, o null si no la tiene (la oferta usa entonces el plan activo de la carrera en el
+ * Módulo 9).
  *
  * Suponemos un solo plan por alumno. Si se manejan varias carreras, hay que cambiar `planId`
- * por una lista acá, en el filtro de cursos de la oferta (InscripcionService y
- * AcademicoAdapter.cursos) y en `Perfil` del openapi.yaml.
+ * por una lista acá, en el plan de la oferta (InscripcionService) y en `Perfil` del
+ * openapi.yaml.
  */
 export function aFicha(alumno: Alumno, datos: unknown): FichaAlumno {
   const usuario = parsearOrigen('BACKOFFICE', UsuarioBackoffice, datos);

@@ -85,7 +85,7 @@ export function ejemplo(tipo: TipoNotificacion) {
       title: 'Se publicó tu nota de Desarrollo de Aplicaciones I',
       message: 'Recuperatorio Parcial 1: 8 (aprobado)',
       // actionUrl provisorio del Módulo 2: nos pidieron la ruta y la ajustan
-      actionUrl: '/student/courses/curso-desa1-2026-2-a/exams/202',
+      actionUrl: '/student/courses/1006/exams/202',
       sourceModule: 'teacher',
       sourceReference: `exam-result/${ref}`,
       expiresAt: null,

@@ -1,11 +1,27 @@
-import type { Comision, MateriaOferta, OfertaInscripcion } from '@uadenet/api-types';
+import type { Asignatura, Comision, MateriaOferta, OfertaInscripcion } from '@uadenet/api-types';
 import { ProblemaError } from '../comun/problema';
 import type {
   Correlativa,
+  CursoDelPeriodo,
   CursoOfertado,
   InscripcionAlumno,
   PeriodoAcademico,
 } from '../modulos/academico/academico.modelo';
+
+/**
+ * Cursos del período → los del plan, con su asignatura. El Módulo 9 no filtra los cursos por
+ * plan ni trae el nombre de la materia: las dos cosas salen de las asignaturas del plan.
+ */
+export function cursosDelPlan(
+  cursos: CursoDelPeriodo[],
+  asignaturas: Asignatura[],
+): CursoOfertado[] {
+  const delPlan = new Map(asignaturas.map((a) => [a.id, a]));
+  return cursos.flatMap(({ asignaturaId, ...curso }) => {
+    const asignatura = delPlan.get(asignaturaId);
+    return asignatura ? [{ ...curso, asignatura }] : [];
+  });
+}
 
 const periodoNoEncontrado = (detail: string) =>
   new ProblemaError(404, 'PERIODO_NO_ENCONTRADO', 'Período no encontrado', { detail });

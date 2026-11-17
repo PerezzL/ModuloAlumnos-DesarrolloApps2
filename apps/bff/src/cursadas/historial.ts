@@ -3,14 +3,19 @@ import type { InscripcionAlumno } from '../modulos/academico/academico.modelo';
 
 const EN_CURSO: ReadonlySet<CursadaResumen['estado']> = new Set(['INSCRIPTO', 'CURSANDO']);
 
-const fechaMs = (i: InscripcionAlumno) => (i.fecha === undefined ? -Infinity : Date.parse(i.fecha));
+/** Compara fechas `YYYY-MM-DD`, más reciente primero; sin fecha, al final */
+const masReciente = (a?: string, b?: string) =>
+  a === b ? 0 : a === undefined ? 1 : b === undefined ? -1 : b.localeCompare(a);
 
 /**
- * De la más reciente a la más antigua según la fecha de inscripción (los ids de período son
- * opacos: no se ordenan). Sin fecha, van al final en el orden en que llegaron.
+ * De la más reciente a la más antigua: por inicio del período y, dentro del mismo período,
+ * por fecha de inscripción (los ids son opacos: no se ordenan). Sin fechas, van al final en
+ * el orden en que llegaron.
  */
 export const masRecientesPrimero = (inscripciones: InscripcionAlumno[]) =>
-  [...inscripciones].sort((a, b) => fechaMs(b) - fechaMs(a));
+  [...inscripciones].sort(
+    (a, b) => masReciente(a.inicioPeriodo, b.inicioPeriodo) || masReciente(a.fecha, b.fecha),
+  );
 
 /**
  * Una inscripción como cursada. La situación es la del Módulo 9 y la nota final, la del acta
