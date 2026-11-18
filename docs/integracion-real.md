@@ -239,16 +239,17 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 ## Despliegue
 
-En Railway, en un proyecto propio (no el de CORE), con dos servicios que salen del mismo repo.
-Cada uno tiene su `railway.json` (Dockerfile, health check y carpetas que disparan un deploy).
-El CORE falso y Prism no se despliegan.
+En Railway, proyecto `uadenet-alumnos` (propio, no el de CORE), con dos servicios que salen
+del mismo repo. El CORE falso y Prism no se despliegan.
 
-| Servicio | Config file path | Qué corre | Health check |
-| --- | --- | --- | --- |
-| `bff` | `/apps/bff/railway.json` | `apps/bff/Dockerfile` | `/health/live` (no depende de CORE) |
-| `web` | `/apps/web/railway.json` | `apps/web/Dockerfile`: build de Vite servido por nginx | `/` |
+| Servicio | Dominio | Dockerfile | Health check | Carpetas que disparan un deploy |
+| --- | --- | --- | --- | --- |
+| `bff` | `https://bff-production-d272d9d7.up.railway.app` | `apps/bff/Dockerfile` | `/health/live` (no depende de CORE) | `apps/bff/**`, `packages/**`, `openapi.yaml`, `package*.json` |
+| `web` | `https://web-production-8e99804e.up.railway.app` | `apps/web/Dockerfile` (build de Vite servido por nginx) | `/` | `apps/web/**`, `packages/api-types/**`, `openapi.yaml`, `package*.json` |
 
-Los dos se construyen desde la raíz del repo (no hay que cambiar el "Root Directory").
+Los dos se construyen desde la raíz del repo, con reinicio ante fallas. La configuración vive
+en cada servicio de Railway (no hay `railway.json`: Railway ya no lo acepta en servicios
+nuevos).
 
 ### Variables de cada servicio
 
@@ -297,10 +298,15 @@ cookie es del dominio del portal.
 
 ### Paso a paso
 
-1. Crear el proyecto en Railway y conectarlo al repo de GitHub.
-2. Crear los servicios `bff` y `web` desde el repo y, en cada uno, cargar su "Config file path".
-3. Cargar las variables de cada servicio (tablas de arriba).
-4. Generar el dominio público de cada uno (Settings → Networking), con el puerto de su `PORT`.
+Ya hecho para `uadenet-alumnos`; sirve para rearmarlo desde cero.
+
+1. Darle acceso a la Railway App de GitHub al repo. Es privado y de una cuenta personal: lo
+   tiene que instalar el dueño (`PerezzL`).
+2. Crear el proyecto y los servicios `bff` y `web` vacíos.
+3. En cada servicio, cargar Dockerfile, health check y carpetas (tabla de arriba) y las
+   variables, antes de conectar el repo: así el primer build ya sale bien.
+4. Conectar cada servicio al repo (rama `main`) y generar su dominio público con el puerto de
+   su `PORT`.
 5. Probar `https://<bff>/health/ready` y abrir `https://<web>`.
 6. Pasarle a CORE la URL del BFF con `/api/v1` para `STUDENT_SERVICE_URL`, y el origen del
    front para su CORS.
