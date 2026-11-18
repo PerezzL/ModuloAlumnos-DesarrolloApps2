@@ -12,6 +12,7 @@ const datosUsuario = (u: UsuarioPrueba) => ({
   id: u.id,
   email: u.email,
   careerIds: u.careerIds,
+  planIds: u.planIds,
   roles: u.roles,
   permissions: u.permissions,
   status: u.status,

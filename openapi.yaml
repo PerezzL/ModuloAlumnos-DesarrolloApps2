@@ -83,8 +83,8 @@ paths:
       description: >
         Lista las comisiones del período para el plan del alumno, agrupadas por asignatura,
         con el estado ya resuelto por comisión (inscripto, con cupo, sin cupo, bloqueada por
-        correlatividad). El BFF obtiene el plan del alumno (Backoffice o, si no lo da, el plan
-        activo de su carrera en el Módulo 9), pide al Módulo 9 los cursos del período, las
+        correlatividad). El BFF obtiene el plan del alumno (el del token de CORE; si no lo trae,
+        el de Backoffice o el plan activo de su carrera en el Módulo 9), pide al Módulo 9 los cursos del período, las
         materias del plan y las correlatividades, y los cruza con las inscripciones del
         alumno. Si no se puede determinar el plan, la oferta sale sin materias y con
         `filtradaPorPlan: false`.
@@ -609,8 +609,9 @@ components:
           nullable: true
           x-provisional: true
           description: >
-            Plan de estudios que informa Backoffice para la carrera del alumno. Null si no lo
-            tiene (la oferta usa entonces el plan activo de la carrera en el Módulo 9).
+            Plan de estudios del alumno: el primero del claim `planIds` del token de CORE o,
+            si no trae, el que informa Backoffice para su carrera. Null si ninguno lo tiene
+            (la oferta usa entonces el plan activo de la carrera en el Módulo 9).
       example:
         id: "alumno-456"
         email: jperez@uade.edu.ar
@@ -645,8 +646,8 @@ components:
         filtradaPorPlan:
           type: boolean
           description: >
-            False si no se pudo determinar el plan del alumno: ni Backoffice ni el plan
-            activo de su carrera en el Módulo 9. La oferta sale entonces sin materias, porque
+            False si no se pudo determinar el plan del alumno: ni el token de CORE, ni
+            Backoffice, ni el plan activo de su carrera en el Módulo 9. La oferta sale entonces sin materias, porque
             el Módulo 9 solo da el nombre de las materias por plan.
           x-provisional: true
         inscripcionDesde: { type: string, format: date-time }

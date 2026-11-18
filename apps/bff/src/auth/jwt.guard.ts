@@ -15,11 +15,11 @@ import { ES_PUBLICO } from './publico.decorator';
 const noAutenticado = () => new ProblemaError(401, 'AUTH_TOKEN_INVALID', 'No autenticado');
 
 /**
- * Claim `careerIds` del token de CORE → ids opacos. PROVISIONAL: CORE lo devuelve en el login
- * y en `/auth/me`, pero no confirmó que viaje en el JWT. Un claim ausente o con otra forma se
- * ignora (undefined): la carrera sale entonces de Backoffice.
+ * Claims `careerIds` y `planIds` del token de CORE → ids opacos (vistos en un token real,
+ * noviembre 2026). Un claim ausente o con otra forma se ignora (undefined): la carrera y el
+ * plan salen entonces de Backoffice.
  */
-export function idsDeCarrera(claim: unknown): string[] | undefined {
+export function idsDelClaim(claim: unknown): string[] | undefined {
   if (!Array.isArray(claim)) return undefined;
   return claim
     .filter((id): id is string | number => typeof id === 'string' || typeof id === 'number')
@@ -61,6 +61,7 @@ export class JwtGuard implements CanActivate {
     let sub: string | undefined;
     let email: unknown;
     let carreraIds: string[] | undefined;
+    let planIds: string[] | undefined;
     try {
       const { payload } = await jwtVerify(header.slice(7), this.jwks, {
         algorithms: ['RS256'],
@@ -70,7 +71,8 @@ export class JwtGuard implements CanActivate {
       });
       sub = payload.sub;
       email = payload.email;
-      carreraIds = idsDeCarrera(payload.careerIds);
+      carreraIds = idsDelClaim(payload.careerIds);
+      planIds = idsDelClaim(payload.planIds);
     } catch (error) {
       this.logger.debug({ err: error }, 'Token rechazado');
       throw noAutenticado();
@@ -85,6 +87,7 @@ export class JwtGuard implements CanActivate {
       id: sub,
       ...(typeof email === 'string' && { email }),
       ...(carreraIds && { carreraIds }),
+      ...(planIds && { planIds }),
     };
     return true;
   }

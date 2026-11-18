@@ -145,6 +145,31 @@ describe('mapper de Backoffice → ficha del alumno', () => {
     });
   });
 
+  describe('plan del token de CORE (`planIds`)', () => {
+    it('el plan del token gana al de Backoffice', () => {
+      expect(aFicha({ ...alumno, planIds: ['30'] }, conPlan)).toMatchObject({
+        perfil: { planId: '30' },
+        carreraId: '3',
+      });
+    });
+
+    it('con el plan en el token no hace falta `careers` en Backoffice', () => {
+      const { careers: _, ...sinCampo } = conPlan;
+      expect(aFicha({ ...alumno, planIds: ['30'] }, sinCampo).perfil.planId).toBe('30');
+    });
+
+    it('sin planes en el token (vacío) usa el de Backoffice', () => {
+      expect(aFicha({ ...alumno, planIds: [] }, conPlan).perfil.planId).toBe('12');
+    });
+
+    it('si Backoffice no conoce al alumno, el plan sale igual del token', () => {
+      expect(fichaSoloIdentidad({ ...alumno, carreraIds: ['3'], planIds: ['12'] })).toEqual({
+        perfil: { id: alumno.id, email: alumno.email, planId: '12' },
+        carreraId: '3',
+      });
+    });
+  });
+
   it('sin mail en el token usa el de Backoffice', () => {
     expect(aFicha({ id: alumno.id }, conPlan).perfil.email).toBe('v.moreno@uade.edu.ar');
   });

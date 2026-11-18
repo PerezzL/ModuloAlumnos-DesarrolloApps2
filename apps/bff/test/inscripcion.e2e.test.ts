@@ -284,3 +284,26 @@ describe('GET /inscripcion/oferta con la carrera en el token', () => {
     expect((res.body as OfertaInscripcion).materias).toHaveLength(4);
   });
 });
+
+// Token de CORE con `planIds`: el plan sale de ahí, sin depender de Backoffice ni del catálogo
+describe('GET /inscripcion/oferta con el plan en el token', () => {
+  const e2e = prepararE2E({ claims: { planIds: [12] } });
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-04T15:00:00Z'));
+  });
+  afterAll(() => vi.useRealTimers());
+
+  it('con Backoffice y el catálogo de carreras caídos, la oferta sale con el plan del token', async () => {
+    e2e.server.use(
+      http.get(RUTAS_ACADEMICO.USUARIO, () => new HttpResponse(null, { status: 503 })),
+      http.get(RUTAS_ACADEMICO.CARRERAS_CON_PLAN, () => new HttpResponse(null, { status: 503 })),
+      ...academicoConFixtures(),
+    );
+    const res = await e2e.get('/inscripcion/oferta');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ filtradaPorPlan: true });
+    // Las cuatro materias del plan 12 en el período
+    expect((res.body as OfertaInscripcion).materias).toHaveLength(4);
+  });
+});
