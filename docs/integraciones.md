@@ -66,19 +66,24 @@ CORE aclara que todo es compatible: no se quitaron rutas, campos, roles ni permi
 
 - **En producción:** `https://core-api-production-e458.up.railway.app` (JWKS en
   `/.well-known/jwks.json`, `kid` `dev-key-1`).
-- **`iss` nuevo:** pasó de `http://localhost:3000` a la URL de Railway; `aud` sigue `uadenet`.
-  El BFF lo lee de `JWT_ISSUER`: no hay que tocar código.
+- **`iss` nuevo:** pasó de `http://localhost:3000` a la URL de Railway, sin `/` final
+  (visto en un token real, noviembre 2026); `aud` sigue `uadenet`. El BFF lo lee de
+  `JWT_ISSUER`: no hay que tocar código.
 - **`careerIds`:** la identidad trae `careerIds` en el `user` del login y del refresh y en
   `GET /auth/me` (el refresh ahora también devuelve `user`). El BFF toma la carrera del claim
-  `careerIds` del JWT y usa Backoffice solo de respaldo (ver Módulo 8). Que viaje en el JWT
-  no está confirmado: `/auth/me` dice devolver lo que trae el token, pero la lista de claims del
-  contrato de CORE no lo incluye.
+  `careerIds` del JWT y usa Backoffice solo de respaldo (ver Módulo 8). Confirmado con un
+  token real: el JWT trae `careerIds` y también `planIds` (vacíos para el usuario de prueba).
+  El access token dura 15 minutos y el de un estudiante solo trae permisos de saldo
+  (`wallet:read:self`, `wallet:credit:self`).
 - **Roles y permisos:** roles nuevos de Backoffice (`BACKOFFICE_VIEWER`, `PAYROLL_ADMIN`) y
   permisos `backoffice:*`. STUDENT y TEACHER siguen con solo la wallet propia. Al portal no le
   cambia nada: no autoriza por rol. Un usuario TEACHER puede entrar al portal del alumno.
 - **No nos afecta:** `GET /internal/v1/identities/{userId}` y sus errores `AUTH_*` (para
   Backoffice), reversa idempotente del saldo, `events:read` en
   `GET /internal/v1/events/{eventId}`.
+- **Credenciales de servicio:** CORE ya nos asignó el `clientId` `student-service` y su
+  `clientSecret` (para `POST /internal/v1/service-auth/token`). Hoy no se usan: no llamamos a
+  `/internal/v1/*`. El secreto no va al repo; si hace falta, entra como variable de entorno.
 - **Límite de pedidos:** 100 por minuto por IP de cliente, en toda la API. Ver el pendiente
   de abajo.
 - **401 sin token:** llega con `code: "HTTP_401"` y sin `correlationId`, aunque el OpenAPI lo
@@ -104,9 +109,8 @@ Pendiente (la fixture `core/notificaciones.provisional.json` sigue provisional p
 | `actionUrl` de `EVENT_REMINDER` | `/events/{eventoId}`, relativa (ejemplo de la sección 8.1) |
 | Paginación de `/notifications` | El OpenAPI solo documenta `read` y devuelve `nextCursor`; seguimos mandando `limit` y `cursor` |
 | Paginación de `/wallets/me/transactions` | El OpenAPI solo documenta `limit` ("a lo sumo 100") y devuelve `nextCursor`; seguimos mandando `cursor` |
-| `careerIds` en el JWT | Lo damos por hecho; si no viene, la carrera sale de Backoffice |
 | Límite de 100 pedidos por minuto en el proxy | Pendiente: todo lo del BFF sale de una sola IP |
-| Cookie de refresh con el front en otro sitio | `SameSite=Lax`: desde otro sitio (incluso `localhost`) no viajaría en el refresh. Probar con un usuario real |
+| Cookie de refresh con el front en otro sitio | Vista en un login real: `refreshToken`, `Path=/api/v1/auth`, `HttpOnly`, `SameSite=Lax`, 7 días, sin `Domain` y sin `Secure` (el contrato decía `Secure`). Desde otro sitio (incluso `localhost`) no viaja en el refresh. Reenviar `/api/v1/auth/*` desde el hosting del front funciona porque no fija `Domain` |
 
 Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/destino.ts`, el
 único lugar que conoce su formato):
