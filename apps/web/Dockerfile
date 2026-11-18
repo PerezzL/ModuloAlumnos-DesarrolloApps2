@@ -4,7 +4,7 @@
 FROM node:24-alpine AS build
 ARG VITE_GATEWAY_URL=http://localhost:4000
 ARG VITE_NOTIFICATIONS_URL=http://localhost:4000/notifications
-ARG VITE_BIBLIOTECA_URL=https://biblioteca.uadenet.example
+ARG VITE_BIBLIOTECA_URL=https://asignia.app/uade-net
 ARG VITE_EVENTOS_URL=https://eventos.uadenet.example
 ARG VITE_AUTH_PROXY=false
 ENV VITE_GATEWAY_URL=$VITE_GATEWAY_URL \

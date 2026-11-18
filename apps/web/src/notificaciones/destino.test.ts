@@ -14,12 +14,31 @@ describe('traducción de actionUrl', () => {
     });
   });
 
-  it('sanción → portal de Biblioteca configurado', () => {
-    expect(destinoDe('LIBRARY_PENALTY_APPLIED', '/library/loan-1/penalty', portales)).toEqual({
+  it('sanción → detalle del préstamo en el portal de Biblioteca', () => {
+    expect(destinoDe('LIBRARY_PENALTY_APPLIED', '/prestamos/loan-1', portales)).toEqual({
       tipo: 'externo',
-      url: 'https://biblioteca.test/library/loan-1/penalty',
+      url: 'https://biblioteca.test/prestamos/loan-1',
       portal: 'Biblioteca',
     });
+  });
+
+  it('portal con ruta base: relativa o absoluta debajo de esa ruta, sin duplicarla', () => {
+    const conBase = { ...portales, biblioteca: 'https://asignia.app/uade-net' };
+    const esperado = {
+      tipo: 'externo',
+      url: 'https://asignia.app/uade-net/prestamos/loan-1',
+      portal: 'Biblioteca',
+    };
+    expect(destinoDe('LIBRARY_PENALTY_APPLIED', '/prestamos/loan-1', conBase)).toEqual(esperado);
+    expect(
+      destinoDe('LIBRARY_PENALTY_APPLIED', 'https://asignia.app/uade-net/prestamos/loan-1', conBase),
+    ).toEqual(esperado);
+    expect(
+      destinoDe('LIBRARY_PENALTY_APPLIED', 'https://asignia.app/otro/prestamos/loan-1', conBase),
+    ).toBeNull();
+    expect(
+      destinoDe('LIBRARY_PENALTY_APPLIED', 'https://asignia.app/uade-netx/prestamos/l', conBase),
+    ).toBeNull();
   });
 
   it('recordatorio → portal de Eventos, relativo o absoluto al mismo origen', () => {
@@ -46,6 +65,7 @@ describe('traducción de actionUrl', () => {
     ['tipo anterior', 'EXAM_RESULT_PUBLISHED', '/student/courses/c/exams/1'],
     ['tipo desconocido', 'NUEVO_TIPO', '/events/ev-1'],
     ['ruta de otro tipo', 'LIBRARY_PENALTY_APPLIED', '/events/ev-1'],
+    ['ruta anterior de sanción', 'LIBRARY_PENALTY_APPLIED', '/library/loan-1/penalty'],
   ])('%s → no navega', (_caso, tipo, url) => {
     expect(destinoDe(tipo, url, portales)).toBeNull();
   });
