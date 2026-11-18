@@ -20,7 +20,7 @@ pendiente se sigue en la tarjeta "[CORE] Dominio de los portales…" de Trello:
 | --- | --- |
 | URL pública del Gateway | `https://core-api-production-e458.up.railway.app` |
 | URL del JWKS | `https://core-api-production-e458.up.railway.app/.well-known/jwks.json` |
-| `iss` y `aud` de los tokens | `iss`: la URL de la API en Railway (antes `http://localhost:3000`); `aud`: `uadenet`. Falta ver con un token real si el `iss` termina en `/`: `jose` compara el valor exacto |
+| `iss` y `aud` de los tokens | `iss`: la URL de la API en Railway (antes `http://localhost:3000`); `aud`: `uadenet`. Visto en un token real: el `iss` no termina en `/` (`jose` compara el valor exacto) |
 | URL del WebSocket de notificaciones | _pendiente_; no figura en su OpenAPI. Suponemos `<URL del Gateway>/notifications` |
 | Dominio bajo el que se sirven los portales (por la cookie de refresh) | _pendiente_ |
 | Si el Gateway espera una URL pública del BFF o una red compartida | _pendiente_ |
@@ -64,8 +64,11 @@ con las variables de la tabla anterior.
   `STUDENT_SERVICE_URL` (con `/api/v1` incluido). Depende del despliegue (tarjeta E02).
 - **Timeout:** el BFF tiene que responder antes de los 10 s del Gateway. Ojo con los planes
   de hosting que apagan el servicio por inactividad.
-- **Cookie de refresh:** es `SameSite=Lax` y la define CORE. Si el front no queda bajo el
-  mismo sitio que CORE, la sesión se pierde al recargar. Plan B: una regla de reescritura en
+- **Cookie de refresh:** la define CORE. En un login real llegó `refreshToken` con
+  `Path=/api/v1/auth`, `HttpOnly`, `SameSite=Lax`, sin `Domain` y sin `Secure`. `up.railway.app`
+  está en la Public Suffix List, así que un front en otro subdominio de Railway tampoco es
+  el mismo sitio que CORE: la sesión se pierde al recargar. Como no fija `Domain`, el plan B
+  funciona si el reenvío conserva la ruta `/api/v1/auth`. Plan B: una regla de reescritura en
   el hosting del front para login, refresh y logout (ver [`arquitectura.md`](arquitectura.md), "Despliegue").
   El CORS de producción acepta `http://localhost:5173` con credenciales, pero desde
   `localhost` la cookie `Lax` tampoco viaja en el `POST /auth/refresh`: probarlo con un
@@ -153,7 +156,7 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | | |
 | --- | --- |
 | OpenAPI | https://core-api-production-e458.up.railway.app/docs-json (formas de auth, saldo, notificaciones y errores del Gateway: ya aplicadas) |
-| Falta confirmar | Formato del `actionUrl` de cada notificación; que cada módulo sirva sus rutas bajo `/api/v1`; que `careerIds` viaje en el JWT; paginación con `cursor` en `/notifications` y `/wallets/me/transactions`; si el límite de 100 pedidos por minuto aplica al proxy |
+| Falta confirmar | Formato del `actionUrl` de cada notificación; que cada módulo sirva sus rutas bajo `/api/v1`; paginación con `cursor` en `/notifications` y `/wallets/me/transactions`; si el límite de 100 pedidos por minuto aplica al proxy |
 | Fixtures | `packages/fixtures/core/` (`wallet-me.json` y `transacciones.json` confirmadas; `notificaciones.provisional.json` por el `actionUrl`) |
 | Código | Front: `apps/web/src/core/` (`saldo.ts`, `notificaciones.ts`, `cargaSaldo.ts`). Claim `careerIds`: `apps/bff/src/auth/jwt.guard.ts` (`idsDeCarrera`). Errores del Gateway: `apps/bff/src/gateway/gateway.client.ts`, `apps/bff/src/modulos/comun.ts` y `apps/web/src/api/errores.ts` (deciden por status). CORE falso: `saldo.ts`, `notificaciones.ts`, `gateway.ts` |
 | Contrato | No toca [`openapi.yaml`](../openapi.yaml): el front consume a CORE directo |
