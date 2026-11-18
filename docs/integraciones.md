@@ -65,7 +65,8 @@ Novedades del 4 de noviembre de 2026 (PDF "CORE G10 · Novedades" y OpenAPI de p
 CORE aclara que todo es compatible: no se quitaron rutas, campos, roles ni permisos.
 
 - **En producción:** `https://core-api-production-e458.up.railway.app` (JWKS en
-  `/.well-known/jwks.json`, `kid` `dev-key-1`).
+  `/.well-known/jwks.json`, `kid` `dev-key-1`). Al reiniciar regenera la clave con el mismo
+  `kid` (visto el 17/11): el BFF vuelve a pedir el JWKS cuando una firma no verifica.
 - **`iss` nuevo:** pasó de `http://localhost:3000` a la URL de Railway, sin `/` final
   (visto en un token real, noviembre 2026); `aud` sigue `uadenet`. El BFF lo lee de
   `JWT_ISSUER`: no hay que tocar código.

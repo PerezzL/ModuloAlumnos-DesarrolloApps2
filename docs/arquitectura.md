@@ -272,7 +272,8 @@ compras son URLs que entrega la Tienda.
 - Claims del JWT: `iss`, `aud`, `sub` (userId), `sid`, `email`, `roles`, `permissions`,
   `iat`, `exp`, `jti`.
 - El BFF valida el JWT localmente contra `GET /.well-known/jwks.json` (defensa en profundidad,
-  pedido explícito de CORE), cacheando las claves y refrescándolas solo ante un `kid` desconocido.
+  pedido explícito de CORE), cacheando las claves y refrescándolas ante un `kid` desconocido o
+  una firma que no verifica: CORE regenera la clave al reiniciar y mantiene el `kid`.
 - Introspección (`POST /internal/v1/auth/introspect`): existe, pero es solo para operaciones
   sensibles, no para cada request.
 - Errores de login (problem+json): 401 `AUTH_INVALID_CREDENTIALS` (genérico a propósito),

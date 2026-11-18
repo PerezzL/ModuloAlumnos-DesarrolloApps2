@@ -60,8 +60,9 @@ real se usa el despliegue en Railway (ver "Despliegue"), que usa los mismos Dock
 
 ### Del lado de CORE
 
-- **Registrar nuestro BFF:** pasarle a CORE la URL pública del BFF para su
-  `STUDENT_SERVICE_URL` (con `/api/v1` incluido). Depende del despliegue (tarjeta E02).
+- **Registrar nuestro BFF:** hecho (17/11). CORE cargó `STUDENT_SERVICE_URL` sin `/api/v1`
+  (`https://uadenet-alumnos-bff.up.railway.app`): el Gateway agrega `/api/v1` solo, así que
+  `/api/v1/student/me` llega al BFF como `/api/v1/me`.
 - **Timeout:** el BFF tiene que responder antes de los 10 s del Gateway. Ojo con los planes
   de hosting que apagan el servicio por inactividad.
 - **Cookie de refresh:** la define CORE. En un login real llegó `refreshToken` con
