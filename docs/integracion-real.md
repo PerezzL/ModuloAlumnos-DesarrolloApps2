@@ -244,8 +244,8 @@ del mismo repo. El CORE falso y Prism no se despliegan.
 
 | Servicio | Dominio | Dockerfile | Health check | Carpetas que disparan un deploy |
 | --- | --- | --- | --- | --- |
-| `bff` | `https://bff-production-d272d9d7.up.railway.app` | `apps/bff/Dockerfile` | `/health/live` (no depende de CORE) | `apps/bff/**`, `packages/**`, `openapi.yaml`, `package*.json` |
-| `web` | `https://web-production-8e99804e.up.railway.app` | `apps/web/Dockerfile` (build de Vite servido por nginx) | `/` | `apps/web/**`, `packages/api-types/**`, `openapi.yaml`, `package*.json` |
+| `bff` | `https://uadenet-alumnos-bff.up.railway.app` | `apps/bff/Dockerfile` | `/health/live` (no depende de CORE) | `apps/bff/**`, `packages/**`, `openapi.yaml`, `package*.json` |
+| `web` | `https://uadenet-alumnos.up.railway.app` | `apps/web/Dockerfile` (build de Vite servido por nginx) | `/` | `apps/web/**`, `packages/api-types/**`, `openapi.yaml`, `package*.json` |
 
 Los dos se construyen desde la raíz del repo, con reinicio ante fallas. La configuración vive
 en cada servicio de Railway (no hay `railway.json`: Railway ya no lo acepta en servicios
