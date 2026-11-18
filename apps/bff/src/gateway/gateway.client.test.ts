@@ -1,6 +1,7 @@
 import { delay, http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { Logger } from '@nestjs/common';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { cargarConfig } from '../config/config';
 import { correlationMiddleware } from '../comun/contexto';
 import { ProblemaError } from '../comun/problema';
@@ -71,6 +72,22 @@ describe('GatewayClient', () => {
       code: 'UPSTREAM_UNAVAILABLE',
       modulo: 'COMEDOR',
     });
+  });
+
+  it('loguea en debug el cuerpo de error que manda el Gateway', async () => {
+    const debug = vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+    const problema = { status: 503, code: 'UPSTREAM_UNAVAILABLE', detail: 'dining caído' };
+    server.use(
+      http.get(`${GW}/api/v1/dining/*`, () => HttpResponse.json(problema, { status: 503 })),
+    );
+
+    await capturar(client.get('COMEDOR', '/reservations/me'));
+
+    expect(debug).toHaveBeenCalledWith(
+      { modulo: 'COMEDOR', status: 503, cuerpo: problema },
+      'Respuesta de error del Gateway',
+    );
+    debug.mockRestore();
   });
 
   it('Gateway inalcanzable → 503 UPSTREAM_UNAVAILABLE', async () => {
