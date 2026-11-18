@@ -201,7 +201,7 @@ describe('destino al tocar una notificación (H26, H28, H29)', () => {
       'sanción',
       /sanción de biblioteca/i,
       'Biblioteca',
-      'https://biblioteca.test/library/loan-1/penalty',
+      'https://biblioteca.test/prestamos/loan-1',
     ],
     ['recordatorio', /se acerca tu evento/i, 'Eventos', 'https://eventos.test/events/ev-1'],
   ])(

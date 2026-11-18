@@ -94,7 +94,7 @@ export function ejemplo(tipo: TipoNotificacion) {
       type: tipo,
       title: 'Tenés una sanción de biblioteca',
       message: 'Devolviste un libro con 3 días de atraso. Multa: $ 1500,00',
-      actionUrl: `/library/${ref}/penalty`,
+      actionUrl: `/prestamos/${ref}`,
       sourceModule: 'library',
       sourceReference: `penalty/${ref}`,
       expiresAt: null,

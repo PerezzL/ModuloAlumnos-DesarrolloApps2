@@ -18,7 +18,7 @@
     "type": "LIBRARY_PENALTY_APPLIED",
     "title": "Tenés una sanción de biblioteca",
     "message": "Devolviste un libro con 8 días de atraso. Multa: $ 2500,00",
-    "actionUrl": "/library/4b3c2d1e-0f9a-4b8c-9d7e-6f5a4b3c2d1e/penalty",
+    "actionUrl": "/prestamos/4b3c2d1e-0f9a-4b8c-9d7e-6f5a4b3c2d1e",
     "sourceModule": "library",
     "sourceReference": "penalty/4b3c2d1e-0f9a-4b8c-9d7e-6f5a4b3c2d1e",
     "createdAt": "2026-09-20T13:00:00.000Z",

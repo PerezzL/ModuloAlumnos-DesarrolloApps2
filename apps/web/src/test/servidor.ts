@@ -183,7 +183,7 @@ const notificacionesIniciales = (): NotificacionCore[] => [
     type: 'LIBRARY_PENALTY_APPLIED',
     title: 'Tenés una sanción de biblioteca',
     message: 'Devolviste un libro con 8 días de atraso.',
-    actionUrl: '/library/loan-1/penalty',
+    actionUrl: '/prestamos/loan-1',
     readAt: null,
     createdAt: '2026-09-20T13:00:00.000Z',
   },

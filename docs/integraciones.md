@@ -101,7 +101,6 @@ Pendiente (la fixture `core/notificaciones.provisional.json` sigue provisional p
 | Tema | Suposición |
 | --- | --- |
 | `actionUrl` de `TEACHER_EXAM_RESULT_PUBLISHED` | `/student/courses/{courseId}/exams/{examId}`, provisorio del Módulo 2; les propusimos `/cursadas/{courseId}/notas/{examId}` |
-| `actionUrl` de `LIBRARY_PENALTY_APPLIED` | `/library/{loanId}/penalty` (pendiente con el Módulo 3) |
 | `actionUrl` de `EVENT_REMINDER` | `/events/{eventoId}`, relativa (ejemplo de la sección 8.1) |
 | Paginación de `/notifications` | El OpenAPI solo documenta `read` y devuelve `nextCursor`; seguimos mandando `limit` y `cursor` |
 | Paginación de `/wallets/me/transactions` | El OpenAPI solo documenta `limit` ("a lo sumo 100") y devuelve `nextCursor`; seguimos mandando `cursor` |
@@ -116,11 +115,12 @@ Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/d
   aceptan la ruta provisoria del Módulo 2 y la que les propusimos; cuando confirmen, queda una.
   El `examId` es el `notaId` de nuestro contrato (confirmado), así que el listado de notas y la
   notificación llevan a la misma pantalla.
-- `LIBRARY_PENALTY_APPLIED` y `EVENT_REMINDER` → portal de Biblioteca o de Eventos, con la URL
-  base de `VITE_BIBLIOTECA_URL` y `VITE_EVENTOS_URL`. La de Biblioteca es un valor de ejemplo
-  hasta que el Módulo 3 confirme la suya.
-- Se acepta un `actionUrl` relativo o absoluto hacia el origen del portal configurado; otro
-  origen, otro formato o un tipo desconocido no navega (solo marca la notificación como leída).
+- `LIBRARY_PENALTY_APPLIED` → detalle del préstamo en el portal de Biblioteca
+  (`/prestamos/{loanId}` sobre `VITE_BIBLIOTECA_URL`, confirmado por el Módulo 3).
+- `EVENT_REMINDER` → portal de Eventos, con la URL base de `VITE_EVENTOS_URL`.
+- Se acepta un `actionUrl` relativo al portal o absoluto dentro del portal configurado (si el
+  portal tiene ruta base, como `https://asignia.app/uade-net`, tiene que estar debajo de ella);
+  otro origen, otro formato o un tipo desconocido no navega (solo marca la notificación como leída).
 
 ## Módulo 2 — Docente
 
@@ -184,7 +184,8 @@ Cómo lo usa el BFF (adaptador en `apps/bff/src/modulos/docente/`, servicio en
 | Tema | Estado |
 | --- | --- |
 | Evento de sanción | Confirmado |
-| URL de destino | Pendiente; adelantaron `www.su-url.com/library/{loanId}/penalty` |
+| URL de destino | Confirmada: `https://asignia.app/uade-net/prestamos/{loanId}` (detalle del préstamo) |
+| Rutas por el Gateway | Exponen préstamos, sanciones, catálogo y pago; no las usamos (la sanción es una redirección) |
 
 Sin integración directa. Publica `library.penalty.applied.v1` hacia CORE, que genera
 `LIBRARY_PENALTY_APPLIED`.
@@ -200,6 +201,11 @@ Sin integración directa. Publica `library.penalty.applied.v1` hacia CORE, que g
 ```
 
 El monto lo calcula Backoffice pero llega resuelto desde Biblioteca.
+
+Según su Swagger de integraciones (v2.0.0), CORE avisa al alumno con link a
+`https://asignia.app/uade-net/prestamos/{loanId}`. El evento no trae `penaltyId`, por eso el
+link va al préstamo (que muestra la sanción) y no al detalle de la sanción. El `actionUrl` lo
+arma CORE: aceptamos tanto `/prestamos/{loanId}` relativo como la URL absoluta.
 
 ## Módulo 4 — Comedor
 
