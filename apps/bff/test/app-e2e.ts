@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { http, HttpResponse } from 'msw';
@@ -9,9 +10,34 @@ import { aplicarEnvDePrueba, envDePrueba } from './env';
 import { EmisorDePrueba } from './tokens';
 import { AppModule } from '../src/app.module';
 import { configurarApp } from '../src/app';
+import { firmar } from '../src/auth/firma';
 
 export const GW = envDePrueba.GATEWAY_URL;
 export const ALUMNO = 'alumno-opaco-1';
+
+/**
+ * Headers que agrega el Gateway de CORE, con la firma `X-Core-Signature` calculada con el
+ * secreto de prueba. `ruta` es la que recibe el BFF (`/api/v1/...`).
+ */
+export function headersFirmados(
+  metodo: string,
+  ruta: string,
+  opciones: { userId?: string; timestamp?: number } = {},
+): Record<string, string> {
+  const pedido = {
+    metodo,
+    ruta,
+    userId: opciones.userId ?? ALUMNO,
+    correlationId: randomUUID(),
+    timestamp: String(opciones.timestamp ?? Date.now()),
+  };
+  return {
+    'X-User-Id': pedido.userId,
+    'X-Correlation-Id': pedido.correlationId,
+    'X-Core-Timestamp': pedido.timestamp,
+    'X-Core-Signature': firmar(envDePrueba.CORE_SIGNATURE_SECRET, pedido),
+  };
+}
 
 /**
  * BFF completo para tests e2e: JWKS de prueba y Gateway simulado con msw. Cada test agrega
@@ -24,16 +50,18 @@ export function prepararE2E(opciones: { claims?: Record<string, unknown> } = {})
     server,
     app: undefined as unknown as INestApplication,
     token: '',
-    /** GET autenticado como ALUMNO */
+    /** GET autenticado como ALUMNO, firmado como lo hace el Gateway */
     get(ruta: string) {
       return request(ctx.app.getHttpServer())
         .get(`/api/v1${ruta}`)
+        .set(headersFirmados('GET', `/api/v1${ruta}`))
         .set('Authorization', `Bearer ${ctx.token}`);
     },
-    /** POST JSON autenticado como ALUMNO */
+    /** POST JSON autenticado como ALUMNO, firmado como lo hace el Gateway */
     post(ruta: string, body: string | object) {
       return request(ctx.app.getHttpServer())
         .post(`/api/v1${ruta}`)
+        .set(headersFirmados('POST', `/api/v1${ruta}`))
         .set('Authorization', `Bearer ${ctx.token}`)
         .set('Content-Type', 'application/json')
         .send(body);

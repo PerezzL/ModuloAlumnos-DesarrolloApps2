@@ -60,7 +60,7 @@ es esperable y no impide que todo funcione.
 | --- | --- | --- |
 | web | http://localhost:5173 | El portal (lo que se abre en el navegador) |
 | core-falso | http://localhost:4000 | Imitación de CORE: login, tokens, Gateway y los módulos externos (ver [CORE falso](#core-falso-módulos-externos-y-fallas)) |
-| bff | http://localhost:3000 | Nuestro backend. Documentación de la API en http://localhost:3000/docs |
+| bff | http://localhost:3000 | Nuestro backend. Documentación de la API en http://localhost:3000/docs. Solo atiende pedidos firmados por el Gateway: para probar un endpoint, pasá por el CORE falso (`http://localhost:4000/api/v1/student/...`) |
 
 Abrí http://localhost:5173 y entrá con **`v.moreno@uade.edu.ar` / `uade2026`**.
 Hay más usuarios en `apps/core-falso/src/usuarios.ts` (por ejemplo, uno suspendido para

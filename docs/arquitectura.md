@@ -274,6 +274,11 @@ compras son URLs que entrega la Tienda.
 - El BFF valida el JWT localmente contra `GET /.well-known/jwks.json` (defensa en profundidad,
   pedido explícito de CORE), cacheando las claves y refrescándolas ante un `kid` desconocido o
   una firma que no verifica: CORE regenera la clave al reiniciar y mantiene el `kid`.
+- Antes del token, el BFF verifica la firma del Gateway (`X-Core-Signature`): HMAC-SHA256 en
+  hexadecimal sobre método, ruta sin query, `X-User-Id`, `X-Correlation-Id` y
+  `X-Core-Timestamp`, con un secreto compartido con CORE. Así el BFF no atiende pedidos que
+  no pasaron por el Gateway, aunque su URL sea pública. Sin firma válida responde 403
+  `GATEWAY_SIGNATURE_INVALID` (no 401: no es un problema de sesión). El CORE falso firma igual.
 - Introspección (`POST /internal/v1/auth/introspect`): existe, pero es solo para operaciones
   sensibles, no para cada request.
 - Errores de login (problem+json): 401 `AUTH_INVALID_CREDENTIALS` (genérico a propósito),

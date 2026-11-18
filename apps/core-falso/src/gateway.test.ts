@@ -4,6 +4,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from './app.js';
 import { cargarConfig } from './config.js';
+import { firmar } from './firma.js';
 
 let destino = 'http://localhost:1';
 let recibido: IncomingMessage | undefined;
@@ -51,6 +52,28 @@ describe('Gateway del CORE falso', () => {
     expect(recibido?.headers['x-user-permissions']).toContain('wallet:read:self');
     expect(recibido?.headers['x-correlation-id']).toBe('corr-9');
     expect(recibido?.headers.authorization).toBe(`Bearer ${token}`);
+  });
+
+  it('firma el pedido con X-Core-Signature sobre la ruta de destino', async () => {
+    await request(app)
+      .get('/api/v1/student/calendario?desde=2026-10-01')
+      .set('Authorization', `Bearer ${token}`)
+      .set('X-Correlation-Id', 'corr-9')
+      .set('X-Core-Signature', 'falsificada');
+
+    const h = recibido!.headers;
+    const timestamp = String(h['x-core-timestamp']);
+    expect(Math.abs(Date.now() - Number(timestamp))).toBeLessThan(5_000);
+    expect(h['x-core-signature']).toBe(
+      firmar(
+        config.secretoFirma,
+        'GET',
+        '/api/v1/calendario',
+        'ba310c57-a684-4dbf-a4a4-905fcfbefa08',
+        'corr-9',
+        timestamp,
+      ),
+    );
   });
 
   it('deja pasar health sin token y sin X-User-*', async () => {

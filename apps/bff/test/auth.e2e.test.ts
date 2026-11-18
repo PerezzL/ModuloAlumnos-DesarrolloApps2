@@ -6,6 +6,7 @@ import { setupServer } from 'msw/node';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { aplicarEnvDePrueba, envDePrueba } from './env';
+import { headersFirmados } from './app-e2e';
 import { EmisorDePrueba } from './tokens';
 import { AppModule } from '../src/app.module';
 import { configurarApp } from '../src/app';
@@ -36,7 +37,11 @@ const server = setupServer(
 describe('guard de JWT', () => {
   let app: INestApplication;
   const pedir = (token?: string, headers: Record<string, string> = {}) => {
-    const req = request(app.getHttpServer()).get('/api/v1/protegido').set(headers);
+    // Firmado como el Gateway: este archivo prueba el token, no la firma
+    const firmados = headersFirmados('GET', '/api/v1/protegido', {
+      userId: headers['X-User-Id'] ?? 'alumno-opaco-1',
+    });
+    const req = request(app.getHttpServer()).get('/api/v1/protegido').set(firmados);
     return token ? req.set('Authorization', `Bearer ${token}`) : req;
   };
   const esNoAutenticado = (res: request.Response) => {

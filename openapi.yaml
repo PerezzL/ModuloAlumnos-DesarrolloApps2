@@ -71,6 +71,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Perfil'
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '502': { $ref: '#/components/responses/ModuloInvalido' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }
         '504': { $ref: '#/components/responses/ModuloTimeout' }
@@ -112,6 +113,7 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '404':
           description: >
             El `periodoId` pedido no existe, o el Módulo 9 no tiene períodos
@@ -161,6 +163,7 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '404':
           description: La comisión no existe (`code` `CURSO_NO_ENCONTRADO`)
           content:
@@ -233,6 +236,7 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '502': { $ref: '#/components/responses/ModuloInvalido' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }
         '504': { $ref: '#/components/responses/ModuloTimeout' }
@@ -259,6 +263,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CursadaDetalle'
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '404':
           description: El alumno no tiene una inscripción en ese curso (`code` `CURSADA_NO_ENCONTRADA`)
           content:
@@ -297,6 +302,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotaDetalle'
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '404':
           description: >
             La nota no existe, o el curso o la nota no pertenecen al alumno
@@ -365,6 +371,7 @@ paths:
                 code: RANGO_INVALIDO
                 detail: El rango no puede superar los 62 días.
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '503':
           description: >
             Fallaron todas las fuentes consultadas (las tres, o las pedidas en `categorias`).
@@ -436,6 +443,7 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problema' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '502': { $ref: '#/components/responses/ModuloInvalido' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }
         '504': { $ref: '#/components/responses/ModuloTimeout' }
@@ -462,6 +470,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CompraDetalle'
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '404':
           description: >
             La compra no existe o no pertenece al alumno (`code` `COMPRA_NO_ENCONTRADA`)
@@ -491,6 +500,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListaSedes'
         '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/FirmaInvalida' }
         '502': { $ref: '#/components/responses/ModuloInvalido' }
         '503': { $ref: '#/components/responses/ModuloNoDisponible' }
         '504': { $ref: '#/components/responses/ModuloTimeout' }
@@ -522,6 +532,20 @@ components:
             title: No autenticado
             status: 401
             code: AUTH_TOKEN_INVALID
+    FirmaInvalida:
+      description: >
+        El pedido no trae una firma válida del Gateway de CORE (`X-Core-Signature`): falta, no
+        coincide o su `X-Core-Timestamp` tiene más de 5 minutos. El BFF solo atiende pedidos
+        que pasan por el Gateway. No es un problema de sesión: el front no debe refrescar el
+        token ante este error.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problema' }
+          example:
+            type: about:blank
+            title: Pedido no firmado por el Gateway
+            status: 403
+            code: GATEWAY_SIGNATURE_INVALID
     ModuloInvalido:
       description: Un módulo del que depende la operación respondió algo inválido
       content:

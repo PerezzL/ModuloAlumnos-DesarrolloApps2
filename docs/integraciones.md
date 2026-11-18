@@ -89,6 +89,25 @@ CORE aclara que todo es compatible: no se quitaron rutas, campos, roles ni permi
   `/internal/v1/*`. El secreto no va al repo; si hace falta, entra como variable de entorno.
 - **Límite de pedidos:** 100 por minuto por IP de cliente, en toda la API. Ver el pendiente
   de abajo.
+- **Alta en el Gateway (respuesta de CORE, 17/11):**
+  - `STUDENT_SERVICE_URL` sin `/api/v1`: el Gateway lo agrega (`/api/v1/student/me` llega
+    como `/api/v1/me`).
+  - Cada pedido llega firmado: `X-Core-Signature` (HMAC-SHA256 en hexadecimal sobre método,
+    ruta de destino sin query, `X-User-Id`, `X-Correlation-Id` y `X-Core-Timestamp`, unidos
+    por `\n`) y `X-Core-Timestamp` en milisegundos. Hay que rechazar timestamps de más de 5
+    minutos. El secreto lo pasó CORE por privado: va en `CORE_SIGNATURE_SECRET`, fuera del repo.
+  - El Gateway también manda `X-User-Roles`, `X-User-Permissions`, `X-User-Career-Ids` y
+    `X-User-Plan-Ids`. El BFF sigue leyendo carrera y plan del JWT.
+  - CORS habilitado para `https://uadenet-alumnos.up.railway.app`, también en el socket.
+  - Cookie de refresh: confirman que no llevará `Domain` y mantiene `Path=/api/v1/auth`, así
+    que el reenvío desde nuestro hosting sigue funcionando.
+  - CORE no tiene `academic:read` ni `academic:write` y no se los da a STUDENT. Recomienda a
+    Gestión Académica, Docente y Backoffice autorizar los datos propios del alumno con el rol
+    STUDENT y comparando `X-User-Id` con el alumno pedido. Cada módulo decide qué rutas abre.
+  - `student-service` tiene `backoffice:read` y `backoffice:people:read`: puede leer
+    `GET /internal/v1/users/{userId}` con `client_credentials`.
+  - Límite de 100 pedidos por minuto por IP: alcanza para el TP; si aparecen 429 en `/auth`,
+    avisarles.
 - **401 sin token:** llega con `code: "HTTP_401"` y sin `correlationId`, aunque el OpenAPI lo
   marca obligatorio. El front decide el refresh por status, así que no le afecta.
 
