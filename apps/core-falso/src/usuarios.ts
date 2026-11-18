@@ -10,6 +10,8 @@ export interface UsuarioPrueba {
   permissions: string[];
   /** Carreras (ids del Módulo 9), las mismas que da Backoffice en `careers` */
   careerIds: string[];
+  /** Planes (ids del Módulo 9), como el claim `planIds` del CORE real */
+  planIds: string[];
   status: 'ACTIVE' | 'SUSPENDED';
 }
 
@@ -23,6 +25,7 @@ export const USUARIOS: UsuarioPrueba[] = [
     roles: ['STUDENT'],
     permissions: permisosAlumno,
     careerIds: ['3'],
+    planIds: ['12'],
     status: 'ACTIVE',
   },
   {
@@ -32,6 +35,7 @@ export const USUARIOS: UsuarioPrueba[] = [
     roles: ['STUDENT'],
     permissions: permisosAlumno,
     careerIds: [],
+    planIds: [],
     status: 'ACTIVE',
   },
   {
@@ -41,6 +45,7 @@ export const USUARIOS: UsuarioPrueba[] = [
     roles: ['STUDENT'],
     permissions: permisosAlumno,
     careerIds: [],
+    planIds: [],
     status: 'SUSPENDED',
   },
 ];

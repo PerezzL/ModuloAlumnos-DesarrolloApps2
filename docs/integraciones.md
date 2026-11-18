@@ -73,6 +73,8 @@ CORE aclara que todo es compatible: no se quitaron rutas, campos, roles ni permi
   `GET /auth/me` (el refresh ahora también devuelve `user`). El BFF toma la carrera del claim
   `careerIds` del JWT y usa Backoffice solo de respaldo (ver Módulo 8). Confirmado con un
   token real: el JWT trae `careerIds` y también `planIds` (vacíos para el usuario de prueba).
+  El BFF toma el plan del claim `planIds` de la misma forma: Backoffice y el plan activo de la
+  carrera en el Módulo 9 quedan de respaldo.
   El access token dura 15 minutos y el de un estudiante solo trae permisos de saldo
   (`wallet:read:self`, `wallet:credit:self`).
 - **Roles y permisos:** roles nuevos de Backoffice (`BACKOFFICE_VIEWER`, `PAYROLL_ADMIN`) y
@@ -376,8 +378,9 @@ tiene un solo plan**. Si `careers` trae varias, se toma la primera. Manejar vari
 obliga a cambiar `planId` por una lista en el adaptador (`backoffice.mapper.ts`), en el
 plan de la oferta (`InscripcionService`) y en `Perfil` del [`openapi.yaml`](../openapi.yaml).
 
-Si Backoffice no da el plan (`careers` vacío, null o ausente) o no responde, la oferta usa el
-plan activo de la carrera del alumno en el Módulo 9. Sin carrera, sale sin materias y con
+El plan sale primero del claim `planIds` del token de CORE. Si el token no lo trae y
+Backoffice tampoco (`careers` vacío, null o ausente) o no responde, la oferta usa el plan
+activo de la carrera del alumno en el Módulo 9. Sin carrera, sale sin materias y con
 `filtradaPorPlan: false` (decisión 11 de [`plan.md`](plan.md); ver Módulo 9).
 
 Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/` y
@@ -389,8 +392,9 @@ Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/` 
 - **Carrera:** la primera del claim `careerIds` del token de CORE. Backoffice es el
   respaldo: si el token no trae carreras (claim ausente o lista vacía), se usa la primera de
   `careers` y, si no viene, el `careerId` suelto (confirmado).
-- **Plan:** el de Backoffice es el de la carrera elegida dentro de `careers`; si Backoffice
-  no la tiene, `planId` es null y la oferta usa el plan activo de la carrera en el Módulo 9
+- **Plan:** el primero del claim `planIds` del token de CORE. Si el token no trae planes, el
+  de Backoffice es el de la carrera elegida dentro de `careers`; si Backoffice no la tiene,
+  `planId` es null y la oferta usa el plan activo de la carrera en el Módulo 9
   (ver arriba).
 - El nombre de la carrera sale de `GET /academica/carreras` del Módulo 9, cacheado en memoria
   una hora. Si el Módulo 9 falla o no conoce la carrera, el perfil sale igual, sin `carrera`.
@@ -449,7 +453,7 @@ lista los endpoints y formatos que van a exponer, pero CORE todavía no lo confi
   de usuario de todo el sistema (`sub` de CORE).
 - Materias del plan: `GET /api/academica/planes/{planId}/asignaturas` da los ids, códigos y
   nombres de las asignaturas del plan. Los cursos del plan son los de `/cursos` cuyo
-  `asignaturaId` está en esa lista. El `planId` del alumno sigue viniendo del Módulo 8.
+  `asignaturaId` está en esa lista. El `planId` del alumno sale del token de CORE o del Módulo 8.
 - Listado de cursos: `codigo` (la comisión), `asignaturaId`, `periodoId`, `sedeId`,
   `modalidad`, `turno`, un solo horario (`diaSemana` en inglés, `horaInicio`/`horaFin`
   `HH:MM:SS`, `aulaId`), `estado` (`PLANIFICADO`, `EN_CURSO`, `FINALIZADO`, `CANCELADO`),
@@ -505,8 +509,8 @@ Cómo lo usa el BFF (oferta, inscripción e historial, adaptador en
   no el último que cerró); pide los cursos del período y las materias del plan, y se queda con
   los cursos de esas materias (de ahí salen nombre y código). Las comisiones `CANCELADO` y
   `FINALIZADO` no se ofrecen.
-- Plan del alumno: el de Backoffice para su carrera y, si no lo da, el plan activo de la
-  carrera (`/academica/carreras/con-ultimo-plan-activo`). Sin plan, la oferta sale sin
+- Plan del alumno: el del token de CORE (`planIds`); si no lo trae, el de Backoffice para su
+  carrera y, si tampoco, el plan activo de la carrera (`/academica/carreras/con-ultimo-plan-activo`). Sin plan, la oferta sale sin
   materias y con `filtradaPorPlan: false` (decisión 11 de [`plan.md`](plan.md)).
 - Correlatividades: se aplanan las `condiciones` (una correlativa por materia, con su tipo).
   Si el Módulo 9 no conoce una asignatura (404), se toma como sin correlativas. Si fallan,

@@ -25,7 +25,7 @@ y pasos. El porqué de cada decisión está en [`arquitectura.md`](arquitectura.
 | — | Docker | Dockerfile por app y docker-compose; el desarrollo diario no depende de él |
 | — | Despliegue | Proveedor sin elegir; todo configurable por variables de entorno |
 | — | Equipo | Sin reparto: el trabajo lo hace una persona con el agente. Sin revisores obligatorios ni protección de `main` |
-| 11 | Oferta sin `planId` | Si Backoffice no devuelve el `planId`, se usa el plan activo de la carrera en el Módulo 9. Si tampoco hay carrera, la oferta sale sin materias y con `filtradaPorPlan: false` (ver abajo) |
+| 11 | Oferta sin `planId` | Si ni el token de CORE (`planIds`) ni Backoffice dan el plan, se usa el plan activo de la carrera en el Módulo 9. Si tampoco hay carrera, la oferta sale sin materias y con `filtradaPorPlan: false` (ver abajo) |
 | 12 | Módulo 2 | El `examId` es el `notaId`; un 404 del Módulo 2 para un curso que el Módulo 9 tiene cuenta como falla de `DOCENTE`; cada llamada falla por separado. Con el contrato confirmado (bloque `docente-contrato`): condición por asistencia contra el mínimo que informa el Módulo 2, sin faltas restantes; nota final desde sus actas; docente desde Backoffice; sin observaciones (ver [`integraciones.md`](integraciones.md)) |
 
 Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
@@ -43,8 +43,8 @@ de `GET /academica/planes/{planId}/asignaturas`. Sin plan no hay de dónde sacar
 así que ya no se puede ofrecer "todo sin filtrar" (lo que hacía esta decisión antes del
 pedido del Módulo 9 a CORE, noviembre 2026).
 
-El plan sale de Backoffice (el de la carrera del alumno) y, si no lo informa o no responde,
-del plan activo de esa carrera en el Módulo 9 (`/academica/carreras/con-ultimo-plan-activo`).
+El plan sale del claim `planIds` del token de CORE; si no lo trae, de Backoffice (el de la
+carrera del alumno) y, si no lo informa o no responde, del plan activo de esa carrera en el Módulo 9 (`/academica/carreras/con-ultimo-plan-activo`).
 La carrera sale del token (`careerIds`) o de Backoffice. Si no hay carrera, o el catálogo de
 carreras falla, el BFF registra un warning y devuelve la oferta sin materias con
 `filtradaPorPlan: false`; la pantalla avisa que no pudo confirmar el plan.

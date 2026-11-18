@@ -56,12 +56,14 @@ export class InscripcionService {
   }
 
   /**
-   * Plan del alumno: el que informa Backoffice para su carrera y, si no lo informa, el plan
-   * activo de esa carrera en el Módulo 9. La carrera sale del token o de Backoffice. Sin plan,
+   * Plan del alumno: el del token (`planIds`); si no trae, el que informa Backoffice para su
+   * carrera y, si tampoco, el plan activo de esa carrera en el Módulo 9. La carrera sale del token o de Backoffice. Sin plan,
    * la oferta sale vacía (decisión 11, docs/plan.md): el Módulo 9 solo da el nombre de las
    * materias por plan. Si Backoffice o el catálogo de carreras fallan, se sigue sin ese dato.
    */
   private async planId(alumno: Alumno): Promise<string | null> {
+    const delToken = alumno.planIds?.[0];
+    if (delToken !== undefined) return delToken;
     const ficha = await this.fichaOpcional(alumno);
     const planId = ficha?.perfil.planId ?? null;
     if (planId !== null) return planId;

@@ -28,7 +28,7 @@ autenticación es de CORE.
 - Id del alumno desde la sesión, tratado como string opaco.
 - Datos del alumno (nombre, apellido, legajo, carrera, plan) desde Backoffice: `GET /me` del BFF.
 
-El plan viene en `careers` de la ficha de Backoffice (comprometido, sin publicar); el nombre de la carrera, del Módulo 9.
+El plan viene del claim `planIds` del token de CORE o, si no lo trae, de `careers` en la ficha de Backoffice (comprometido, sin publicar); el nombre de la carrera, del Módulo 9.
 
 ## RF2 — Inscripción a materias
 
@@ -37,7 +37,7 @@ y se inscribe en una comisión. La inscripción se registra en el Módulo 9.
 
 Flujo del BFF:
 
-1. Obtener el plan del alumno (Módulo 8 o, si no lo da, el plan activo de su carrera en
+1. Obtener el plan del alumno (token de CORE, Módulo 8 o, si no lo dan, el plan activo de su carrera en
    `GET /api/academica/carreras/con-ultimo-plan-activo`) y el período vigente
    (`GET /api/planificacion/periodos`).
 2. Listar la oferta: `GET /api/planificacion/cursos?periodoId={id}` (no filtra por plan) y

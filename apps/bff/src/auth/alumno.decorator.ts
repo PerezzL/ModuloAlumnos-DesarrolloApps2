@@ -10,6 +10,8 @@ export interface Alumno {
    * texto). Ausente si el token no las trae: entonces se usan las de Backoffice.
    */
   carreraIds?: string[];
+  /** Planes del alumno según el token (claim `planIds`). Ausente si no los trae. */
+  planIds?: string[];
 }
 
 export interface RequestConAlumno extends Request {
