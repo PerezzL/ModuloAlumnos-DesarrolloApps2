@@ -118,6 +118,15 @@ export class GatewayClient {
       }
       return cuerpo;
     }
+    // Lo que explica el Gateway (o el módulo) sobre la falla: el front solo recibe el code propio
+    this.logger.debug(
+      {
+        modulo,
+        status: respuesta.status,
+        cuerpo: cuerpo === SIN_JSON ? texto.slice(0, MAX_CUERPO_LOG) : cuerpo,
+      },
+      'Respuesta de error del Gateway',
+    );
     switch (respuesta.status) {
       case 503:
         throw noDisponible(modulo);
@@ -154,3 +163,5 @@ export class GatewayClient {
 }
 
 const SIN_JSON = Symbol('SIN_JSON');
+/** Un error que no es JSON puede ser una página HTML entera: se loguea solo el principio */
+const MAX_CUERPO_LOG = 1000;
