@@ -79,6 +79,9 @@ CORE aclara que todo es compatible: no se quitaron rutas, campos, roles ni permi
 - **No nos afecta:** `GET /internal/v1/identities/{userId}` y sus errores `AUTH_*` (para
   Backoffice), reversa idempotente del saldo, `events:read` en
   `GET /internal/v1/events/{eventId}`.
+- **Credenciales de servicio:** CORE ya nos asignó el `clientId` `student-service` y su
+  `clientSecret` (para `POST /internal/v1/service-auth/token`). Hoy no se usan: no llamamos a
+  `/internal/v1/*`. El secreto no va al repo; si hace falta, entra como variable de entorno.
 - **Límite de pedidos:** 100 por minuto por IP de cliente, en toda la API. Ver el pendiente
   de abajo.
 - **401 sin token:** llega con `code: "HTTP_401"` y sin `correlationId`, aunque el OpenAPI lo

@@ -149,7 +149,7 @@ pueden agregar como ítems de Gestión Académica sin pedirle nada nuevo:
 ## Pendientes externos
 
 - **CORE:** dominio de los portales (por la cookie de refresh), URL pública o red compartida,
-  ambiente de pruebas, credenciales de servicio si hicieran falta.
+  ambiente de pruebas. Las credenciales de servicio ya están asignadas (`student-service`).
 - **Módulo 2:** confirmar la ruta del `actionUrl` que les propusimos. El acceso con el token
   del alumno se ve con CORE.
 - **Módulo 8:** campos del endpoint de usuarios y si incluye `planId`.
