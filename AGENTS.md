@@ -94,7 +94,8 @@ Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
 
 **Seguridad y sesión**
 - El BFF valida el JWT localmente (RS256 contra el JWKS de CORE; issuer, audience, expiración).
-  Las claves se cachean y se refrescan solo ante un `kid` desconocido.
+  Las claves se cachean y se refrescan ante un `kid` desconocido o una firma que no verifica
+  (CORE regenera la clave al reiniciar con el mismo `kid`), con 30 s de espera entre pedidos.
 - Frontend: el `accessToken` vive solo en memoria. Nunca en localStorage ni sessionStorage.
 - Los llamados a refresh se serializan: el refresh token rota en cada uso y dos refresh
   en paralelo rompen la sesión.

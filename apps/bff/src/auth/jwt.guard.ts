@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { createRemoteJWKSet, errors, jwtVerify } from 'jose';
 import { CONFIG, type Config } from '../config/config';
 import { ProblemaError } from '../comun/problema';
 import type { RequestConAlumno } from './alumno.decorator';
@@ -29,7 +29,9 @@ export function idsDelClaim(claim: unknown): string[] | undefined {
 /**
  * Valida localmente el JWT de CORE en cada request (defensa en profundidad: el Gateway ya lo
  * validó). Firma RS256 contra el JWKS, issuer, audience y expiración. Las claves se cachean
- * sin vencimiento y solo se vuelven a pedir ante un `kid` desconocido.
+ * sin vencimiento y se vuelven a pedir ante un `kid` desconocido o una firma que no verifica:
+ * CORE regenera la clave al reiniciar y puede mantener el mismo `kid`. Las dos recargas
+ * respetan la espera de 30 s entre pedidos.
  */
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -63,12 +65,7 @@ export class JwtGuard implements CanActivate {
     let carreraIds: string[] | undefined;
     let planIds: string[] | undefined;
     try {
-      const { payload } = await jwtVerify(header.slice(7), this.jwks, {
-        algorithms: ['RS256'],
-        issuer: this.config.JWT_ISSUER,
-        audience: this.config.JWT_AUDIENCE,
-        requiredClaims: ['sub', 'exp'],
-      });
+      const { payload } = await this.verificar(header.slice(7));
       sub = payload.sub;
       email = payload.email;
       carreraIds = idsDelClaim(payload.careerIds);
@@ -90,5 +87,27 @@ export class JwtGuard implements CanActivate {
       ...(planIds && { planIds }),
     };
     return true;
+  }
+
+  /**
+   * Verifica el token. Si la firma no verifica con la clave cacheada, vuelve a pedir el JWKS
+   * una vez (fuera de la espera entre pedidos) y reintenta.
+   */
+  private async verificar(token: string) {
+    const opciones = {
+      algorithms: ['RS256'],
+      issuer: this.config.JWT_ISSUER,
+      audience: this.config.JWT_AUDIENCE,
+      requiredClaims: ['sub', 'exp'],
+    };
+    try {
+      return await jwtVerify(token, this.jwks, opciones);
+    } catch (error) {
+      if (!(error instanceof errors.JWSSignatureVerificationFailed) || this.jwks.coolingDown) {
+        throw error;
+      }
+      await this.jwks.reload();
+      return jwtVerify(token, this.jwks, opciones);
+    }
   }
 }

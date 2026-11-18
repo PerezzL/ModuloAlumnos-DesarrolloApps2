@@ -114,4 +114,22 @@ describe('guard de JWT', () => {
       vi.useRealTimers();
     }
   });
+  it('si CORE regenera la clave con el mismo kid, vuelve a pedir el JWKS y acepta el token', async () => {
+    // CORE reinicia y firma con una clave nueva, pero sigue usando el kid `clave-1`
+    jwks = { keys: [otraClave.jwk] };
+    const token = await otraClave.firmar();
+    vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 100_000 });
+    try {
+      const antes = pedidosJwks;
+      const res = await pedir(token);
+      expect(res.status).toBe(200);
+      expect(pedidosJwks).toBe(antes + 1);
+
+      // Una firma que sigue sin verificar no vuelve a pedir el JWKS durante el cooldown
+      esNoAutenticado(await pedir(await emisor.firmar()));
+      expect(pedidosJwks).toBe(antes + 1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
