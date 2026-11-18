@@ -41,7 +41,7 @@ Ninguna URL está en el código: pasar a CORE real es cambiar estas variables.
 | `PREFIJO_*` | BFF | `/api/v1/{modulo}` | Los mismos: el OpenAPI de CORE registra `student`, `teacher`, `library`, etc. |
 | `VITE_GATEWAY_URL` | Front | `http://localhost:4000` | `https://core-api-production-e458.up.railway.app` |
 | `VITE_NOTIFICATIONS_URL` | Front | `http://localhost:4000/notifications` | `https://core-api-production-e458.up.railway.app/notifications` (supuesto) |
-| `VITE_BIBLIOTECA_URL` | Front | `https://biblioteca.uadenet.example` | Portal de Biblioteca (Módulo 3) |
+| `VITE_BIBLIOTECA_URL` | Front | `https://asignia.app/uade-net` | Portal de Biblioteca (Módulo 3) |
 | `VITE_EVENTOS_URL` | Front | `https://eventos.uadenet.example` | Portal de Eventos (Módulo 6) |
 
 Las `VITE_*` quedan fijas **al compilar** el front: cambiarlas obliga a reconstruirlo
@@ -177,7 +177,7 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 | | |
 | --- | --- |
-| Falta confirmar | URL oficial del detalle de la sanción (adelantaron `/library/{loanId}/penalty`) |
+| Confirmado | Destino `https://asignia.app/uade-net/prestamos/{loanId}`. Falta que CORE confirme si el `actionUrl` llega relativo o absoluto (se aceptan los dos) |
 | Código | `apps/web/src/notificaciones/destino.ts` (formato del `actionUrl`) y `VITE_BIBLIOTECA_URL` |
 | Fixtures | El ítem `LIBRARY_PENALTY_APPLIED` de `packages/fixtures/core/notificaciones.provisional.json` |
 | Trello | "[Módulo 3 · Biblioteca]…" (no tiene tarjeta de integración: es solo una redirección) |

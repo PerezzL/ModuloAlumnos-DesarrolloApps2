@@ -7,7 +7,8 @@ import { config } from '@/config';
  * - `TEACHER_EXAM_RESULT_PUBLISHED`: `/student/courses/{cursoId}/exams/{notaId}` (provisorio
  *   del Módulo 2) o `/cursadas/{cursoId}/notas/{notaId}` (la ruta que les propusimos) →
  *   pantalla propia del detalle de la nota. Cuando confirmen, queda una sola.
- * - `LIBRARY_PENALTY_APPLIED`: `/library/{loanId}/penalty` → portal de Biblioteca.
+ * - `LIBRARY_PENALTY_APPLIED`: `/prestamos/{loanId}` (detalle del préstamo, confirmado por el
+ *   Módulo 3) → portal de Biblioteca.
  * - `EVENT_REMINDER`: `/events/{eventoId}` → portal de Eventos.
  *
  * Solo se navega a rutas propias o a los portales configurados; un `actionUrl` vacío, con
@@ -25,28 +26,33 @@ const EXAMEN = [
   new RegExp(`^/student/courses/${ID}/exams/${ID}/?$`),
   new RegExp(`^/cursadas/${ID}/notas/${ID}/?$`),
 ];
-const SANCION = new RegExp(`^/library/${ID}/penalty/?$`);
+const PRESTAMO = new RegExp(`^/prestamos/${ID}/?$`);
 const EVENTO = new RegExp(`^/events/${ID}/?$`);
 
 /**
- * `actionUrl` relativa (lo normal en CORE) o absoluta hacia el portal configurado → ruta
- * dentro de ese portal. Null si apunta a otro origen.
+ * `actionUrl` relativa al portal (lo normal en CORE) o absoluta dentro del portal configurado →
+ * ruta dentro de ese portal. El portal puede tener ruta base (`https://asignia.app/uade-net`):
+ * una URL absoluta tiene que estar debajo de esa ruta y se le quita. Null si apunta a otro lado.
  */
 function rutaEnPortal(actionUrl: string, base: string | undefined): string | null {
   if (!base) return null;
-  let origen: URL;
+  let portal: URL;
   try {
-    origen = new URL(base);
+    portal = new URL(base);
   } catch {
     return null;
   }
   if (actionUrl.startsWith('/') && !actionUrl.startsWith('//')) return actionUrl;
+  let url: URL;
   try {
-    const url = new URL(actionUrl);
-    return url.origin === origen.origin ? url.pathname : null;
+    url = new URL(actionUrl);
   } catch {
     return null;
   }
+  if (url.origin !== portal.origin) return null;
+  const prefijo = portal.pathname.replace(/\/$/, '');
+  if (!prefijo) return url.pathname;
+  return url.pathname.startsWith(`${prefijo}/`) ? url.pathname.slice(prefijo.length) : null;
 }
 
 function externo(base: string, ruta: string, portal: Portal): Destino {
@@ -69,7 +75,7 @@ export function destinoDe(
     }
     case 'LIBRARY_PENALTY_APPLIED': {
       const ruta = rutaEnPortal(actionUrl, portales.biblioteca);
-      return ruta && SANCION.test(ruta) ? externo(portales.biblioteca!, ruta, 'Biblioteca') : null;
+      return ruta && PRESTAMO.test(ruta) ? externo(portales.biblioteca!, ruta, 'Biblioteca') : null;
     }
     case 'EVENT_REMINDER': {
       const ruta = rutaEnPortal(actionUrl, portales.eventos);
