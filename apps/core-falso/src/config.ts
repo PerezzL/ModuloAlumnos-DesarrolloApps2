@@ -31,6 +31,8 @@ export interface ConfigCore {
   /** Cookie de refresh con Secure: true en producción; en http://localhost Safari la rechaza */
   cookieSecure: boolean;
   timeoutGatewayMs: number;
+  /** Secreto de la firma `X-Core-Signature` de los pedidos que el Gateway reenvía. Solo de desarrollo */
+  secretoFirma: string;
 }
 
 export function cargarConfig(env: NodeJS.ProcessEnv = process.env): ConfigCore {
@@ -54,5 +56,6 @@ export function cargarConfig(env: NodeJS.ProcessEnv = process.env): ConfigCore {
     webOrigin: env.WEB_ORIGIN ?? 'http://localhost:5173',
     cookieSecure: env.CORE_COOKIE_SECURE === 'true',
     timeoutGatewayMs: Number(env.CORE_GATEWAY_TIMEOUT_MS ?? 10_000),
+    secretoFirma: env.CORE_SIGNATURE_SECRET ?? 'secreto-de-desarrollo',
   };
 }

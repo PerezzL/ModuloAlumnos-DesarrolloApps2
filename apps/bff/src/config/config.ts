@@ -10,6 +10,8 @@ const esquema = z.object({
   // Menor que los 10 s del Gateway: así el BFF responde el 504 con el módulo que tardó antes de
   // que el Gateway corte el pedido del front (docs/arquitectura.md)
   GATEWAY_TIMEOUT_MS: z.coerce.number().int().positive().default(8_000),
+  // Secreto con el que el Gateway de CORE firma cada pedido (X-Core-Signature)
+  CORE_SIGNATURE_SECRET: z.string().min(1),
   JWKS_URL: url,
   JWT_ISSUER: z.string().min(1),
   JWT_AUDIENCE: z.string().min(1),

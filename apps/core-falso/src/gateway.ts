@@ -2,6 +2,7 @@ import { setTimeout as esperar } from 'node:timers/promises';
 import type { Request, RequestHandler, Response } from 'express';
 import type { ConfigCore, Modulo } from './config.js';
 import { bearer } from './auth.js';
+import { firmar } from './firma.js';
 import type { Fallas } from './fallas.js';
 import { enviarProblema } from './problema.js';
 import type { Tokens } from './tokens.js';
@@ -29,8 +30,8 @@ export interface OpcionesGateway {
 }
 
 /**
- * Gateway: valida el token, borra los X-User-* que vengan de afuera, inyecta los propios y
- * reenvía al servicio. `/api/v1/{prefijo}/x` llega como `{destino}/x`, donde `destino` ya
+ * Gateway: valida el token, borra los X-User-* que vengan de afuera, inyecta los propios, firma
+ * el pedido (`X-Core-Signature`) y reenvía al servicio. `/api/v1/{prefijo}/x` llega como `{destino}/x`, donde `destino` ya
  * incluye la base a la que se reescribe (CORE usa `/api/v1`; Prism sirve en la raíz).
  * No transforma la respuesta. Caído → 503, respuesta inválida → 502, timeout → 504, con los
  * `code` del OpenAPI de CORE. El CORE real responde 502 mientras el circuito sigue cerrado y
@@ -44,7 +45,8 @@ export function gateway(config: ConfigCore, tokens: Tokens, opciones: OpcionesGa
 
     const headers: Record<string, string> = {};
     for (const [clave, valor] of Object.entries(req.headers)) {
-      if (valor === undefined || NO_REENVIAR.has(clave) || clave.startsWith('x-user-')) continue;
+      if (valor === undefined || NO_REENVIAR.has(clave)) continue;
+      if (clave.startsWith('x-user-') || clave.startsWith('x-core-')) continue;
       headers[clave] = Array.isArray(valor) ? valor.join(', ') : valor;
     }
     headers['x-correlation-id'] = String(res.getHeader('X-Correlation-Id'));
@@ -90,10 +92,22 @@ export function gateway(config: ConfigCore, tokens: Tokens, opciones: OpcionesGa
       );
     }
 
+    const url = `${destino.replace(/\/$/, '')}${ruta}`;
+    const timestamp = String(Date.now());
+    headers['x-core-timestamp'] = timestamp;
+    headers['x-core-signature'] = firmar(
+      config.secretoFirma,
+      req.method,
+      new URL(url).pathname,
+      headers['x-user-id'] ?? '',
+      headers['x-correlation-id'],
+      timestamp,
+    );
+
     const tieneCuerpo = !['GET', 'HEAD'].includes(req.method);
     let respuesta: globalThis.Response;
     try {
-      respuesta = await fetch(`${destino.replace(/\/$/, '')}${ruta}`, {
+      respuesta = await fetch(url, {
         method: req.method,
         headers,
         body: tieneCuerpo && req.body !== undefined ? JSON.stringify(req.body) : undefined,

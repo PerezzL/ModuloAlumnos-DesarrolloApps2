@@ -6,6 +6,7 @@ const completa = {
   JWKS_URL: 'http://localhost:4000/.well-known/jwks.json',
   JWT_ISSUER: 'http://localhost:4000',
   JWT_AUDIENCE: 'uadenet',
+  CORE_SIGNATURE_SECRET: 'secreto',
   PREFIJO_DOCENTE: '/api/v1/teacher',
   PREFIJO_COMEDOR: '/api/v1/dining',
   PREFIJO_TIENDA: '/api/v1/store',
@@ -24,6 +25,14 @@ describe('cargarConfig', () => {
   it('nombra todas las variables que faltan', () => {
     const { GATEWAY_URL: _g, JWKS_URL: _j, ...incompleta } = completa;
     expect(() => cargarConfig(incompleta)).toThrow(/GATEWAY_URL[\s\S]*JWKS_URL/);
+  });
+
+  it('sin el secreto de la firma del Gateway no arranca', () => {
+    const { CORE_SIGNATURE_SECRET: _s, ...sinSecreto } = completa;
+    expect(() => cargarConfig(sinSecreto)).toThrow(/CORE_SIGNATURE_SECRET/);
+    expect(() => cargarConfig({ ...completa, CORE_SIGNATURE_SECRET: '' })).toThrow(
+      /CORE_SIGNATURE_SECRET/,
+    );
   });
 
   it('rechaza un prefijo sin barra inicial', () => {

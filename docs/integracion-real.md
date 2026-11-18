@@ -265,6 +265,7 @@ nuevos).
 | `JWT_AUDIENCE` | `uadenet` |
 | `PREFIJO_*` | Los de `.env.example` (`/api/v1/teacher`, `/api/v1/dining`, ...) |
 | `LOG_LEVEL` | `info` |
+| `CORE_SIGNATURE_SECRET` | El secreto de la firma del Gateway que pasó CORE por privado. Lo carga una persona desde el panel de Railway: no va al repo ni al chat |
 
 **`web`**: las `VITE_*` se usan al compilar (Railway pasa las variables del servicio a los
 `ARG` del Dockerfile); `PORT` y `CORE_URL`, al arrancar nginx.
@@ -316,4 +317,6 @@ Ya hecho para `uadenet-alumnos`; sirve para rearmarlo desde cero.
 ### Seguridad
 
 CORE pide que el módulo no sea accesible desde afuera. El BFF queda con URL pública (Railway
-no comparte red privada entre proyectos); el riesgo se cubre con la validación local del JWT.
+no comparte red privada entre proyectos), pero solo atiende pedidos firmados por el Gateway
+(`X-Core-Signature`): uno directo responde 403 `GATEWAY_SIGNATURE_INVALID`. El health y el
+Swagger quedan públicos. Además valida el JWT localmente.

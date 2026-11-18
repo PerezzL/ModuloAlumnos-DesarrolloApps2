@@ -3,6 +3,7 @@ export const envDePrueba = {
   GATEWAY_URL: 'http://gateway.test',
   GATEWAY_TIMEOUT_MS: '200',
   JWKS_URL: 'http://gateway.test/.well-known/jwks.json',
+  CORE_SIGNATURE_SECRET: 'secreto-de-prueba',
   JWT_ISSUER: 'http://gateway.test',
   JWT_AUDIENCE: 'uadenet',
   PREFIJO_DOCENTE: '/api/v1/teacher',
