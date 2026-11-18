@@ -334,8 +334,9 @@ Definida en [`openapi.yaml`](../openapi.yaml). Rutas relativas a `/api/v1/studen
 **Tomadas**
 
 - La inscripción vive en el Módulo 9; el portal no la persiste.
-- El filtrado por plan se hace en el Módulo 9 (`planId`), no en el BFF. Si no se conoce el
-  `planId`, la oferta se pide sin filtrar y se marca con `filtradaPorPlan: false`.
+- El filtrado por plan se hace en el BFF, con las materias del plan que da el Módulo 9 (sus
+  cursos no se filtran por plan). Si no se conoce el plan, la oferta sale sin materias y se
+  marca con `filtradaPorPlan: false` (decisión 11).
 - Historial, calendario y compras se consultan en vivo, sin tabla propia.
 - El calendario se agrega en el BFF con llamadas en paralelo y tolera la caída de un módulo.
 - Las notificaciones usan el payload y el WebSocket de CORE; no hay contrato ni consumer propios.

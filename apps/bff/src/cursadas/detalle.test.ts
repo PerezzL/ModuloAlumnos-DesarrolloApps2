@@ -16,8 +16,8 @@ const inscripcion = (cambios: Partial<InscripcionAlumno>): InscripcionAlumno => 
 
 describe('inscripción del alumno en un curso', () => {
   it('encuentra la del curso con su comisión', () => {
-    expect(inscripcionDelCurso(inscripciones, 'curso-bd1-2026-2-a')).toMatchObject({
-      cursoId: 'curso-bd1-2026-2-a',
+    expect(inscripcionDelCurso(inscripciones, '1005')).toMatchObject({
+      cursoId: '1005',
       comision: 'A - Noche',
       estado: 'CURSANDO',
     });
@@ -28,14 +28,14 @@ describe('inscripción del alumno en un curso', () => {
   });
 
   it('el id se compara tal cual: es opaco', () => {
-    expect(inscripcionDelCurso(inscripciones, 'CURSO-BD1-2026-2-A')).toBeUndefined();
+    expect(inscripcionDelCurso(inscripciones, '01005')).toBeUndefined();
   });
 
   it('si hay más de una en el mismo curso (una baja y una nueva), toma la más reciente', () => {
     const resultado = inscripcionDelCurso(
       [
-        inscripcion({ estado: 'BAJA', fecha: '2026-03-01T00:00:00Z' }),
-        inscripcion({ estado: 'CURSANDO', fecha: '2026-03-10T00:00:00Z' }),
+        inscripcion({ estado: 'BAJA', fecha: '2026-03-01' }),
+        inscripcion({ estado: 'CURSANDO', fecha: '2026-03-10' }),
       ],
       'c',
     );

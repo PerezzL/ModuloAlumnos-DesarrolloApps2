@@ -5,9 +5,9 @@ import { aAsistencia, aNotasCurso, aNotasFinales } from './docente.mapper';
 
 const DEMO = 'ba310c57-a684-4dbf-a4a4-905fcfbefa08';
 const asistencias = fixture<Record<string, Record<string, unknown>>>('teacher/attendance.json');
-const bd1 = asistencias['curso-bd1-2026-2-a']!;
+const bd1 = asistencias['1005']!;
 const notas = fixture<Record<string, { exams: Record<string, unknown>[] }>>('teacher/grades.json');
-const notasDesa1 = notas['curso-desa1-2026-2-a']!;
+const notasDesa1 = notas['1006']!;
 const examen = notasDesa1.exams[0]!;
 const resultados = fixture<Record<string, unknown[]>>('teacher/results.json')[DEMO]!;
 
@@ -64,7 +64,7 @@ describe('mapper de Docente: asistencia', () => {
   });
 
   it('la condición LIBRE pasa tal cual: el portal no la calcula', () => {
-    expect(aAsistencia(asistencias['curso-ayed-2025-2-a'])).toMatchObject({
+    expect(aAsistencia(asistencias['1003'])).toMatchObject({
       porcentaje: 68.75,
       condicion: 'LIBRE',
     });
@@ -88,7 +88,7 @@ describe('mapper de Docente: asistencia', () => {
 
 describe('mapper de Docente: notas', () => {
   it('instancia desde la categoría, título, fecha, nota y resultado; el examId es el notaId', () => {
-    const { notas: lista, promedio } = aNotasCurso(notas['curso-bd1-2026-2-a']);
+    const { notas: lista, promedio } = aNotasCurso(notas['1005']);
     expect(promedio).toBe(8);
     expect(lista[0]).toEqual({
       notaId: '101',
@@ -103,7 +103,7 @@ describe('mapper de Docente: notas', () => {
   });
 
   it('un examen sin nota todavía queda con nota null y sin resultado', () => {
-    const futuro = aNotasCurso(notas['curso-bd1-2026-2-a']).notas[2];
+    const futuro = aNotasCurso(notas['1005']).notas[2];
     expect(futuro).toEqual({
       notaId: '103',
       instancia: 'PARCIAL',
@@ -157,9 +157,9 @@ describe('mapper de Docente: notas', () => {
 describe('mapper de Docente: notas finales', () => {
   it('la nota de cada curso con acta; sin nota (LIBRE), null', () => {
     const finales = aNotasFinales(resultados);
-    expect(finales.get('curso-prog1-2025-2-a')).toBe(8);
-    expect(finales.get('curso-ayed-2025-2-a')).toBeNull();
-    expect(finales.has('curso-bd1-2026-2-a')).toBe(false);
+    expect(finales.get('1001')).toBe(8);
+    expect(finales.get('1003')).toBeNull();
+    expect(finales.has('1005')).toBe(false);
   });
 
   it('un courseId numérico pasa a string sin interpretarlo', () => {

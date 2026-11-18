@@ -1,7 +1,7 @@
 {
-  "curso-bd1-2026-2-a": {
+  "1005": {
     "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
-    "courseId": "curso-bd1-2026-2-a",
+    "courseId": 1005,
     "threshold": 75,
     "classesRecorded": 8,
     "present": 5,
@@ -52,9 +52,9 @@
       }
     ]
   },
-  "curso-desa1-2026-2-a": {
+  "1006": {
     "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
-    "courseId": "curso-desa1-2026-2-a",
+    "courseId": 1006,
     "threshold": 75,
     "classesRecorded": 8,
     "present": 8,
@@ -105,9 +105,9 @@
       }
     ]
   },
-  "curso-ayed-2025-2-a": {
+  "1003": {
     "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
-    "courseId": "curso-ayed-2025-2-a",
+    "courseId": 1003,
     "threshold": 75,
     "classesRecorded": 16,
     "present": 11,

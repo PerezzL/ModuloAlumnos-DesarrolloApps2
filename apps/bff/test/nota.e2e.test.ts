@@ -19,7 +19,7 @@ describe('GET /cursadas/{cursoId}/notas/{notaId}', () => {
 
   it('materia y comisión del Módulo 9, nota del Módulo 2 y docente de Backoffice', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
-    const res = await e2e.get('/cursadas/curso-desa1-2026-2-a/notas/202');
+    const res = await e2e.get('/cursadas/1006/notas/202');
     expect(res.status).toBe(200);
     validar(200, res.body);
     expect(res.body).toEqual({
@@ -30,8 +30,8 @@ describe('GET /cursadas/{cursoId}/notas/{notaId}', () => {
       nota: 8,
       resultado: 'APROBADO',
       docente: 'Carla Ruiz',
-      cursoId: 'curso-desa1-2026-2-a',
-      asignatura: { id: 'asig-desa1', codigo: '3.4.207', nombre: 'Desarrollo de Aplicaciones I' },
+      cursoId: '1006',
+      asignatura: { id: '106', codigo: '3.4.207', nombre: 'Desarrollo de Aplicaciones I' },
       comision: 'A - Noche',
     });
   });
@@ -42,21 +42,19 @@ describe('GET /cursadas/{cursoId}/notas/{notaId}', () => {
       moduloNueve(),
       http.get(RUTAS_DOCENTE.NOTAS, ({ params }) => {
         pedido = { ...params };
-        return HttpResponse.json(
-          fixture<Record<string, object>>('teacher/grades.json')['curso-bd1-2026-2-a'],
-        );
+        return HttpResponse.json(fixture<Record<string, object>>('teacher/grades.json')['1005']);
       }),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a/notas/101');
+    const res = await e2e.get('/cursadas/1005/notas/101');
     validar(200, res.body);
     expect(res.body).toMatchObject({ nota: 7, docente: 'Laura Gómez' });
-    expect(pedido).toEqual({ cursoId: 'curso-bd1-2026-2-a', alumnoId: ALUMNO });
+    expect(pedido).toEqual({ cursoId: '1005', alumnoId: ALUMNO });
   });
 
   it('una nota sin cargar todavía sale sin docente', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a/notas/103');
+    const res = await e2e.get('/cursadas/1005/notas/103');
     validar(200, res.body);
     expect(res.body).toMatchObject({ nota: null, docente: null });
     expect(res.body).not.toHaveProperty('resultado');
@@ -72,7 +70,7 @@ describe('GET /cursadas/{cursoId}/notas/{notaId}', () => {
       ...docenteConFixtures(),
     );
     // Un docente que ningún test anterior buscó: el nombre se cachea entre pedidos
-    const res = await e2e.get('/cursadas/curso-desa1-2026-2-a/notas/201');
+    const res = await e2e.get('/cursadas/1006/notas/201');
     expect(res.status).toBe(200);
     validar(200, res.body);
     expect(res.body).toMatchObject({ nota: 3.5, docente: null });
@@ -83,7 +81,7 @@ describe('GET /cursadas/{cursoId}/notas/{notaId}', () => {
     ['cancelada', '203'],
   ])('una nota %s es 404', async (_caso, notaId) => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
-    const res = await e2e.get(`/cursadas/curso-desa1-2026-2-a/notas/${notaId}`);
+    const res = await e2e.get(`/cursadas/1006/notas/${notaId}`);
     expect(res.status).toBe(404);
     expect(cuerpo(res)).toMatchObject({ code: 'NOTA_NO_ENCONTRADA' });
     validar(404, cuerpo(res));
@@ -94,7 +92,7 @@ describe('GET /cursadas/{cursoId}/notas/{notaId}', () => {
       http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => HttpResponse.json([])),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a/notas/101');
+    const res = await e2e.get('/cursadas/1005/notas/101');
     expect(res.status).toBe(404);
     expect(cuerpo(res)).toMatchObject({ code: 'NOTA_NO_ENCONTRADA' });
   });
@@ -108,7 +106,7 @@ describe('GET /cursadas/{cursoId}/notas/{notaId}', () => {
       moduloNueve(),
       http.get(RUTAS_DOCENTE.NOTAS, () => new HttpResponse(null, { status })),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a/notas/101');
+    const res = await e2e.get('/cursadas/1005/notas/101');
     expect(res.status).toBe(status);
     expect(cuerpo(res)).toMatchObject({ code, modulo: 'DOCENTE' });
     validar(status, cuerpo(res));
@@ -119,7 +117,7 @@ describe('GET /cursadas/{cursoId}/notas/{notaId}', () => {
       http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => new HttpResponse(null, { status: 503 })),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a/notas/101');
+    const res = await e2e.get('/cursadas/1005/notas/101');
     expect(res.status).toBe(503);
     expect(cuerpo(res)).toMatchObject({ modulo: 'GESTION_ACADEMICA' });
   });

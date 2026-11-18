@@ -43,11 +43,20 @@ describe('mapper de Backoffice → ficha del alumno', () => {
     });
   });
 
-  it('careers null es lo mismo que sin carreras', () => {
+  it('careers null es lo mismo que sin carreras: sin plan, con el careerId suelto', () => {
     expect(aFicha(alumno, { ...conPlan, careers: null })).toMatchObject({
       perfil: { planId: null },
-      carreraId: null,
+      carreraId: '3',
     });
+  });
+
+  it('sin careers ni careerId, no hay carrera', () => {
+    expect(aFicha(alumno, { ...conPlan, careers: null, careerId: null }).carreraId).toBeNull();
+  });
+
+  it('careers manda sobre el careerId suelto', () => {
+    const distintos = { ...conPlan, careerId: '5', careers: [{ careerId: '3', planId: '12' }] };
+    expect(aFicha(alumno, distintos).carreraId).toBe('3');
   });
 
   it('con varias carreras se toma la primera', () => {
@@ -69,11 +78,11 @@ describe('mapper de Backoffice → ficha del alumno', () => {
     });
   });
 
-  it('sin careers, planId se omite: Backoffice no lo informó', () => {
+  it('sin careers, planId se omite (Backoffice no lo informó) y la carrera es el careerId', () => {
     const { careers: _, ...sinCampo } = conPlan;
     const ficha = aFicha(alumno, sinCampo);
     expect(ficha.perfil).not.toHaveProperty('planId');
-    expect(ficha.carreraId).toBeNull();
+    expect(ficha.carreraId).toBe('3');
   });
 
   it('los campos que Backoffice no manda quedan afuera, sin romper', () => {

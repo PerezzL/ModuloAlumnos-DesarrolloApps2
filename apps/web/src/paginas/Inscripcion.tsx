@@ -80,12 +80,12 @@ export function Inscripcion() {
       {!data.filtradaPorPlan && (
         <p className="flex gap-2 rounded-item border border-borde-suave bg-white p-3 text-sm text-etiqueta">
           <Info className="mt-0.5 size-4 shrink-0 text-primario" aria-hidden />
-          No pudimos confirmar tu plan de estudios, así que mostramos las comisiones de todos los
-          planes. Revisá que la materia sea de tu carrera antes de inscribirte.
+          No pudimos confirmar tu plan de estudios, así que no podemos mostrarte la oferta. Consultá
+          en Secretaría Académica.
         </p>
       )}
 
-      {data.materias.length === 0 ? (
+      {!data.filtradaPorPlan ? null : data.materias.length === 0 ? (
         <EstadoVacio
           icono={BookX}
           titulo="No hay materias para inscribirte"

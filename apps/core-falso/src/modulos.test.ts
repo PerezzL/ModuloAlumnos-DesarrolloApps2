@@ -39,12 +39,14 @@ describe('Módulos externos desde fixtures', () => {
       '/api/v1/backoffice/sites',
       '/api/v1/academic/planificacion/periodos',
       '/api/v1/academic/planificacion/turnos-examen',
-      '/api/v1/academic/planificacion/cursos?periodoId=2027-1&planId=12',
+      '/api/v1/academic/planificacion/cursos?periodoId=4',
       '/api/v1/academic/academica/carreras',
-      '/api/v1/academic/academica/asignaturas/asig-so/correlatividades',
+      '/api/v1/academic/academica/carreras/con-ultimo-plan-activo',
+      '/api/v1/academic/academica/planes/12/asignaturas',
+      '/api/v1/academic/academica/asignaturas/107/correlatividades',
       `/api/v1/academic/planificacion/alumnos/${DEMO}/inscripciones`,
-      `/api/v1/teacher/students/${DEMO}/courses/curso-bd1-2026-2-a/attendance`,
-      `/api/v1/teacher/students/${DEMO}/courses/curso-desa1-2026-2-a/grades`,
+      `/api/v1/teacher/students/${DEMO}/courses/1005/attendance`,
+      `/api/v1/teacher/students/${DEMO}/courses/1006/grades`,
       `/api/v1/teacher/students/${DEMO}/results`,
     ];
     for (const ruta of rutas) {
@@ -139,11 +141,9 @@ describe('Módulos externos desde fixtures', () => {
 
   it('docente: datos por alumno; un curso que no cursa es 404 y los resultados se filtran', async () => {
     const alumno = `/api/v1/teacher/students/${DEMO}`;
-    expect((await get(`${alumno}/courses/curso-so-2027-1-a/grades`)).status).toBe(404);
-    expect(
-      (await get(`/api/v1/teacher/students/otro/courses/curso-bd1-2026-2-a/grades`)).status,
-    ).toBe(404);
-    const resultados = await get(`${alumno}/results?courseId=curso-prog1-2025-2-a`);
+    expect((await get(`${alumno}/courses/1009/grades`)).status).toBe(404);
+    expect((await get(`/api/v1/teacher/students/otro/courses/1005/grades`)).status).toBe(404);
+    const resultados = await get(`${alumno}/results?courseId=1001`);
     expect(resultados.body).toEqual([expect.objectContaining({ grade: 8, result: 'APROBADO' })]);
     expect((await get('/api/v1/teacher/students/otro/results')).body).toEqual([]);
   });
@@ -158,58 +158,79 @@ describe('Módulos externos desde fixtures', () => {
 describe('Inscripción con estado en memoria', () => {
   const cupoDe = async (cursoId: string) =>
     (
-      (await get('/api/v1/academic/planificacion/cursos?periodoId=2027-1')).body as {
-        id: string;
+      (await get('/api/v1/academic/planificacion/cursos?periodoId=4')).body as {
+        id: number;
         inscriptosActivos: number;
       }[]
-    ).find((c) => c.id === cursoId)?.inscriptosActivos;
+    ).find((c) => String(c.id) === cursoId)?.inscriptosActivos;
+
+  it('como el Módulo 9, los cursos se filtran por período y no por plan', async () => {
+    const cursos = (await get('/api/v1/academic/planificacion/cursos?periodoId=4&planId=12'))
+      .body as { id: number }[];
+    expect(cursos.map((c) => c.id)).toContain(1013);
+  });
 
   it('una inscripción hecha se ve en la oferta y en el historial; el reset la borra', async () => {
-    expect(await cupoDe('curso-so-2027-1-a')).toBe(10);
+    expect(await cupoDe('1009')).toBe(10);
 
-    const res = await inscribir('curso-so-2027-1-a');
+    const res = await inscribir('1009');
     expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({ cursoId: 'curso-so-2027-1-a', estado: 'INSCRIPTO' });
+    expect(res.body).toMatchObject({ alumnoId: DEMO, estado: 'INSCRIPTO', notaFinal: null });
+    expect(res.body).not.toHaveProperty('cursoId');
 
-    expect(await cupoDe('curso-so-2027-1-a')).toBe(11);
+    expect(await cupoDe('1009')).toBe(11);
     const historial = await get(
-      `/api/v1/academic/planificacion/alumnos/${DEMO}/inscripciones?periodoId=2027-1`,
+      `/api/v1/academic/planificacion/alumnos/${DEMO}/inscripciones?periodoId=4`,
     );
     expect(historial.body).toEqual([
       expect.objectContaining({
-        cursoId: 'curso-so-2027-1-a',
+        id: res.body.id,
         estado: 'INSCRIPTO',
-        periodo: { id: '2027-1', nombre: '1° cuatrimestre 2027' },
+        curso: expect.objectContaining({
+          id: 1009,
+          asignatura: { id: 107, codigo: '3.4.074', nombre: 'Sistemas Operativos' },
+          periodo: expect.objectContaining({ id: 4, anio: 2027, numero: 1 }),
+        }),
       }),
     ]);
 
     await request(app).post('/__falso/reset').expect(204);
-    expect(await cupoDe('curso-so-2027-1-a')).toBe(10);
+    expect(await cupoDe('1009')).toBe(10);
   });
 
-  it('dos veces la misma asignatura → 409 YA_INSCRIPTO', async () => {
-    await inscribir('curso-so-2027-1-a').expect(201);
-    const res = await inscribir('curso-so-2027-1-a');
-    expect(res.status).toBe(409);
-    expect(JSON.parse(res.text).code).toBe('YA_INSCRIPTO');
-  });
-
-  it('comisión llena → 409 SIN_CUPO', async () => {
-    const res = await inscribir('curso-ayed-2027-1-a');
-    expect(JSON.parse(res.text).code).toBe('SIN_CUPO');
-  });
-
-  it('correlativa no cumplida → 409 CORRELATIVIDAD_FALTANTE con el detalle', async () => {
-    const res = await inscribir('curso-desa2-2027-1-a');
+  // Códigos genéricos del Módulo 9: el motivo va en `detail`
+  it('dos veces la misma asignatura → 409 DATA_CONFLICT', async () => {
+    await inscribir('1009').expect(201);
+    const res = await inscribir('1009');
     expect(res.status).toBe(409);
     expect(JSON.parse(res.text)).toMatchObject({
-      code: 'CORRELATIVIDAD_FALTANTE',
-      correlativasFaltantes: [{ asignaturaId: 'asig-desa1', tipo: 'REGULAR' }],
+      code: 'DATA_CONFLICT',
+      detail: 'El alumno ya está inscripto en la asignatura',
+    });
+  });
+
+  it('comisión llena → 422 BUSINESS_RULE_VIOLATION', async () => {
+    const res = await inscribir('1007');
+    expect(res.status).toBe(422);
+    expect(JSON.parse(res.text)).toMatchObject({
+      code: 'BUSINESS_RULE_VIOLATION',
+      detail: 'La comisión no tiene cupo disponible',
+    });
+  });
+
+  it('correlativa no cumplida → 422 BUSINESS_RULE_VIOLATION con la materia en el detalle', async () => {
+    const res = await inscribir('1010');
+    expect(res.status).toBe(422);
+    expect(JSON.parse(res.text)).toMatchObject({
+      code: 'BUSINESS_RULE_VIOLATION',
+      detail: 'Falta regularizar Desarrollo de Aplicaciones I',
     });
   });
 
   it('curso inexistente → 404', async () => {
-    expect((await inscribir('no-existe')).status).toBe(404);
+    const res = await inscribir('no-existe');
+    expect(res.status).toBe(404);
+    expect(JSON.parse(res.text).code).toBe('RESOURCE_NOT_FOUND');
   });
 });
 
@@ -288,19 +309,18 @@ describe('Destino real configurado', () => {
 
 describe('Inscripción cerrada simulada', () => {
   interface PeriodoFixture {
-    id: string;
+    id: number;
     inscripcionDesde: string;
     inscripcionHasta: string;
   }
   const simular = (cerrada: unknown) => request(app).put('/__falso/inscripcion').send({ cerrada });
+  // Fechas sin hora: la ventana incluye los dos días completos, en hora de Argentina
+  const hoy = () => new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const abiertos = async () => {
-    const ahora = Date.now();
     const periodos = (await get('/api/v1/academic/planificacion/periodos'))
       .body as PeriodoFixture[];
     return periodos
-      .filter(
-        (p) => Date.parse(p.inscripcionDesde) <= ahora && ahora < Date.parse(p.inscripcionHasta),
-      )
+      .filter((p) => p.inscripcionDesde <= hoy() && hoy() <= p.inscripcionHasta)
       .map((p) => p.id);
   };
 
@@ -310,15 +330,18 @@ describe('Inscripción cerrada simulada', () => {
     expect(await abiertos()).toEqual([]);
     const periodos = (await get('/api/v1/academic/planificacion/periodos'))
       .body as PeriodoFixture[];
-    const desde = Date.parse(periodos.find((p) => p.id === '2027-1')!.inscripcionDesde);
-    expect(desde - Date.now()).toBeGreaterThan(6 * 24 * 60 * 60 * 1000);
+    const desde = periodos.find((p) => p.id === 4)!.inscripcionDesde;
+    expect(Date.parse(desde) - Date.parse(hoy())).toBeGreaterThanOrEqual(7 * 24 * 60 * 60 * 1000);
   });
 
-  it('inscribirse → 409 FUERA_DE_FECHA', async () => {
+  it('inscribirse → 422 BUSINESS_RULE_VIOLATION', async () => {
     await simular(true).expect(200);
-    const res = await inscribir('curso-so-2027-1-a');
-    expect(res.status).toBe(409);
-    expect(JSON.parse(res.text).code).toBe('FUERA_DE_FECHA');
+    const res = await inscribir('1009');
+    expect(res.status).toBe(422);
+    expect(JSON.parse(res.text)).toMatchObject({
+      code: 'BUSINESS_RULE_VIOLATION',
+      detail: 'La inscripción del período no está abierta',
+    });
   });
 
   it('se vuelve a abrir con cerrada: false o con reset, y se consulta con GET', async () => {

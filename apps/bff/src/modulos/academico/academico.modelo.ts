@@ -12,19 +12,27 @@ import type {
  */
 
 export interface PeriodoAcademico extends Periodo {
+  /** Inicio de la ventana de inscripción: las 00:00 del primer día, hora de Argentina */
   inscripcionDesde?: string;
+  /** Fin de la ventana de inscripción: el último instante del último día, hora de Argentina */
   inscripcionHasta?: string;
 }
 
-export interface CursoOfertado {
+/** Una comisión que se ofrece en el período (sin las canceladas ni las finalizadas). */
+export interface CursoDelPeriodo {
   cursoId: string;
+  asignaturaId: string;
   nombre?: string;
-  /** Pedido al Módulo 9, sin confirmar: null si no viene */
+  /** Nombre de la sede: null si no viene */
   sede: string | null;
-  /** Pedido al Módulo 9, sin confirmar: vacío si no vienen */
+  /** El horario del curso: vacío si no viene */
   horarios: Horario[];
   cupoMaximo: number;
   inscriptosActivos: number;
+}
+
+/** Una comisión de la oferta, con su asignatura resuelta desde el plan. */
+export interface CursoOfertado extends Omit<CursoDelPeriodo, 'asignaturaId'> {
   asignatura: Asignatura;
 }
 
@@ -36,6 +44,9 @@ export interface InscripcionAlumno {
   comision?: string;
   asignatura: Asignatura;
   periodo: Periodo;
+  /** Inicio de cursada del período, `YYYY-MM-DD`: ordena el historial */
+  inicioPeriodo?: string;
   estado: EstadoCursada;
+  /** Fecha de inscripción, `YYYY-MM-DD` */
   fecha?: string;
 }

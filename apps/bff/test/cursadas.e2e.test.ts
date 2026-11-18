@@ -31,8 +31,8 @@ describe('GET /cursadas', () => {
     const { items } = res.body as { items: CursadaResumen[] };
     expect(items).toHaveLength(6);
     expect(items.filter((c) => c.enCurso).map((c) => c.asignatura.nombre)).toEqual([
-      'Desarrollo de Aplicaciones I',
       'Bases de Datos I',
+      'Desarrollo de Aplicaciones I',
     ]);
     expect(pedido).toEqual({ alumnoId: ALUMNO, periodoId: null });
     expect((res.body as { fuentesConError: unknown }).fuentesConError).toEqual([]);
@@ -46,13 +46,13 @@ describe('GET /cursadas', () => {
         pedidos++;
         expect(params.alumnoId).toBe(ALUMNO);
         expect(new URL(request.url).searchParams.has('courseId')).toBe(false);
-        return HttpResponse.json([{ courseId: 'curso-discreta-2025-2-a', grade: 10 }]);
+        return HttpResponse.json([{ courseId: '1002', grade: 10 }]);
       }),
     );
     const { items } = (await e2e.get('/cursadas')).body as { items: CursadaResumen[] };
     expect(pedidos).toBe(1);
-    expect(items.find((c) => c.cursoId === 'curso-discreta-2025-2-a')?.notaFinal).toBe(10);
-    expect(items.find((c) => c.cursoId === 'curso-prog1-2025-2-a')?.notaFinal).toBeNull();
+    expect(items.find((c) => c.cursoId === '1002')?.notaFinal).toBe(10);
+    expect(items.find((c) => c.cursoId === '1001')?.notaFinal).toBeNull();
   });
 
   it.each([503, 504, 502])(

@@ -1,0 +1,106 @@
+{
+  "12": [
+    {
+      "id": 101,
+      "codigo": "3.4.069",
+      "nombre": "Programación I",
+      "anio": 1,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    },
+    {
+      "id": 102,
+      "codigo": "3.1.024",
+      "nombre": "Matemática Discreta",
+      "anio": 1,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    },
+    {
+      "id": 103,
+      "codigo": "3.4.070",
+      "nombre": "Algoritmos y Estructuras de Datos",
+      "anio": 1,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    },
+    {
+      "id": 104,
+      "codigo": "3.4.071",
+      "nombre": "Programación II",
+      "anio": 2,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    },
+    {
+      "id": 105,
+      "codigo": "3.4.072",
+      "nombre": "Bases de Datos I",
+      "anio": 2,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    },
+    {
+      "id": 106,
+      "codigo": "3.4.207",
+      "nombre": "Desarrollo de Aplicaciones I",
+      "anio": 2,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    },
+    {
+      "id": 107,
+      "codigo": "3.4.074",
+      "nombre": "Sistemas Operativos",
+      "anio": 3,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    },
+    {
+      "id": 108,
+      "codigo": "3.4.208",
+      "nombre": "Desarrollo de Aplicaciones II",
+      "anio": 3,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    },
+    {
+      "id": 109,
+      "codigo": "3.4.073",
+      "nombre": "Bases de Datos II",
+      "anio": 3,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 12
+    }
+  ],
+  "20": [
+    {
+      "id": 201,
+      "codigo": "2.1.010",
+      "nombre": "Contabilidad I",
+      "anio": 1,
+      "creditos": 8,
+      "cargaHoraria": 128,
+      "estado": "ACTIVA",
+      "planId": 20
+    }
+  ]
+}

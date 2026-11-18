@@ -218,8 +218,8 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | Falta confirmar | Que publiquen `careers: [{ careerId, planId }]`; la ruta definitiva de la ficha (lo define CORE) y el permiso de lectura |
 | Fixtures | `packages/fixtures/backoffice/users.provisional.json`; el nombre de la carrera sale de `academic/carreras.provisional.json` (Módulo 9) |
 | Adaptador | `apps/bff/src/modulos/backoffice/`. Lo usan `apps/bff/src/perfil/` (que resuelve el nombre de la carrera con el Módulo 9) y `apps/bff/src/inscripcion/` (para el `planId`). Si se manejan varias carreras, ver [`integraciones.md`](integraciones.md) |
-| Contrato | `Perfil`: `nombre`, `apellido`, `legajo`, `carrera`, `planId` (`x-provisional`) |
-| Decisiones | **11**: oferta sin filtrar por plan si no hay `planId` (`filtradaPorPlan`, en `apps/bff/src/inscripcion/oferta.ts`). Si Backoffice lo trae siempre, revisar si el caso sigue haciendo falta |
+| Contrato | `Perfil`: `carrera` y `planId` (`x-provisional`); `nombre`, `apellido` y `legajo` ya están confirmados |
+| Decisiones | **11**: sin `planId` de Backoffice, la oferta usa el plan activo de la carrera en el Módulo 9; sin carrera, sale sin materias (`filtradaPorPlan: false`, en `apps/bff/src/inscripcion/inscripcion.service.ts`). Si Backoffice publica `careers`, revisar si el respaldo sigue haciendo falta |
 | Pruebas y demo | [`pruebas.md`](pruebas.md) "Home y perfil" e "Inscripción" (caso "Sin plan" con `j.perez`); [`demo-guide.md`](demo-guide.md) pasos 3 y 5 |
 | Trello | "[Módulo 8 · Backoffice]…" e "[Integración] Módulo 8" |
 
@@ -227,12 +227,12 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 | | |
 | --- | --- |
-| Falta confirmar | Que estén disponibles los endpoints comprometidos (filtro `planId`, `asignatura` anidada, inscripciones por alumno); códigos de error del POST; horarios anidados; sede; regularidad |
-| Fixtures | Todas las de `packages/fixtures/academic/` (cursos, correlatividades, períodos, turnos de examen, inscripciones del alumno, inscripción creada y rechazos) |
-| Adaptador | `apps/bff/src/modulos/academico/`. La traducción de códigos de rechazo está solo en `academico.mapper.ts` (hoy es identidad). Lo usan `inscripcion/`, `cursadas/` y `calendario/` |
+| Falta confirmar | Que CORE confirme el pedido del Módulo 9 (rutas y formas); con qué status llegan los rechazos y si van a informar el motivo con un código propio; si `curso.periodo` viene anidado en las inscripciones del alumno; si `numero` del período es siempre el cuatrimestre; acceso con el token del alumno |
+| Fixtures | Todas las de `packages/fixtures/academic/` (cursos, materias del plan, carreras, correlatividades, períodos, turnos de examen, inscripciones del alumno, inscripción creada y rechazos). Ya siguen las formas publicadas: al confirmarse, se reemplazan por respuestas reales y se les quita `.provisional` |
+| Adaptador | `apps/bff/src/modulos/academico/`. La traducción de rechazos está solo en `academico.mapper.ts` (hoy todo es `INSCRIPCION_RECHAZADA` con el `detail`; la tabla `MOTIVOS` espera códigos por motivo). Lo usan `inscripcion/`, `cursadas/`, `calendario/` y `perfil/` |
 | Contrato | `Comision.sede`, `Comision.horarios`, `ProblemaInscripcion.code` (`x-provisional`) |
-| Decisiones | **11** (filtro por plan) |
-| Pendiente propio | T16 (Backlog): simular `SIN_REGULARIDAD` y `FUERA_DE_FECHA` en el CORE falso; conviene hacerlo con los códigos reales |
+| Decisiones | **11** (plan del alumno y oferta sin plan) |
+| Pendiente propio | T16 (Backlog) queda sin sentido mientras el Módulo 9 use códigos genéricos: el CORE falso ya simula los rechazos con su forma |
 | Pruebas y demo | [`pruebas.md`](pruebas.md) "Inscripción" e "Historial"; [`demo-guide.md`](demo-guide.md) pasos 5 y 6 |
 | Trello | "[Módulo 9 · Gestión Académica]…", "[Módulos 2 y 9] Fuente única de la nota final" e "[Integración] Módulo 9" |
 

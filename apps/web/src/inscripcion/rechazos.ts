@@ -39,15 +39,19 @@ const GENERICO = {
 };
 
 /**
- * Un 409 de `POST /inscripciones` → mensaje para el alumno. Un `code` desconocido no rompe la
- * pantalla: muestra un mensaje genérico. Cualquier otro error no es un rechazo (null).
+ * Un 409 de `POST /inscripciones` → mensaje para el alumno. Un `code` desconocido o
+ * `INSCRIPCION_RECHAZADA` no rompe la pantalla: muestra el motivo que dio Gestión Académica
+ * (`detail`) o, si no lo dio, un mensaje genérico. Hoy el Módulo 9 solo informa códigos
+ * genéricos, así que es el caso habitual. Cualquier otro error no es un rechazo (null).
  */
 export function describirRechazo(error: unknown): Rechazo | null {
   if (!(error instanceof ErrorApi) || error.status !== 409) return null;
   const problema = error.problema as typeof error.problema & {
     correlativasFaltantes?: CorrelativaFaltante[];
   };
-  const base = Object.hasOwn(MENSAJES, problema.code) ? MENSAJES[problema.code]! : GENERICO;
+  const base = Object.hasOwn(MENSAJES, problema.code)
+    ? MENSAJES[problema.code]!
+    : { ...GENERICO, ...(problema.detail && { mensaje: problema.detail }) };
   return {
     ...base,
     correlativasFaltantes:

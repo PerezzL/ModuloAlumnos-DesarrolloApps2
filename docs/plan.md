@@ -25,7 +25,7 @@ y pasos. El porqué de cada decisión está en [`arquitectura.md`](arquitectura.
 | — | Docker | Dockerfile por app y docker-compose; el desarrollo diario no depende de él |
 | — | Despliegue | Proveedor sin elegir; todo configurable por variables de entorno |
 | — | Equipo | Sin reparto: el trabajo lo hace una persona con el agente. Sin revisores obligatorios ni protección de `main` |
-| 11 | Oferta sin `planId` | Si Backoffice no devuelve el `planId` (o no responde), la oferta se pide sin filtrar por plan y se informa con `filtradaPorPlan: false` (ver abajo) |
+| 11 | Oferta sin `planId` | Si Backoffice no devuelve el `planId`, se usa el plan activo de la carrera en el Módulo 9. Si tampoco hay carrera, la oferta sale sin materias y con `filtradaPorPlan: false` (ver abajo) |
 | 12 | Módulo 2 | El `examId` es el `notaId`; un 404 del Módulo 2 para un curso que el Módulo 9 tiene cuenta como falla de `DOCENTE`; cada llamada falla por separado. Con el contrato confirmado (bloque `docente-contrato`): condición por asistencia contra el mínimo que informa el Módulo 2, sin faltas restantes; nota final desde sus actas; docente desde Backoffice; sin observaciones (ver [`integraciones.md`](integraciones.md)) |
 
 Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
@@ -38,11 +38,16 @@ Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 
 ## Oferta sin `planId` (decisión 11)
 
-El `planId` debería venir de Backoffice, pero el Módulo 8 todavía no lo confirmó. En lugar de
-bloquear la inscripción, el BFF pide la oferta al Módulo 9 sin el filtro de plan, registra un
-warning y devuelve `filtradaPorPlan: false`. La pantalla avisa que la oferta puede incluir
-materias de otros planes. El Módulo 9 vuelve a validar todo al inscribir. Cuando Backoffice
-confirme el campo, se revisa si el caso sigue haciendo falta.
+El Módulo 9 no filtra los cursos por plan ni trae el nombre de la materia: las dos cosas salen
+de `GET /academica/planes/{planId}/asignaturas`. Sin plan no hay de dónde sacar los nombres,
+así que ya no se puede ofrecer "todo sin filtrar" (lo que hacía esta decisión antes del
+pedido del Módulo 9 a CORE, noviembre 2026).
+
+El plan sale de Backoffice (el de la carrera del alumno) y, si no lo informa o no responde,
+del plan activo de esa carrera en el Módulo 9 (`/academica/carreras/con-ultimo-plan-activo`).
+La carrera sale del token (`careerIds`) o de Backoffice. Si no hay carrera, o el catálogo de
+carreras falla, el BFF registra un warning y devuelve la oferta sin materias con
+`filtradaPorPlan: false`; la pantalla avisa que no pudo confirmar el plan.
 
 ## Testing (decisión 5)
 
@@ -127,6 +132,19 @@ Aplicadas (T03): ítem de comedor con `todoElDia: true` y sin hora; `GET /calend
 
 Pendiente para el front: el Módulo 2 espera que le digamos la ruta del `actionUrl` de la nota
 (propuesta: `/cursadas/{courseId}/notas/{examId}`); hasta entonces `destino.ts` acepta las dos.
+
+## Para sumar al calendario
+
+Datos que el Módulo 9 ya expone y RF7 no pide (mensaje de integración, octubre 2026). Se
+pueden agregar como ítems de Gestión Académica sin pedirle nada nuevo:
+
+- **Inscripción a finales:** `inscripcionDesde` / `inscripcionHasta` de cada turno de examen
+  (mismo endpoint que ya usamos para los turnos).
+- **Cuatrimestre:** inicio y fin de cursada (`fechaInicio` / `fechaFin`) y ventana de
+  inscripción a materias de cada período.
+- **Clases de cada cursada:** día y horario del curso, entre su `fechaInicio` y `fechaFin`.
+  Sale del endpoint de inscripciones del alumno, que trae el curso con su horario (forma
+  publicada en el pedido del Módulo 9 a CORE, noviembre 2026).
 
 ## Pendientes externos
 

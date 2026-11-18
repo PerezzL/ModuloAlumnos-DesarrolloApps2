@@ -24,7 +24,7 @@ describe('GET /calendario', () => {
       'COMEDOR:c7a2d4f1-8b3e-4c5a-a1d6-2e9f0b7c4d02',
       'EVENTO:65a783d1-d407-442d-8d09-a6d2abfe9321',
       'COMEDOR:d9e4f6a3-1c5b-4d7e-b2a8-3f0c1d9e5f03',
-      'EXAMEN:turno-2026-10',
+      'EXAMEN:30',
     ]);
     const inicios = items.map((i) => Date.parse(i.inicio));
     expect(inicios).toEqual([...inicios].sort((a, b) => a - b));

@@ -25,11 +25,11 @@ describe('GET /cursadas/{cursoId}', () => {
 
   it('encabezado con materia, comisión, período y situación del Módulo 9', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     expect(res.status).toBe(200);
     validar(200, res.body);
     expect(res.body).toMatchObject({
-      cursoId: 'curso-bd1-2026-2-a',
+      cursoId: '1005',
       asignatura: { nombre: 'Bases de Datos I' },
       periodo: { nombre: '2° cuatrimestre 2026' },
       comision: 'A - Noche',
@@ -46,12 +46,12 @@ describe('GET /cursadas/{cursoId}', () => {
       http.get(RUTAS_DOCENTE.ASISTENCIA, ({ params }) => {
         pedido = { ...params };
         return HttpResponse.json(
-          fixture<Record<string, object>>('teacher/attendance.json')['curso-bd1-2026-2-a'],
+          fixture<Record<string, object>>('teacher/attendance.json')['1005'],
         );
       }),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     validar(200, res.body);
     expect((res.body as CursadaDetalle).asistencia).toMatchObject({
       clasesDictadas: 8,
@@ -62,12 +62,12 @@ describe('GET /cursadas/{cursoId}', () => {
       porcentajeMinimo: 75,
       condicion: 'REGULAR',
     });
-    expect(pedido).toEqual({ cursoId: 'curso-bd1-2026-2-a', alumnoId: ALUMNO });
+    expect(pedido).toEqual({ cursoId: '1005', alumnoId: ALUMNO });
   });
 
   it('notas del Módulo 2 sin las canceladas, con su notaId y el promedio', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
-    const res = await e2e.get('/cursadas/curso-desa1-2026-2-a');
+    const res = await e2e.get('/cursadas/1006');
     validar(200, res.body);
     const { notas, promedio } = res.body as CursadaDetalle;
     expect(notas?.map((n) => [n.notaId, n.instancia, n.nota, n.resultado])).toEqual([
@@ -90,9 +90,9 @@ describe('GET /cursadas/{cursoId}', () => {
       }),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     expect(res.body).toMatchObject({ notaFinal: 9 });
-    expect(courseId).toBe('curso-bd1-2026-2-a');
+    expect(courseId).toBe('1005');
   });
 
   it('un curso en el que el alumno no está inscripto es 404', async () => {
@@ -108,7 +108,7 @@ describe('GET /cursadas/{cursoId}', () => {
       http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => new HttpResponse(null, { status: 503 })),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     expect(res.status).toBe(503);
     expect(cuerpo(res)).toMatchObject({
       code: 'UPSTREAM_UNAVAILABLE',
@@ -119,7 +119,7 @@ describe('GET /cursadas/{cursoId}', () => {
 
   it('sin fallas, fuentesConError vacío', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     expect((res.body as CursadaDetalle).fuentesConError).toEqual([]);
   });
 
@@ -131,11 +131,11 @@ describe('GET /cursadas/{cursoId}', () => {
     'Módulo 2 %i (%s): 200 con asistencia, notas y nota final en null y DOCENTE en fuentesConError',
     async (status) => {
       e2e.server.use(moduloNueve(), ...moduloDosCaido(status));
-      const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+      const res = await e2e.get('/cursadas/1005');
       expect(res.status).toBe(200);
       validar(200, res.body);
       expect(res.body).toMatchObject({
-        cursoId: 'curso-bd1-2026-2-a',
+        cursoId: '1005',
         estado: 'CURSANDO',
         asistencia: null,
         notas: null,
@@ -153,7 +153,7 @@ describe('GET /cursadas/{cursoId}', () => {
       http.get(RUTAS_DOCENTE.NOTAS, () => new Promise(() => undefined)),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ asistencia: null, notas: null, fuentesConError: ['DOCENTE'] });
   });
@@ -164,7 +164,7 @@ describe('GET /cursadas/{cursoId}', () => {
       http.get(RUTAS_DOCENTE.ASISTENCIA, () => HttpResponse.json({ present: 'muchos' })),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     validar(200, res.body);
     expect(res.body).toMatchObject({ asistencia: null, fuentesConError: ['DOCENTE'] });
     expect((res.body as CursadaDetalle).notas).toHaveLength(3);
@@ -176,7 +176,7 @@ describe('GET /cursadas/{cursoId}', () => {
       http.get(RUTAS_DOCENTE.NOTAS, () => new HttpResponse(null, { status: 503 })),
       ...docenteConFixtures(),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     validar(200, res.body);
     expect(res.body).toMatchObject({
       asistencia: { clasesDictadas: 8 },
@@ -187,7 +187,7 @@ describe('GET /cursadas/{cursoId}', () => {
 
   it('un 404 del Módulo 2 para un curso que el Módulo 9 sí tiene es falla de DOCENTE, no vacío', async () => {
     e2e.server.use(moduloNueve(), ...docenteConFixtures());
-    const res = await e2e.get('/cursadas/curso-prog1-2025-2-a');
+    const res = await e2e.get('/cursadas/1001');
     validar(200, res.body);
     expect(res.body).toMatchObject({
       asistencia: null,
@@ -202,7 +202,7 @@ describe('GET /cursadas/{cursoId}', () => {
       http.get(RUTAS_ACADEMICO.INSCRIPCIONES, () => new HttpResponse(null, { status: 504 })),
       ...moduloDosCaido(503),
     );
-    const res = await e2e.get('/cursadas/curso-bd1-2026-2-a');
+    const res = await e2e.get('/cursadas/1005');
     expect(res.status).toBe(504);
     expect(cuerpo(res)).toMatchObject({ code: 'UPSTREAM_TIMEOUT', modulo: 'GESTION_ACADEMICA' });
   });

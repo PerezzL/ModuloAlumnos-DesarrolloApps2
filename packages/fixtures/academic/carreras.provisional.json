@@ -1,4 +1,38 @@
 [
-  { "id": 3, "codigo": "INF", "nombre": "Ingeniería en Informática" },
-  { "id": 5, "codigo": "LAS", "nombre": "Licenciatura en Gestión de Tecnología" }
+  {
+    "id": 3,
+    "codigo": "INF",
+    "nombre": "Ingeniería en Informática",
+    "facultad": "Ingeniería y Ciencias Exactas",
+    "duracion": 5,
+    "titulo": "Ingeniero en Informática",
+    "estado": "ACTIVA",
+    "ultimoPlanActivo": {
+      "id": 12,
+      "codigo": "INF-2024",
+      "nombre": "Plan 2024",
+      "vigenciaDesde": "2024-03-01",
+      "cantidadAsignaturas": 9,
+      "estado": "ACTIVO",
+      "carreraId": 3
+    }
+  },
+  {
+    "id": 5,
+    "codigo": "LAS",
+    "nombre": "Licenciatura en Gestión de Tecnología",
+    "facultad": "Ingeniería y Ciencias Exactas",
+    "duracion": 4,
+    "titulo": "Licenciado en Gestión de Tecnología",
+    "estado": "ACTIVA",
+    "ultimoPlanActivo": {
+      "id": 20,
+      "codigo": "LAS-2024",
+      "nombre": "Plan 2024",
+      "vigenciaDesde": "2024-03-01",
+      "cantidadAsignaturas": 1,
+      "estado": "ACTIVO",
+      "carreraId": 5
+    }
+  }
 ]

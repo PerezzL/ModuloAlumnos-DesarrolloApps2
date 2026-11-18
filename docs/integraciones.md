@@ -155,8 +155,8 @@ OpenAPI de `teacher-service` y respuestas a nuestras consultas (noviembre 2026).
   `teacher.course-result-published.v1`. No los consumimos: no tenemos broker.
 
 Fixtures confirmadas: `teacher/attendance.json` y `teacher/grades.json` (por curso) y
-`teacher/results.json` (por alumno). Sus `courseId` son los de las fixtures académicas, que
-todavía usan ids de texto: en el Módulo 2 son enteros, pero es el mismo id.
+`teacher/results.json` (por alumno). Sus `courseId` son enteros y coinciden con los cursos de
+las fixtures académicas.
 
 Cómo lo usa el BFF (adaptador en `apps/bff/src/modulos/docente/`, servicio en
 `apps/bff/src/cursadas/`):
@@ -364,27 +364,24 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 Suposiciones nuestras: la respuesta trae la ficha de arriba más `careers`, y **cada alumno
 tiene un solo plan**. Si `careers` trae varias, se toma la primera. Manejar varias carreras
 obliga a cambiar `planId` por una lista en el adaptador (`backoffice.mapper.ts`), en el
-filtro de la oferta (`InscripcionService` y `AcademicoAdapter.cursos`) y en `Perfil` del
-[`openapi.yaml`](../openapi.yaml).
+plan de la oferta (`InscripcionService`) y en `Perfil` del [`openapi.yaml`](../openapi.yaml).
 
-Sin `planId` no se puede filtrar la oferta de RF2. Decisión nuestra: si Backoffice no lo
-devuelve (`careers` vacío, null o ausente) o no responde, el BFF pide la oferta sin `planId`
-y la marca con `filtradaPorPlan: false`; la pantalla avisa que puede incluir materias de
-otros planes. Queda registrado con un warning en el log.
+Si Backoffice no da el plan (`careers` vacío, null o ausente) o no responde, la oferta usa el
+plan activo de la carrera del alumno en el Módulo 9. Sin carrera, sale sin materias y con
+`filtradaPorPlan: false` (decisión 11 de [`plan.md`](plan.md); ver Módulo 9).
 
 Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/` y
 `apps/bff/src/perfil/perfil.service.ts`):
 
 - El id y el mail salen del token de CORE; de Backoffice se toman `firstName`, `lastName` y
   `fileNumber` (→ `nombre`, `apellido`, `legajo`). Se ignoran `documentId`, `roles`,
-  `status`, `siteId` y el `careerId` suelto. Todos opcionales: si no vienen, el perfil sale
-  sin ellos.
+  `status` y `siteId`. Todos opcionales: si no vienen, el perfil sale sin ellos.
 - **Carrera:** la primera del claim `careerIds` del token de CORE. Backoffice es el
   respaldo: si el token no trae carreras (claim ausente o lista vacía), se usa la primera de
-  `careers`.
-- **Plan:** solo lo da Backoffice. Es el de la carrera elegida dentro de `careers`; si
-  Backoffice no tiene la carrera del token, `planId` es null y la oferta sale sin filtrar por
-  plan (ver abajo).
+  `careers` y, si no viene, el `careerId` suelto (confirmado).
+- **Plan:** el de Backoffice es el de la carrera elegida dentro de `careers`; si Backoffice
+  no la tiene, `planId` es null y la oferta usa el plan activo de la carrera en el Módulo 9
+  (ver arriba).
 - El nombre de la carrera sale de `GET /academica/carreras` del Módulo 9, cacheado en memoria
   una hora. Si el Módulo 9 falla o no conoce la carrera, el perfil sale igual, sin `carrera`.
 - Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale con id, mail y, si
@@ -412,65 +409,110 @@ que mande solo un `siteId`; hoy, Comedor y el filtro por sede de Compras):
 ## Módulo 9 — Gestión Académica y Planificación
 
 Dueño de la cursada (entidad Curso), de la inscripción y del historial. La nota final la
-tomamos del Módulo 2 (ver arriba), aunque las inscripciones también traen `notaFinal`.
+tomamos del Módulo 2 (ver arriba), aunque el Módulo 9 también la expone.
+Documento de integración del Módulo 9 y respuestas a nuestras consultas (octubre 2026), más
+el pedido de alta en el Gateway que el Módulo 9 le mandó a CORE (noviembre 2026). Ese pedido
+lista los endpoints y formatos que van a exponer, pero CORE todavía no lo confirmó.
 
 | Tema | Estado |
 | --- | --- |
-| `POST /api/planificacion/cursos/{cursoId}/inscripciones` con `{ "alumnoId" }` | Implementado |
-| `GET /api/academica/asignaturas/{asignaturaId}/correlatividades` | Implementado |
+| `POST /api/planificacion/cursos/{cursoId}/inscripciones` con `{ "alumnoId" }` | Implementado; listado para el Portal del Estudiante en el pedido a CORE |
+| `GET /api/academica/asignaturas/{asignaturaId}/correlatividades` | Implementado; la forma cambió y trae nombres (ver abajo) |
 | `GET /api/planificacion/turnos-examen` | Implementado |
 | `GET /api/planificacion/periodos` | Implementado |
-| Filtro `planId` en `GET /api/planificacion/cursos?periodoId=&planId=` | Comprometido |
-| `asignatura: { id, codigo, nombre }` anidada en el listado de cursos | Comprometido |
-| `GET /api/planificacion/alumnos/{alumnoId}/inscripciones?periodoId=` | Comprometido |
-| Horarios anidados en el listado de cursos | Pedido |
-| Códigos de error del POST | Pendiente |
-| Condiciones de regularidad | Pendiente |
-| Emisión de `academica.resultado.publicado` | Pendiente; DTO definido (`tipo`, `ocurridoEn`, `enlace`) |
-| Evento de reprogramación o cancelación de finales | Pendiente; no está en el catálogo de CORE |
+| `GET /api/planificacion/cursos?periodoId=` | Implementado |
+| `GET /api/academica/carreras` · `/carreras/{carreraId}/planes` · `/planes/{planId}/asignaturas` | Implementado |
+| `GET /api/planificacion/cursos/{cursoId}/notas/{alumnoId}` (nota final) | Implementado |
+| `GET /api/planificacion/alumnos/{alumnoId}/inscripciones?periodoId=` | Forma definida en el pedido a CORE: `InscripcionAlumno[]` (ver abajo) |
+| Nombre de sede y de aula en el listado de cursos | Resuelto en el pedido a CORE: `sedeNombre` y `aulaNombre` (puede ser null) |
+| Filtro `planId` y `asignatura` anidada en el listado de cursos | Propuesto, no previsto; no hace falta (ver abajo) |
+| Período anidado en las inscripciones del alumno | Lo habían rechazado, pero en el pedido a CORE viene anidado en `curso.periodo`. Confirmar cuál vale |
+| Códigos de error | `code` genéricos (ver abajo). Pendiente: cómo distinguir el motivo de un rechazo de inscripción |
+| Condiciones de regularidad | Expuestas en `GET /api/regularidad/cursos/{cursoId}`; el portal usa el `threshold` del Módulo 2 |
+| Acceso con el token del alumno | Pendiente; sus rutas piden `ROLE_ADMINISTRATIVO` o `ROLE_ACADEMIC_ADMIN`. Le propusieron a CORE `academic:read` y `academic:write` y le preguntaron qué roles va a emitir para estudiante y docente |
+| Reescritura de rutas en el Gateway | Pendiente: le preguntaron a CORE si reescribe `/api/v1/academic/{resto}` → `/api/{resto}` o si ellos pasan a servir `/api/v1`. Con cualquiera de las dos, la ruta pública que usamos no cambia |
+| `GET /api/planificacion/asignaturas/{id}/agenda?desde=&hasta=` | Listado para "Portales" en el pedido a CORE. Pendiente: qué representa una `Asignacion` (si son fechas de examen por materia, serviría para el calendario) |
+| Notificación de la nota final | Resuelto: no hay. El Módulo 2 no notifica la nota final y `resultado.publicado` va solo a Analítica |
+| Evento de reprogramación o cancelación de finales | Pendiente; no está en el catálogo de CORE. El Módulo 9 pidió publicar `academic.exam-scheduled.v1` y `academic.term-defined.v1`; falta saber si CORE los convierte en notificaciones al alumno |
 
-- Correlatividades: tipo `REGULAR` o `APROBADA`.
-- Turnos de examen: ventanas generales (`nombre`, `fechaInicio`, `fechaFin`,
-  `inscripcionDesde`, `inscripcionHasta`), sin fecha por asignatura.
-- Inscripciones por alumno: cada una con curso y asignatura, período, `notaFinal`, `estado`.
+- Ids de curso, asignatura, período, etc.: `Long`. El `alumnoId` es `String` y es el mismo id
+  de usuario de todo el sistema (`sub` de CORE).
+- Materias del plan: `GET /api/academica/planes/{planId}/asignaturas` da los ids, códigos y
+  nombres de las asignaturas del plan. Los cursos del plan son los de `/cursos` cuyo
+  `asignaturaId` está en esa lista. El `planId` del alumno sigue viniendo del Módulo 8.
+- Listado de cursos: `codigo` (la comisión), `asignaturaId`, `periodoId`, `sedeId`,
+  `modalidad`, `turno`, un solo horario (`diaSemana` en inglés, `horaInicio`/`horaFin`
+  `HH:MM:SS`, `aulaId`), `estado` (`PLANIFICADO`, `EN_CURSO`, `FINALIZADO`, `CANCELADO`),
+  `cupoMaximo`, `inscriptosActivos`, `fechaInicio`, `fechaFin`. Cursos viejos pueden traer
+  el horario en null. El pedido a CORE agrega `sedeNombre` y `aulaNombre` (puede ser null), y
+  detalla los valores de `turno` (`MAÑANA`, `TARDE`, `NOCHE`). `sedeId` va a ser el `siteId` de Backoffice; las
+  sedes y aulas del Módulo 9 son un mock local que no se expone.
+- Correlatividades: el GET devuelve
+  `{ asignaturaId, condiciones: [{ tipo, materiasCorrelativas: [{ id, codigo, nombre }] }] }`,
+  con tipo `REGULAR` o `APROBADA` (pedido a CORE de noviembre 2026). Trae los nombres: ya no
+  hace falta cruzarlas con las asignaturas del plan. `{ id, asignaturaId, correlativaId, tipo }`,
+  que es lo que anotamos en octubre, es la respuesta del POST (alta de una correlatividad).
+- Inscripciones del alumno (pedido a CORE): cada elemento es la inscripción
+  (`{ id, alumnoId, fechaInscripcion, estado, notaFinal, fechaResultado }`) más
+  `curso: CursoAcademico`, que es el curso del listado con `asignatura: { id, codigo, nombre }`
+  y `periodo` (el período completo) en lugar de `asignaturaId` y `periodoId`.
+- Errores: `application/problem+json` con `type`, `title`, `status`, `detail`, `instance`,
+  `code`, `correlationId` y, en los de validación, `errors` (un mensaje por campo). Los `code`
+  son genéricos: `RESOURCE_NOT_FOUND`, `BUSINESS_RULE_VIOLATION`, `VALIDATION_ERROR`,
+  `BAD_REQUEST`, `UNAUTHORIZED`, `FORBIDDEN`, `DATA_CONFLICT`, `DATA_ACCESS_ERROR` e
+  `INTERNAL_ERROR`. No hay uno por motivo de rechazo, así que el adaptador no puede pasarlos a
+  nuestros `code` (`SIN_CUPO`, `CORRELATIVIDAD_FALTANTE`, etc.) sin saber cómo distinguirlos.
+- Períodos: `id`, `anio`, `numero`, `fechaInicio`, `fechaFin`, `inscripcionDesde`,
+  `inscripcionHasta`, todas fechas sin hora. Sin `nombre`. **Suposición nuestra:**
+  `inscripcionHasta` incluye ese día completo, en hora de Argentina.
+- Turnos de examen: `id`, `nombre`, `fechaInicio`, `fechaFin`, `inscripcionDesde`,
+  `inscripcionHasta`. Ventanas generales, sin fecha por asignatura.
+- POST de inscripción: 201 `{ id, alumnoId, fechaInscripcion, estado, notaFinal, fechaResultado }`,
+  sin `cursoId`. Estados: `INSCRIPTO`, `CURSANDO`, `BAJA`, `REGULAR`, `LIBRE`, `APROBADO`,
+  `DESAPROBADO`.
+- Nota final: la carga el Módulo 2 y el Módulo 9 la expone en
+  `GET /cursos/{cursoId}/notas/{alumnoId}` (`{ alumnoId, notaFinal, estado, fechaResultado }`).
+  El portal no la usa: la toma de las actas del Módulo 2 (`/results`, ver arriba).
+- `resultado.publicado` se publica por RabbitMQ para Analítica; no llega a CORE ni genera
+  notificación al alumno.
 - El Módulo 2 obtiene el listado de inscriptos directamente del Módulo 9; el Módulo 1 no lo entrega.
-- Lo comprometido se trabaja con mock hasta que esté disponible.
+- Lo que no está implementado se trabaja con mock hasta que esté disponible.
 
-Fixtures (`academic/*.provisional.json`): aunque varios endpoints están implementados, no
-tenemos sus respuestas, así que todas son provisionales. Suposiciones:
-
-- Períodos: `id`, `nombre`, `fechaInicio`, `fechaFin`, `inscripcionDesde`, `inscripcionHasta`.
-- Turnos de examen: los campos informados más un `id`; fechas sin hora. No suponemos que
-  acepte filtros de fecha: el BFF pide todos y se queda con los que se solapan con el rango
-  (adaptador en `apps/bff/src/modulos/academico/`).
-- Cursos: `id`, `comision`, `periodoId`, `sede`, `cupoMaximo`, `inscriptosActivos`,
-  `asignatura` anidada y `horarios` (pedido, puede faltar).
-- Correlatividades: `[{ asignaturaId, nombre, tipo }]`.
-- Inscripciones del alumno: `id`, `cursoId`, `comision`, `asignatura`, `periodo`,
-  `notaFinal`, `estado`, `fecha`.
-- POST de inscripción: 201 `{ id, cursoId, alumnoId, estado, fecha }`
-  (`academic/inscripcion-creada.provisional.json`). Los rechazos son 409 problem+json con los
-  `code` de nuestro [`openapi.yaml`](../openapi.yaml) (`YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE` con
-  `correlativasFaltantes`, `SIN_REGULARIDAD`, `FUERA_DE_FECHA`), uno por motivo en
-  `academic/inscripcion-rechazos.provisional.json`. El CORE falso no simula
-  `SIN_REGULARIDAD` ni `FUERA_DE_FECHA`.
+Fixtures (`academic/*.provisional.json`): siguen las formas de arriba, con ids numéricos. Son
+provisionales porque CORE todavía no confirmó el pedido del Módulo 9. Las materias del plan
+están en `planes-asignaturas.provisional.json` (por `planId`) y el catálogo de carreras trae
+`ultimoPlanActivo`. El status de los rechazos es una suposición nuestra: `DATA_CONFLICT` con
+409 y `BUSINESS_RULE_VIOLATION` con 422 (`inscripcion-rechazos.provisional.json`).
 
 Cómo lo usa el BFF (oferta, inscripción e historial, adaptador en
 `apps/bff/src/modulos/academico/`):
 
-- Oferta: pide en paralelo el `planId` (Backoffice), los períodos y todas las inscripciones
-  del alumno; elige el período vigente (el de inscripción abierta, si no el próximo en abrir,
-  si no el último que cerró); pide los cursos de ese período y plan y las correlatividades de
-  cada asignatura. Las correlatividades se cachean en memoria una hora; si el Módulo 9 no
-  conoce una asignatura (404), se toma como sin correlativas. Si fallan, falla la oferta: no
-  se ofrece una materia sin validar sus correlativas.
+- Período: el nombre se arma con `numero` y `anio` ("1° cuatrimestre 2027"). La ventana va
+  desde las 00:00 de `inscripcionDesde` hasta las 23:59:59.999 de `inscripcionHasta`, en hora
+  de Argentina.
+- Oferta: pide en paralelo el plan del alumno, los períodos y todas las inscripciones del
+  alumno; elige el período vigente (el de inscripción abierta, si no el próximo en abrir, si
+  no el último que cerró); pide los cursos del período y las materias del plan, y se queda con
+  los cursos de esas materias (de ahí salen nombre y código). Las comisiones `CANCELADO` y
+  `FINALIZADO` no se ofrecen.
+- Plan del alumno: el de Backoffice para su carrera y, si no lo da, el plan activo de la
+  carrera (`/academica/carreras/con-ultimo-plan-activo`). Sin plan, la oferta sale sin
+  materias y con `filtradaPorPlan: false` (decisión 11 de [`plan.md`](plan.md)).
+- Correlatividades: se aplanan las `condiciones` (una correlativa por materia, con su tipo).
+  Si el Módulo 9 no conoce una asignatura (404), se toma como sin correlativas. Si fallan,
+  falla la oferta: no se ofrece una materia sin validar sus correlativas.
+- Caché en memoria por una hora: correlatividades, materias del plan y catálogo de carreras.
 - Estado por comisión: `INSCRIPTO` si hay una inscripción del alumno en ese curso que no sea
   `BAJA`; si no, `BLOQUEADA` si falta una correlativa; si no, `CON_CUPO` o `SIN_CUPO`.
-- Horarios con un día fuera de `LUNES`–`SABADO` o una hora que no sea `HH:MM` invalidan la
-  respuesta (502). Si no vienen horarios o sede, la comisión sale con `horarios: []` y
-  `sede: null`.
-- Rechazos: la traducción de los códigos del Módulo 9 a los nuestros está en un solo lugar
-  (`academico.mapper.ts`). Hoy es identidad; un código que no reconoce, o un cuerpo que no se
-  entiende, es `INSCRIPCION_RECHAZADA`.
-- Historial: ordena por la fecha de inscripción, de la más reciente a la más antigua (los ids
-  de período son opacos y no se ordenan); `enCurso` es `INSCRIPTO` o `CURSANDO`.
+- Horario: el único del curso pasa a `horarios` con el día en español, las horas en `HH:MM`
+  y el aula de `aulaNombre`. Un día fuera de lunes a sábado invalida la respuesta (502). Sin
+  horario o sin sede, la comisión sale con `horarios: []` y `sede: null`.
+- POST: el 201 no trae el curso, así que el `cursoId` es el del pedido.
+- Rechazos: la traducción está en un solo lugar (`academico.mapper.ts`). `BUSINESS_RULE_VIOLATION`
+  y `DATA_CONFLICT` (con 400, 409 o 422) son 409 `INSCRIPCION_RECHAZADA` con el `detail` del
+  Módulo 9, que el front muestra. Un 409 siempre es un rechazo. Otro 4xx (por ejemplo, un
+  `VALIDATION_ERROR`) es 502. Si el Módulo 9 agrega códigos por motivo, se mapean a los
+  nuestros en la misma tabla.
+- Historial: ordena por inicio del período y, dentro del mismo período, por fecha de
+  inscripción, de la más reciente a la más antigua (los ids son opacos y no se ordenan);
+  `enCurso` es `INSCRIPTO` o `CURSANDO`.

@@ -2,7 +2,7 @@
   "ba310c57-a684-4dbf-a4a4-905fcfbefa08": [
     {
       "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
-      "courseId": "curso-prog1-2025-2-a",
+      "courseId": 1001,
       "subjectId": 69,
       "periodId": 8,
       "subject": "Programación I",
@@ -16,7 +16,7 @@
     },
     {
       "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
-      "courseId": "curso-discreta-2025-2-a",
+      "courseId": 1002,
       "subjectId": 24,
       "periodId": 8,
       "subject": "Matemática Discreta",
@@ -30,7 +30,7 @@
     },
     {
       "studentId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
-      "courseId": "curso-ayed-2025-2-a",
+      "courseId": 1003,
       "subjectId": 70,
       "periodId": 8,
       "subject": "Algoritmos y Estructuras de Datos",

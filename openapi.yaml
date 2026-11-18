@@ -62,7 +62,7 @@ paths:
         Combina la identidad de CORE con los datos personales de Backoffice
         (`GET /api/v1/backoffice/users/{userId}`). Pantallas: header y Home (4.2).
       x-fuentes: [CORE, Módulo 8]
-      x-estado-fuente: pendiente (falta saber qué campos trae Backoffice)
+      x-estado-fuente: confirmado (ficha de Backoffice); `careers` comprometido, sin publicar
       responses:
         '200':
           description: Perfil del alumno
@@ -83,13 +83,14 @@ paths:
       description: >
         Lista las comisiones del período para el plan del alumno, agrupadas por asignatura,
         con el estado ya resuelto por comisión (inscripto, con cupo, sin cupo, bloqueada por
-        correlatividad). El BFF obtiene el `planId` de Backoffice, la oferta y las
-        correlatividades del Módulo 9 y las cruza con las inscripciones del alumno.
-        Si Backoffice no devuelve el `planId` (o no responde), la oferta se pide sin filtrar
-        por plan y se informa con `filtradaPorPlan: false`.
+        correlatividad). El BFF obtiene el plan del alumno (Backoffice o, si no lo da, el plan
+        activo de su carrera en el Módulo 9), pide al Módulo 9 los cursos del período, las
+        materias del plan y las correlatividades, y los cruza con las inscripciones del
+        alumno. Si no se puede determinar el plan, la oferta sale sin materias y con
+        `filtradaPorPlan: false`.
         Pantalla: Inscripción a materias (4.3).
       x-fuentes: [Módulo 9, Módulo 8]
-      x-estado-fuente: comprometido (filtro planId y asignatura anidada); horarios pedidos
+      x-estado-fuente: publicado por el Módulo 9, sin confirmar por CORE
       parameters:
         - name: periodoId
           in: query
@@ -133,7 +134,7 @@ paths:
         y vuelve a validar correlatividades. El portal no persiste la inscripción.
         No se reintenta automáticamente ante un error de red.
       x-fuentes: [Módulo 9]
-      x-estado-fuente: implementado (faltan los códigos de error definitivos)
+      x-estado-fuente: publicado por el Módulo 9, sin confirmar por CORE (códigos de error genéricos)
       requestBody:
         required: true
         content:
@@ -169,7 +170,9 @@ paths:
           description: >
             La inscripción fue rechazada por una regla de negocio. `code` indica el motivo:
             `YA_INSCRIPTO`, `SIN_CUPO`, `CORRELATIVIDAD_FALTANTE`, `SIN_REGULARIDAD`,
-            `FUERA_DE_FECHA` o, si el motivo no se reconoce, `INSCRIPCION_RECHAZADA`.
+            `FUERA_DE_FECHA` o, si el motivo no se reconoce, `INSCRIPCION_RECHAZADA` con el
+            `detail` del Módulo 9. Hoy el Módulo 9 solo informa códigos genéricos, así que
+            todos los rechazos llegan como `INSCRIPCION_RECHAZADA`.
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/ProblemaInscripcion' }
@@ -201,7 +204,7 @@ paths:
         Consulta en vivo; el portal no persiste el historial.
         Pantalla: Historial académico (4.4).
       x-fuentes: [Módulo 9, Módulo 2]
-      x-estado-fuente: comprometido (inscripciones por alumno)
+      x-estado-fuente: Módulo 9 publicado, sin confirmar por CORE; Módulo 2 confirmado
       parameters:
         - name: periodoId
           in: query
@@ -245,6 +248,7 @@ paths:
         y `notas` en null y el motivo en `fuentesConError`.
         Pantalla: Detalle de cursada (4.5). Es también el destino `/alumnos/cursos/{cursoId}`.
       x-fuentes: [Módulo 9, Módulo 2]
+      x-estado-fuente: Módulo 9 publicado, sin confirmar por CORE; Módulo 2 confirmado
       parameters:
         - $ref: '#/components/parameters/CursoId'
       responses:
@@ -317,7 +321,7 @@ paths:
         Solo responde con error si fallan las tres fuentes.
         Pantalla: Calendario académico (4.9).
       x-fuentes: [Módulo 4, Módulo 6, Módulo 9]
-      x-estado-fuente: Módulo 6 confirmado; Módulo 9 implementado; Módulo 4 sin hora del turno
+      x-estado-fuente: Módulos 4 y 6 confirmados; Módulo 9 publicado, sin confirmar por CORE
       parameters:
         - name: desde
           in: query
@@ -577,7 +581,7 @@ components:
                 - INSCRIPCION_RECHAZADA
               description: >
                 `INSCRIPCION_RECHAZADA` es el rechazo del Módulo 9 con un motivo que el BFF no
-                reconoce; el frontend muestra un mensaje genérico.
+                reconoce; el frontend muestra el `detail` o un mensaje genérico.
               x-provisional: true
             correlativasFaltantes:
               type: array
@@ -596,15 +600,17 @@ components:
           type: string
           description: Id del alumno, el mismo en todos los módulos (claim `sub` de CORE)
         email: { type: string, format: email }
-        nombre: { type: string, x-provisional: true }
-        apellido: { type: string, x-provisional: true }
-        legajo: { type: string, x-provisional: true }
+        nombre: { type: string }
+        apellido: { type: string }
+        legajo: { type: string }
         carrera: { type: string, x-provisional: true }
         planId:
           type: string
           nullable: true
           x-provisional: true
-          description: Plan de estudios (el de la primera carrera que informa Backoffice). Null si no tiene.
+          description: >
+            Plan de estudios que informa Backoffice para la carrera del alumno. Null si no lo
+            tiene (la oferta usa entonces el plan activo de la carrera en el Módulo 9).
       example:
         id: "alumno-456"
         email: jperez@uade.edu.ar
@@ -639,8 +645,9 @@ components:
         filtradaPorPlan:
           type: boolean
           description: >
-            False si no se conoce el `planId` del alumno (Backoffice no lo devolvió o no
-            respondió): la oferta incluye las comisiones de todos los planes.
+            False si no se pudo determinar el plan del alumno: ni Backoffice ni el plan
+            activo de su carrera en el Módulo 9. La oferta sale entonces sin materias, porque
+            el Módulo 9 solo da el nombre de las materias por plan.
           x-provisional: true
         inscripcionDesde: { type: string, format: date-time }
         inscripcionHasta: { type: string, format: date-time }
@@ -719,7 +726,10 @@ components:
         cursoId: { type: string }
         asignatura: { $ref: '#/components/schemas/Asignatura' }
         estado: { $ref: '#/components/schemas/EstadoCursada' }
-        fecha: { type: string, format: date-time }
+        fecha:
+          type: string
+          format: date
+          description: Fecha de inscripción (`YYYY-MM-DD`), tal como la informa el Módulo 9
 
     EstadoCursada:
       type: string

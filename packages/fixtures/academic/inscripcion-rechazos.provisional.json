@@ -3,45 +3,36 @@
     "type": "about:blank",
     "title": "Conflict",
     "status": 409,
-    "code": "YA_INSCRIPTO",
-    "detail": "Ya está inscripto en la asignatura"
+    "detail": "El alumno ya está inscripto en la asignatura",
+    "instance": "/api/planificacion/cursos/1009/inscripciones",
+    "code": "DATA_CONFLICT",
+    "correlationId": "7d2f4c1a-9b3e-4f5a-8c6d-1e2f3a4b5c6d"
   },
   "SIN_CUPO": {
     "type": "about:blank",
-    "title": "Conflict",
-    "status": 409,
-    "code": "SIN_CUPO",
-    "detail": "La comisión no tiene cupo"
+    "title": "Unprocessable Entity",
+    "status": 422,
+    "detail": "La comisión no tiene cupo disponible",
+    "instance": "/api/planificacion/cursos/1009/inscripciones",
+    "code": "BUSINESS_RULE_VIOLATION",
+    "correlationId": "7d2f4c1a-9b3e-4f5a-8c6d-1e2f3a4b5c6d"
   },
   "CORRELATIVIDAD_FALTANTE": {
     "type": "about:blank",
-    "title": "Conflict",
-    "status": 409,
-    "code": "CORRELATIVIDAD_FALTANTE",
-    "detail": "Faltan correlativas",
-    "correlativasFaltantes": [
-      { "asignaturaId": "asig-desa1", "nombre": "Desarrollo de Aplicaciones I", "tipo": "REGULAR" }
-    ]
-  },
-  "SIN_REGULARIDAD": {
-    "type": "about:blank",
-    "title": "Conflict",
-    "status": 409,
-    "code": "SIN_REGULARIDAD",
-    "detail": "El alumno no es regular"
+    "title": "Unprocessable Entity",
+    "status": 422,
+    "detail": "Falta regularizar Desarrollo de Aplicaciones I",
+    "instance": "/api/planificacion/cursos/1009/inscripciones",
+    "code": "BUSINESS_RULE_VIOLATION",
+    "correlationId": "7d2f4c1a-9b3e-4f5a-8c6d-1e2f3a4b5c6d"
   },
   "FUERA_DE_FECHA": {
     "type": "about:blank",
-    "title": "Conflict",
-    "status": 409,
-    "code": "FUERA_DE_FECHA",
-    "detail": "Fuera del período de inscripción"
-  },
-  "DESCONOCIDO": {
-    "type": "about:blank",
-    "title": "Conflict",
-    "status": 409,
-    "code": "DEUDA_ARANCELARIA",
-    "detail": "El alumno registra deuda"
+    "title": "Unprocessable Entity",
+    "status": 422,
+    "detail": "La inscripción del período no está abierta",
+    "instance": "/api/planificacion/cursos/1009/inscripciones",
+    "code": "BUSINESS_RULE_VIOLATION",
+    "correlationId": "7d2f4c1a-9b3e-4f5a-8c6d-1e2f3a4b5c6d"
   }
 }

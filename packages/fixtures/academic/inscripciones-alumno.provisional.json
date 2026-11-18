@@ -1,70 +1,242 @@
 [
   {
-    "id": "insc-0001",
-    "cursoId": "curso-prog1-2025-2-a",
-    "comision": "A - Noche",
-    "asignatura": { "id": "asig-prog1", "codigo": "3.4.069", "nombre": "Programación I" },
-    "periodo": { "id": "2025-2", "nombre": "2° cuatrimestre 2025" },
+    "id": 5001,
+    "alumnoId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "fechaInscripcion": "2025-07-22",
+    "estado": "APROBADO",
     "notaFinal": 8,
-    "estado": "APROBADO",
-    "fecha": "2025-07-22T13:10:00.000Z"
+    "fechaResultado": "2025-12-12",
+    "curso": {
+      "id": 1001,
+      "codigo": "A - Noche",
+      "sedeId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+      "sedeNombre": "Sede Monserrat",
+      "modalidad": "PRESENCIAL",
+      "estado": "FINALIZADO",
+      "cupoMaximo": 40,
+      "fechaInicio": "2025-08-11",
+      "fechaFin": "2025-12-06",
+      "turno": "NOCHE",
+      "horaInicio": "18:30:00",
+      "horaFin": "22:30:00",
+      "diaSemana": "TUESDAY",
+      "aulaId": 301,
+      "aulaNombre": "Aula 301",
+      "inscriptosActivos": 36,
+      "asignatura": {
+        "id": 101,
+        "codigo": "3.4.069",
+        "nombre": "Programación I"
+      },
+      "periodo": {
+        "id": 1,
+        "anio": 2025,
+        "numero": 2,
+        "fechaInicio": "2025-08-11",
+        "fechaFin": "2025-12-06",
+        "inscripcionDesde": "2025-07-21",
+        "inscripcionHasta": "2025-07-31"
+      }
+    }
   },
   {
-    "id": "insc-0002",
-    "cursoId": "curso-discreta-2025-2-a",
-    "comision": "A - Noche",
-    "asignatura": { "id": "asig-discreta", "codigo": "3.1.024", "nombre": "Matemática Discreta" },
-    "periodo": { "id": "2025-2", "nombre": "2° cuatrimestre 2025" },
+    "id": 5002,
+    "alumnoId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "fechaInscripcion": "2025-07-22",
+    "estado": "APROBADO",
     "notaFinal": 7,
-    "estado": "APROBADO",
-    "fecha": "2025-07-22T13:12:00.000Z"
+    "fechaResultado": "2025-12-15",
+    "curso": {
+      "id": 1002,
+      "codigo": "A - Noche",
+      "sedeId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+      "sedeNombre": "Sede Monserrat",
+      "modalidad": "PRESENCIAL",
+      "estado": "FINALIZADO",
+      "cupoMaximo": 40,
+      "fechaInicio": "2025-08-11",
+      "fechaFin": "2025-12-06",
+      "turno": "NOCHE",
+      "horaInicio": "18:30:00",
+      "horaFin": "22:30:00",
+      "diaSemana": "THURSDAY",
+      "aulaId": 302,
+      "aulaNombre": "Aula 302",
+      "inscriptosActivos": 30,
+      "asignatura": {
+        "id": 102,
+        "codigo": "3.1.024",
+        "nombre": "Matemática Discreta"
+      },
+      "periodo": {
+        "id": 1,
+        "anio": 2025,
+        "numero": 2,
+        "fechaInicio": "2025-08-11",
+        "fechaFin": "2025-12-06",
+        "inscripcionDesde": "2025-07-21",
+        "inscripcionHasta": "2025-07-31"
+      }
+    }
   },
   {
-    "id": "insc-0003",
-    "cursoId": "curso-ayed-2025-2-a",
-    "comision": "A - Mañana",
-    "asignatura": {
-      "id": "asig-ayed",
-      "codigo": "3.4.070",
-      "nombre": "Algoritmos y Estructuras de Datos"
-    },
-    "periodo": { "id": "2025-2", "nombre": "2° cuatrimestre 2025" },
-    "notaFinal": null,
+    "id": 5003,
+    "alumnoId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "fechaInscripcion": "2025-07-22",
     "estado": "LIBRE",
-    "fecha": "2025-07-22T13:15:00.000Z"
+    "notaFinal": null,
+    "fechaResultado": "2025-11-28",
+    "curso": {
+      "id": 1003,
+      "codigo": "A - Mañana",
+      "sedeId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+      "sedeNombre": "Sede Monserrat",
+      "modalidad": "PRESENCIAL",
+      "estado": "FINALIZADO",
+      "cupoMaximo": 40,
+      "fechaInicio": "2025-08-11",
+      "fechaFin": "2025-12-06",
+      "turno": "MAÑANA",
+      "horaInicio": "08:00:00",
+      "horaFin": "12:00:00",
+      "diaSemana": "WEDNESDAY",
+      "aulaId": 210,
+      "aulaNombre": "Aula 210",
+      "inscriptosActivos": 40,
+      "asignatura": {
+        "id": 103,
+        "codigo": "3.4.070",
+        "nombre": "Algoritmos y Estructuras de Datos"
+      },
+      "periodo": {
+        "id": 1,
+        "anio": 2025,
+        "numero": 2,
+        "fechaInicio": "2025-08-11",
+        "fechaFin": "2025-12-06",
+        "inscripcionDesde": "2025-07-21",
+        "inscripcionHasta": "2025-07-31"
+      }
+    }
   },
   {
-    "id": "insc-0004",
-    "cursoId": "curso-prog2-2026-1-a",
-    "comision": "A - Noche",
-    "asignatura": { "id": "asig-prog2", "codigo": "3.4.071", "nombre": "Programación II" },
-    "periodo": { "id": "2026-1", "nombre": "1° cuatrimestre 2026" },
-    "notaFinal": null,
+    "id": 5004,
+    "alumnoId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "fechaInscripcion": "2026-02-20",
     "estado": "REGULAR",
-    "fecha": "2026-02-20T14:00:00.000Z"
+    "notaFinal": null,
+    "fechaResultado": "2026-07-10",
+    "curso": {
+      "id": 1004,
+      "codigo": "A - Noche",
+      "sedeId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+      "sedeNombre": "Sede Monserrat",
+      "modalidad": "PRESENCIAL",
+      "estado": "FINALIZADO",
+      "cupoMaximo": 40,
+      "fechaInicio": "2026-03-16",
+      "fechaFin": "2026-07-11",
+      "turno": "NOCHE",
+      "horaInicio": "18:30:00",
+      "horaFin": "22:30:00",
+      "diaSemana": "FRIDAY",
+      "aulaId": 401,
+      "aulaNombre": "Aula 401",
+      "inscriptosActivos": 33,
+      "asignatura": {
+        "id": 104,
+        "codigo": "3.4.071",
+        "nombre": "Programación II"
+      },
+      "periodo": {
+        "id": 2,
+        "anio": 2026,
+        "numero": 1,
+        "fechaInicio": "2026-03-16",
+        "fechaFin": "2026-07-11",
+        "inscripcionDesde": "2026-02-16",
+        "inscripcionHasta": "2026-02-27"
+      }
+    }
   },
   {
-    "id": "insc-0005",
-    "cursoId": "curso-bd1-2026-2-a",
-    "comision": "A - Noche",
-    "asignatura": { "id": "asig-bd1", "codigo": "3.4.072", "nombre": "Bases de Datos I" },
-    "periodo": { "id": "2026-2", "nombre": "2° cuatrimestre 2026" },
-    "notaFinal": null,
+    "id": 5005,
+    "alumnoId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "fechaInscripcion": "2026-07-21",
     "estado": "CURSANDO",
-    "fecha": "2026-07-21T12:30:00.000Z"
+    "notaFinal": null,
+    "fechaResultado": null,
+    "curso": {
+      "id": 1005,
+      "codigo": "A - Noche",
+      "sedeId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+      "sedeNombre": "Sede Monserrat",
+      "modalidad": "PRESENCIAL",
+      "estado": "EN_CURSO",
+      "cupoMaximo": 40,
+      "fechaInicio": "2026-08-10",
+      "fechaFin": "2026-12-05",
+      "turno": "NOCHE",
+      "horaInicio": "18:30:00",
+      "horaFin": "22:30:00",
+      "diaSemana": "MONDAY",
+      "aulaId": 412,
+      "aulaNombre": "Aula 412",
+      "inscriptosActivos": 38,
+      "asignatura": {
+        "id": 105,
+        "codigo": "3.4.072",
+        "nombre": "Bases de Datos I"
+      },
+      "periodo": {
+        "id": 3,
+        "anio": 2026,
+        "numero": 2,
+        "fechaInicio": "2026-08-10",
+        "fechaFin": "2026-12-05",
+        "inscripcionDesde": "2026-07-20",
+        "inscripcionHasta": "2026-07-30"
+      }
+    }
   },
   {
-    "id": "insc-0006",
-    "cursoId": "curso-desa1-2026-2-a",
-    "comision": "A - Noche",
-    "asignatura": {
-      "id": "asig-desa1",
-      "codigo": "3.4.207",
-      "nombre": "Desarrollo de Aplicaciones I"
-    },
-    "periodo": { "id": "2026-2", "nombre": "2° cuatrimestre 2026" },
-    "notaFinal": null,
+    "id": 5006,
+    "alumnoId": "ba310c57-a684-4dbf-a4a4-905fcfbefa08",
+    "fechaInscripcion": "2026-07-21",
     "estado": "CURSANDO",
-    "fecha": "2026-07-21T12:31:00.000Z"
+    "notaFinal": null,
+    "fechaResultado": null,
+    "curso": {
+      "id": 1006,
+      "codigo": "A - Noche",
+      "sedeId": "3e9b0a12-55cc-4d77-9a01-6b2f8c4e1d90",
+      "sedeNombre": "Sede Monserrat",
+      "modalidad": "PRESENCIAL",
+      "estado": "EN_CURSO",
+      "cupoMaximo": 35,
+      "fechaInicio": "2026-08-10",
+      "fechaFin": "2026-12-05",
+      "turno": "NOCHE",
+      "horaInicio": "18:30:00",
+      "horaFin": "22:30:00",
+      "diaSemana": "WEDNESDAY",
+      "aulaId": 3,
+      "aulaNombre": "Laboratorio 3",
+      "inscriptosActivos": 35,
+      "asignatura": {
+        "id": 106,
+        "codigo": "3.4.207",
+        "nombre": "Desarrollo de Aplicaciones I"
+      },
+      "periodo": {
+        "id": 3,
+        "anio": 2026,
+        "numero": 2,
+        "fechaInicio": "2026-08-10",
+        "fechaFin": "2026-12-05",
+        "inscripcionDesde": "2026-07-20",
+        "inscripcionHasta": "2026-07-30"
+      }
+    }
   }
 ]

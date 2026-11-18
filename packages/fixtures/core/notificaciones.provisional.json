@@ -5,7 +5,7 @@
     "type": "TEACHER_EXAM_RESULT_PUBLISHED",
     "title": "Se publicó tu nota de Bases de Datos I",
     "message": "1er parcial: 7 (aprobado)",
-    "actionUrl": "/student/courses/curso-bd1-2026-2-a/exams/101",
+    "actionUrl": "/student/courses/1005/exams/101",
     "sourceModule": "teacher",
     "sourceReference": "exam-result/101/ba310c57-a684-4dbf-a4a4-905fcfbefa08",
     "createdAt": "2026-09-24T20:15:00.000Z",

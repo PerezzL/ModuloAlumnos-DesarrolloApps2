@@ -1,37 +1,45 @@
 import { Injectable } from '@nestjs/common';
-import type { Inscripcion, ItemCalendario } from '@uadenet/api-types';
+import type { Asignatura, Inscripcion, ItemCalendario } from '@uadenet/api-types';
 import type { Rango } from '../../calendario/rango';
 import { CacheTtl } from '../../comun/cache';
 import { ProblemaError } from '../../comun/problema';
 import { GatewayClient, RespuestaModuloError } from '../../gateway/gateway.client';
 import type {
   Correlativa,
-  CursoOfertado,
+  CursoDelPeriodo,
   InscripcionAlumno,
   PeriodoAcademico,
 } from './academico.modelo';
 import {
+  aAsignaturasPlan,
   aCarreras,
   aCorrelativas,
   aCursos,
   aInscripcion,
   aInscripciones,
   aPeriodos,
+  aPlanesActivos,
   aRechazoInscripcion,
   turnosAItems,
 } from './academico.mapper';
 
-/** Las correlatividades cambian con el plan de estudios: casi nunca. */
-const TTL_CORRELATIVIDADES_MS = 60 * 60 * 1000;
-/** El catálogo de carreras cambia todavía menos. */
-const TTL_CARRERAS_MS = 60 * 60 * 1000;
+/**
+ * Datos de baja variación: correlatividades, materias del plan (nombres de asignatura) y el
+ * catálogo de carreras. Ningún pedido depende de que estén cacheados.
+ */
+const TTL_CATALOGO_MS = 60 * 60 * 1000;
+
+const es404 = (error: unknown) =>
+  error instanceof RespuestaModuloError && error.estadoOrigen === 404;
 
 /** Módulo 9 · Gestión Académica. Único lugar que conoce la forma de sus respuestas. */
 @Injectable()
 export class AcademicoAdapter {
   // Las correlativas traen el nombre de cada asignatura: con esto se cachean los dos datos
-  private readonly correlatividades = new CacheTtl<Correlativa[]>(TTL_CORRELATIVIDADES_MS);
-  private readonly carreras = new CacheTtl<Map<string, string>>(TTL_CARRERAS_MS);
+  private readonly correlatividades = new CacheTtl<Correlativa[]>(TTL_CATALOGO_MS);
+  private readonly asignaturasPlan = new CacheTtl<Asignatura[]>(TTL_CATALOGO_MS);
+  private readonly carreras = new CacheTtl<Map<string, string>>(TTL_CATALOGO_MS);
+  private readonly planesActivos = new CacheTtl<Map<string, string>>(TTL_CATALOGO_MS);
 
   constructor(private readonly gateway: GatewayClient) {}
 
@@ -46,13 +54,30 @@ export class AcademicoAdapter {
     return aPeriodos(await this.gateway.get('GESTION_ACADEMICA', '/planificacion/periodos'));
   }
 
-  /** Comisiones del período. Sin `planId`, el Módulo 9 devuelve las de todos los planes. */
-  async cursos(periodoId: string, planId: string | null): Promise<CursoOfertado[]> {
+  /** Comisiones que se ofrecen en el período, de todos los planes (el Módulo 9 no filtra). */
+  async cursos(periodoId: string): Promise<CursoDelPeriodo[]> {
     return aCursos(
       await this.gateway.get('GESTION_ACADEMICA', '/planificacion/cursos', {
-        query: { periodoId, planId: planId ?? undefined },
+        query: { periodoId },
       }),
     );
+  }
+
+  /** Materias de un plan, con nombre y código. Un plan que el Módulo 9 no conoce no tiene. */
+  asignaturasDelPlan(planId: string): Promise<Asignatura[]> {
+    return this.asignaturasPlan.obtener(planId, async () => {
+      try {
+        return aAsignaturasPlan(
+          await this.gateway.get(
+            'GESTION_ACADEMICA',
+            `/academica/planes/${encodeURIComponent(planId)}/asignaturas`,
+          ),
+        );
+      } catch (error) {
+        if (es404(error)) return [];
+        throw error;
+      }
+    });
   }
 
   /** Inscripciones del alumno (su historial). Sin `periodoId`, todas. */
@@ -74,6 +99,16 @@ export class AcademicoAdapter {
     return carreras.get(carreraId) ?? null;
   }
 
+  /** Plan activo de una carrera, o null si el Módulo 9 no la conoce o no tiene plan activo. */
+  async planActivo(carreraId: string): Promise<string | null> {
+    const planes = await this.planesActivos.obtener('todas', async () =>
+      aPlanesActivos(
+        await this.gateway.get('GESTION_ACADEMICA', '/academica/carreras/con-ultimo-plan-activo'),
+      ),
+    );
+    return planes.get(carreraId) ?? null;
+  }
+
   /** Correlativas de una asignatura. Si el Módulo 9 no la conoce, no tiene correlativas. */
   correlativas(asignaturaId: string): Promise<Correlativa[]> {
     return this.correlatividades.obtener(asignaturaId, async () => {
@@ -85,7 +120,7 @@ export class AcademicoAdapter {
           ),
         );
       } catch (error) {
-        if (error instanceof RespuestaModuloError && error.estadoOrigen === 404) return [];
+        if (es404(error)) return [];
         throw error;
       }
     });
@@ -103,15 +138,16 @@ export class AcademicoAdapter {
           `/planificacion/cursos/${encodeURIComponent(cursoId)}/inscripciones`,
           { alumnoId },
         ),
+        cursoId,
       );
     } catch (error) {
-      if (error instanceof RespuestaModuloError && error.estadoOrigen === 404) {
+      if (es404(error)) {
         throw new ProblemaError(404, 'CURSO_NO_ENCONTRADO', 'La comisión no existe', {
           modulo: 'GESTION_ACADEMICA',
         });
       }
-      if (error instanceof RespuestaModuloError && error.estadoOrigen === 409) {
-        throw aRechazoInscripcion(error.cuerpoOrigen);
+      if (error instanceof RespuestaModuloError) {
+        throw aRechazoInscripcion(error.estadoOrigen, error.cuerpoOrigen) ?? error;
       }
       throw error;
     }

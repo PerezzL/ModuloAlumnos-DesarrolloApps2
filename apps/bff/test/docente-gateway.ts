@@ -24,9 +24,9 @@ const porCurso = (archivo: string, cursoId: unknown) => {
 /** Resultados de actas del alumno de las fixtures, filtrados por `courseId` si viene */
 export const resultados = (courseId?: string | null) => {
   const todos = Object.values(
-    fixture<Record<string, { courseId: string }[]>>('teacher/results.json'),
+    fixture<Record<string, { courseId: string | number }[]>>('teacher/results.json'),
   )[0]!;
-  return courseId ? todos.filter((r) => r.courseId === courseId) : todos;
+  return courseId ? todos.filter((r) => String(r.courseId) === courseId) : todos;
 };
 
 /** Módulo 2 y Backoffice (fichas de docentes) respondiendo con sus fixtures */
