@@ -331,5 +331,5 @@ Cerrar con **Cerrar sesión** y volver atrás con el navegador: pide login y no 
   correlatividades) y que el front solo vea modelos propios. Ver [`arquitectura.md`](arquitectura.md).
 - **¿Por qué las notificaciones y el saldo no pasan por el BFF?** Son contratos de CORE que
   el front consume directo; pasar por el BFF solo agregaría un salto.
-- **¿Qué falta?** La integración real (ver [`integraciones.md`](integraciones.md), "Lo más urgente") y el
-  despliegue, que depende de que CORE defina el dominio de los portales.
+- **¿Qué falta?** La integración real (ver [`integraciones.md`](integraciones.md), "Lo más urgente"). El
+  despliegue es en Railway (ver [`integracion-real.md`](integracion-real.md), "Despliegue").

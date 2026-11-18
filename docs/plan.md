@@ -23,7 +23,7 @@ y pasos. El porqué de cada decisión está en [`arquitectura.md`](arquitectura.
 | 9 | Librerías del BFF | `fetch` nativo, `nestjs-pino` (con `X-Correlation-Id`), configuración validada con zod |
 | 10 | Caché | En memoria con TTL, por instancia, solo para datos de baja variación |
 | — | Docker | Dockerfile por app y docker-compose; el desarrollo diario no depende de él |
-| — | Despliegue | Proveedor sin elegir; todo configurable por variables de entorno |
+| — | Despliegue | Railway: el BFF y el front (nginx) como dos servicios. Login, refresh y logout se reenvían a CORE desde el nginx del front, por la cookie `SameSite=Lax` (ver [`integracion-real.md`](integracion-real.md), "Despliegue") |
 | — | Equipo | Sin reparto: el trabajo lo hace una persona con el agente. Sin revisores obligatorios ni protección de `main` |
 | 11 | Oferta sin `planId` | Si Backoffice no devuelve el `planId`, se usa el plan activo de la carrera en el Módulo 9. Si tampoco hay carrera, la oferta sale sin materias y con `filtradaPorPlan: false` (ver abajo) |
 | 12 | Módulo 2 | El `examId` es el `notaId`; un 404 del Módulo 2 para un curso que el Módulo 9 tiene cuenta como falla de `DOCENTE`; cada llamada falla por separado. Con el contrato confirmado (bloque `docente-contrato`): condición por asistencia contra el mínimo que informa el Módulo 2, sin faltas restantes; nota final desde sus actas; docente desde Backoffice; sin observaciones (ver [`integraciones.md`](integraciones.md)) |
@@ -34,7 +34,7 @@ Además: base de datos y Redis no se levantan hasta que haya algo que persistir.
 
 | Bloque | Tema |
 | --- | --- |
-| Entrega final | Proveedor de despliegue y dominio (cookie de refresh de CORE) |
+| — | Ninguna por ahora |
 
 ## Oferta sin `planId` (decisión 11)
 

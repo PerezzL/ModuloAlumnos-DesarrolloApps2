@@ -110,7 +110,7 @@ Pendiente (la fixture `core/notificaciones.provisional.json` sigue provisional p
 | Paginación de `/notifications` | El OpenAPI solo documenta `read` y devuelve `nextCursor`; seguimos mandando `limit` y `cursor` |
 | Paginación de `/wallets/me/transactions` | El OpenAPI solo documenta `limit` ("a lo sumo 100") y devuelve `nextCursor`; seguimos mandando `cursor` |
 | Límite de 100 pedidos por minuto en el proxy | Pendiente: todo lo del BFF sale de una sola IP |
-| Cookie de refresh con el front en otro sitio | Vista en un login real: `refreshToken`, `Path=/api/v1/auth`, `HttpOnly`, `SameSite=Lax`, 7 días, sin `Domain` y sin `Secure` (el contrato decía `Secure`). Desde otro sitio (incluso `localhost`) no viaja en el refresh. Reenviar `/api/v1/auth/*` desde el hosting del front funciona porque no fija `Domain` |
+| Cookie de refresh con el front en otro sitio | Vista en un login real: `refreshToken`, `Path=/api/v1/auth`, `HttpOnly`, `SameSite=Lax`, 7 días, sin `Domain` y sin `Secure` (el contrato decía `Secure`). Desde otro sitio (incluso `localhost`) no viaja en el refresh. Resuelto con el reenvío de `/api/v1/auth/*` desde el nginx del front (funciona porque no fija `Domain`) |
 
 Cómo usa el front el `actionUrl` (traducción en `apps/web/src/notificaciones/destino.ts`, el
 único lugar que conoce su formato):
