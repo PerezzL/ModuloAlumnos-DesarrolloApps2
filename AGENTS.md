@@ -111,6 +111,9 @@ Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
 
 **Frontend ↔ CORE directo**
 - El navegador solo conoce la URL del Gateway. Nunca llama al BFF directo.
+- Única excepción: con `VITE_AUTH_PROXY=true`, login, refresh y logout van al propio origen del
+  portal y el nginx del front los reenvía al Gateway (la cookie de refresh es `SameSite=Lax`).
+  No reenviar ninguna otra ruta.
 - Autenticación, notificaciones y saldo no pasan por el BFF: el frontend usa los contratos
   de CORE por el Gateway.
 - Notificaciones: `socket.io-client` contra el namespace `/notifications` de CORE.

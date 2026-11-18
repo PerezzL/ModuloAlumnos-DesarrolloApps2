@@ -71,6 +71,10 @@ hacia los demás módulos.
 Login, refresh, logout, saldo y listado de notificaciones. El front llama a CORE y CORE
 responde; el BFF no interviene. Ejemplo: `GET {GATEWAY}/api/v1/wallets/me`.
 
+En el despliegue, login, refresh y logout van al propio origen del portal y el nginx del front
+los reenvía a CORE (`VITE_AUTH_PROXY=true`): la cookie de refresh es `SameSite=Lax` y el
+front no comparte sitio con CORE. Ver [`integracion-real.md`](integracion-real.md), "Despliegue".
+
 ### Camino 3: tiempo real
 
 El front abre una conexión socket.io contra `/notifications` de CORE, autenticada con el
@@ -262,7 +266,8 @@ compras son URLs que entrega la Tienda.
 - Respuesta: `{ accessToken, expiresIn: 900, user: { id, email, roles, permissions, status } }`
   más una cookie de refresh.
 - `accessToken`: JWT RS256, expira en 15 minutos, solo en memoria en el frontend.
-- `refreshToken`: cookie HttpOnly/Secure/SameSite=Lax manejada por CORE. El frontend no la lee.
+- `refreshToken`: cookie HttpOnly/SameSite=Lax con `Path=/api/v1/auth`, manejada por CORE. El
+  frontend no la lee.
   Rota en cada uso, así que los refresh se serializan.
 - Claims del JWT: `iss`, `aud`, `sub` (userId), `sid`, `email`, `roles`, `permissions`,
   `iat`, `exp`, `jti`.

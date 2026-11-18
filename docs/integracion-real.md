@@ -22,8 +22,8 @@ pendiente se sigue en la tarjeta "[CORE] Dominio de los portales…" de Trello:
 | URL del JWKS | `https://core-api-production-e458.up.railway.app/.well-known/jwks.json` |
 | `iss` y `aud` de los tokens | `iss`: la URL de la API en Railway (antes `http://localhost:3000`); `aud`: `uadenet`. Visto en un token real: el `iss` no termina en `/` (`jose` compara el valor exacto) |
 | URL del WebSocket de notificaciones | _pendiente_; no figura en su OpenAPI. Suponemos `<URL del Gateway>/notifications` |
-| Dominio bajo el que se sirven los portales (por la cookie de refresh) | _pendiente_ |
-| Si el Gateway espera una URL pública del BFF o una red compartida | _pendiente_ |
+| Dominio bajo el que se sirven los portales (por la cookie de refresh) | No hace falta: lo resolvemos con el reenvío de auth (ver "Despliegue") |
+| Si el Gateway espera una URL pública del BFF o una red compartida | URL pública (proyectos de Railway distintos). Falta que CORE la registre |
 | Usuarios de prueba en su ambiente | Hay uno STUDENT, uno TEACHER y uno ADMIN; las credenciales se piden por privado a CORE |
 | Límite de pedidos | 100 por minuto por IP de cliente, en toda la API (`x-ratelimit-limit: 100`). Pendiente: si aplica al proxy `/api/v1/{module}/*`, porque todo lo que pide el BFF sale de una sola IP (ver "Del lado de CORE") |
 | Prefijo y rutas de cada módulo detrás del Gateway | _pendiente_ (hoy usamos la suposición de [`integraciones.md`](integraciones.md)) |
@@ -43,6 +43,8 @@ Ninguna URL está en el código: pasar a CORE real es cambiar estas variables.
 | `VITE_NOTIFICATIONS_URL` | Front | `http://localhost:4000/notifications` | `https://core-api-production-e458.up.railway.app/notifications` (supuesto) |
 | `VITE_BIBLIOTECA_URL` | Front | `https://asignia.app/uade-net` | Portal de Biblioteca (Módulo 3) |
 | `VITE_EVENTOS_URL` | Front | `https://eventos.uadenet.example` | Portal de Eventos (Módulo 6) |
+| `VITE_AUTH_PROXY` | Front | `false` | `true`: login, refresh y logout por el reenvío del nginx (ver "Despliegue") |
+| `CORE_URL` | nginx del front | `http://localhost:4000` (no se usa) | `https://core-api-production-e458.up.railway.app`, sin `/` final |
 
 Las `VITE_*` quedan fijas **al compilar** el front: cambiarlas obliga a reconstruirlo
 (`npm run build` o una imagen nueva de Docker).
@@ -52,11 +54,9 @@ Las variables del CORE falso (`CORE_*`, `STUDENT_SERVICE_URL`, `{MODULO}_SERVICE
 
 ### Docker
 
-Hoy `docker-compose.yml` sirve solo para el CORE falso: el BFF tiene
-`GATEWAY_URL: http://core-falso:4000` fijo y el front se compila con `localhost:4000`.
-Cuando tengamos los valores de CORE, hay que agregar un compose aparte (por ejemplo,
-`docker-compose.core-real.yml`) que levante solo `web` y `bff`, sin `core-falso` ni Prism,
-con las variables de la tabla anterior.
+`docker-compose.yml` sirve solo para el CORE falso: el BFF tiene
+`GATEWAY_URL: http://core-falso:4000` fijo y el front se compila con `localhost:4000`. Con CORE
+real se usa el despliegue en Railway (ver "Despliegue"), que usa los mismos Dockerfiles.
 
 ### Del lado de CORE
 
@@ -67,12 +67,10 @@ con las variables de la tabla anterior.
 - **Cookie de refresh:** la define CORE. En un login real llegó `refreshToken` con
   `Path=/api/v1/auth`, `HttpOnly`, `SameSite=Lax`, sin `Domain` y sin `Secure`. `up.railway.app`
   está en la Public Suffix List, así que un front en otro subdominio de Railway tampoco es
-  el mismo sitio que CORE: la sesión se pierde al recargar. Como no fija `Domain`, el plan B
-  funciona si el reenvío conserva la ruta `/api/v1/auth`. Plan B: una regla de reescritura en
-  el hosting del front para login, refresh y logout (ver [`arquitectura.md`](arquitectura.md), "Despliegue").
-  El CORS de producción acepta `http://localhost:5173` con credenciales, pero desde
-  `localhost` la cookie `Lax` tampoco viaja en el `POST /auth/refresh`: probarlo con un
-  usuario real antes de dar por buena la sesión.
+  el mismo sitio que CORE: la sesión se pierde al recargar. Se resuelve con el reenvío de
+  `/api/v1/auth/*` desde el nginx del front (ver "Despliegue"), que funciona porque la cookie
+  no fija `Domain`. CORE igual tiene que aceptar el origen del front en su CORS: el resto de
+  los pedidos (BFF, saldo, notificaciones, socket) van directo al Gateway.
 - **Límite de pedidos:** CORE limita a 100 pedidos por minuto por IP de cliente
   (`TRUST_PROXY_HOPS=1` en Railway). Todo lo que el BFF pide al Gateway sale de la IP del BFF,
   y una sola pantalla puede hacer varios pedidos (el calendario hace tres): si el límite
@@ -239,24 +237,82 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 | Pruebas y demo | [`pruebas.md`](pruebas.md) "Inscripción" e "Historial"; [`demo-guide.md`](demo-guide.md) pasos 5 y 6 |
 | Trello | "[Módulo 9 · Gestión Académica]…", "[Módulos 2 y 9] Fuente única de la nota final" e "[Integración] Módulo 9" |
 
-## Anexo: despliegue (movido de arquitectura.md)
+## Despliegue
 
-Todavía no se eligió proveedor; no hace falta hasta la entrega final (la segunda entrega
-se muestra en local con compose).
+En Railway, proyecto `uadenet-alumnos` (propio, no el de CORE), con dos servicios que salen
+del mismo repo. El CORE falso y Prism no se despliegan.
 
-- **BFF:** se puede hostear en cualquier lado; a CORE se le pasa la URL para
-  `STUDENT_SERVICE_URL`. Tiene que responder dentro del timeout de 10 s del Gateway
-  (ojo con planes que duermen el servicio).
-- **Frontend:** archivos estáticos. El proveedor es libre, pero el dominio no: la cookie de
-  refresh es `SameSite=Lax` y la define CORE, así que el navegador solo la envía si el front
-  está bajo el mismo sitio que CORE. Si no, la sesión se pierde al recargar.
-- **Red interna:** CORE pide que el módulo no sea accesible desde afuera. No se arma red
-  privada; el riesgo se cubre con la validación local del JWT.
+| Servicio | Dominio | Dockerfile | Health check | Carpetas que disparan un deploy |
+| --- | --- | --- | --- | --- |
+| `bff` | `https://uadenet-alumnos-bff.up.railway.app` | `apps/bff/Dockerfile` | `/health/live` (no depende de CORE) | `apps/bff/**`, `packages/**`, `openapi.yaml`, `package*.json` |
+| `web` | `https://uadenet-alumnos.up.railway.app` | `apps/web/Dockerfile` (build de Vite servido por nginx) | `/` | `apps/web/**`, `packages/api-types/**`, `openapi.yaml`, `package*.json` |
 
-Lo que se respeta desde ya para no atarse a ningún proveedor: toda URL es configuración
-(Gateway, JWKS, issuer, audience, WebSocket), el BFF no guarda estado y expone
-`GET /health/live` y `GET /health/ready`.
+Los dos se construyen desde la raíz del repo, con reinicio ante fallas. La configuración vive
+en cada servicio de Railway (no hay `railway.json`: Railway ya no lo acepta en servicios
+nuevos).
 
-**Pendiente con CORE:** bajo qué dominio se sirven los portales, si esperan URL pública o
-red compartida, y si habrá ambiente de pruebas. Plan B para la cookie: regla de reescritura
-en el hosting del front para login, refresh y logout.
+### Variables de cada servicio
+
+**`bff`** (en tiempo de ejecución):
+
+| Variable | Valor |
+| --- | --- |
+| `PORT` y `BFF_PORT` | `3000` (Railway rutea y hace el health check contra `PORT`) |
+| `GATEWAY_URL` | `https://core-api-production-e458.up.railway.app` |
+| `JWKS_URL` | `https://core-api-production-e458.up.railway.app/.well-known/jwks.json` |
+| `JWT_ISSUER` | `https://core-api-production-e458.up.railway.app` |
+| `JWT_AUDIENCE` | `uadenet` |
+| `PREFIJO_*` | Los de `.env.example` (`/api/v1/teacher`, `/api/v1/dining`, ...) |
+| `LOG_LEVEL` | `info` |
+
+**`web`**: las `VITE_*` se usan al compilar (Railway pasa las variables del servicio a los
+`ARG` del Dockerfile); `PORT` y `CORE_URL`, al arrancar nginx.
+
+| Variable | Valor |
+| --- | --- |
+| `VITE_GATEWAY_URL` | `https://core-api-production-e458.up.railway.app` |
+| `VITE_NOTIFICATIONS_URL` | `https://core-api-production-e458.up.railway.app/notifications` |
+| `VITE_BIBLIOTECA_URL` | `https://asignia.app/uade-net` |
+| `VITE_EVENTOS_URL` | Portal de Eventos (Módulo 6) |
+| `VITE_AUTH_PROXY` | `true` |
+| `PORT` | `8080` |
+| `CORE_URL` | `https://core-api-production-e458.up.railway.app` (sin `/` final: nginx recortaría la ruta) |
+
+Cambiar una `VITE_*` obliga a redesplegar `web` (queda fija en el build).
+
+### Reenvío de auth (cookie de refresh)
+
+La cookie de refresh de CORE es `SameSite=Lax`, con `Path=/api/v1/auth` y sin `Domain`, y
+`up.railway.app` está en la Public Suffix List: el front en su propio subdominio de Railway no
+es el mismo sitio que CORE y la cookie no viajaría en el refresh. Por eso, con
+`VITE_AUTH_PROXY=true`, el front llama a `/api/v1/auth/*` en su propio origen y nginx lo
+reenvía a `CORE_URL` conservando la ruta (`apps/web/nginx.conf.template`). Para el navegador la
+cookie es del dominio del portal.
+
+- Solo se reenvía `/api/v1/auth/`. El BFF, el saldo, las notificaciones y el socket siguen
+  yendo directo al Gateway, así que CORE tiene que aceptar el origen del front en su CORS.
+- Los login y refresh de todos los alumnos le llegan a CORE desde la IP del front: comparten
+  el límite de 100 pedidos por minuto por IP.
+- Si CORE pasara la cookie a `SameSite=None; Secure`, alcanza con sacar `VITE_AUTH_PROXY` y
+  redesplegar `web`. No conviene: Safari bloquea esas cookies por defecto.
+
+### Paso a paso
+
+Ya hecho para `uadenet-alumnos`; sirve para rearmarlo desde cero.
+
+1. Darle acceso a la Railway App de GitHub al repo. Es privado y de una cuenta personal: lo
+   tiene que instalar el dueño (`PerezzL`).
+2. Crear el proyecto y los servicios `bff` y `web` vacíos.
+3. En cada servicio, cargar Dockerfile, health check y carpetas (tabla de arriba) y las
+   variables, antes de conectar el repo: así el primer build ya sale bien.
+4. Conectar cada servicio al repo (rama `main`) y generar su dominio público con el puerto de
+   su `PORT`.
+5. Probar `https://<bff>/health/ready` y abrir `https://<web>`.
+6. Pasarle a CORE la URL del BFF con `/api/v1` para `STUDENT_SERVICE_URL`, y el origen del
+   front para su CORS.
+7. Probar con el usuario de prueba la lista de "Cómo verificar" (arriba).
+
+### Seguridad
+
+CORE pide que el módulo no sea accesible desde afuera. El BFF queda con URL pública (Railway
+no comparte red privada entre proyectos); el riesgo se cubre con la validación local del JWT.

@@ -1,7 +1,8 @@
 import { config } from '@/config';
 
 /**
- * Llamadas de autenticación contra CORE por el Gateway (no pasan por el BFF).
+ * Llamadas de autenticación contra CORE: por el Gateway, o por el reenvío del propio hosting si
+ * `VITE_AUTH_PROXY=true` (ver `baseAuth` en config.ts). No pasan por el BFF.
  * Contrato: docs/core/CORE_INTEGRACION.md, sección 3.
  */
 
@@ -26,7 +27,7 @@ export class ErrorLogin extends Error {
   }
 }
 
-const url = (ruta: string) => `${config.gatewayUrl}/api/v1/auth${ruta}`;
+const url = (ruta: string) => `${config.authUrl}/api/v1/auth${ruta}`;
 
 export async function login(email: string, password: string) {
   let res: Response;
