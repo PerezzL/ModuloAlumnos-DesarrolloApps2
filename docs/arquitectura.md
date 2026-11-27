@@ -15,8 +15,9 @@ no es dueño de los datos académicos. Combina dos estilos de comunicación:
 - **Frontend (SPA)**: HTTP/REST hacia el BFF para lo que agrega o traduce; HTTP/REST directo
   a CORE (por Gateway) para auth, notificaciones y saldo; `socket.io-client` directo a CORE
   para notificaciones en tiempo real.
-- **BFF**: REST hacia el Gateway de CORE, que es el único punto de entrada hacia otros módulos.
-  Cachea datos de baja variación (correlatividades, nombres de asignatura).
+- **BFF**: REST hacia el Gateway de CORE, que es el punto de entrada hacia otros módulos. La
+  excepción es Backoffice, que se lee directo con un token de servicio (ver
+  [Backoffice: lecturas internas](#backoffice-lecturas-internas)). Cachea datos de baja variación (correlatividades, nombres de asignatura).
 - **Gateway de CORE**: enruta cada petición al microservicio destino según un prefijo fijo.
 - **Microservicios**: Gestión Académica (9), Docente (2), Biblioteca (3), Comedor (4),
   Tienda (5), Eventos (6), Backoffice (8). CORE gestiona además auth, notificaciones y saldo.
@@ -111,7 +112,7 @@ Comportamiento:
 - Inyecta en cada request autenticado: `X-User-Id`, `X-User-Roles`, `X-User-Permissions`,
   `X-Correlation-Id`.
 
-**Abierto:** las rutas que informaron los módulos 8 y 9 (`/api/v1/backoffice/users/{userId}`, `/api/planificacion/...`,
+**Abierto:** las rutas que informó el Módulo 9 (`/api/planificacion/...`,
 `/api/academica/...`) son las de cada servicio. Falta confirmar cómo quedan publicadas
 detrás del prefijo del Gateway. Mientras tanto suponemos **prefijo + recurso** (por ejemplo
 `/api/v1/academic/planificacion/cursos`); la tabla completa está
@@ -120,6 +121,30 @@ en [`integraciones.md`](integraciones.md).
 **El JWT sí llega al BFF.** Según el contrato de CORE, `Authorization: Bearer <jwt>` viaja
 siempre (salvo login, refresh, health y JWKS) y los headers `X-User-*` se suman a ese token,
 no lo reemplazan. Por eso el BFF puede validar la firma y reenviar el token al Módulo 6.
+
+### Backoffice: lecturas internas
+
+Backoffice no le da al alumno permiso para leer su ficha ni las sedes por el Gateway, y CORE no
+le asigna `backoffice:read` al rol STUDENT: ese permiso no distingue rutas, así que cualquier
+alumno podría leer las fichas de otras personas. El camino que acordaron CORE y Backoffice
+(spec "BO1" del Módulo 8) es que el backend de cada portal lea las rutas internas con su token
+de servicio:
+
+1. El BFF pide un token de servicio a CORE (`POST /internal/v1/service-auth/token`, con el
+   `clientId` y el `clientSecret` de `student-service`). Lo cachea en memoria hasta un minuto
+   antes de que venza y, si varios pedidos lo necesitan juntos, pide uno solo.
+2. Llama directo al backend de Backoffice (`BACKOFFICE_INTERNAL_URL`), sin Gateway y sin
+   `X-Core-Signature`: `GET /internal/v1/users/{userId}` (ficha, permiso
+   `backoffice:people:read`) y `GET /internal/v1/sites` (sedes, `backoffice:read`).
+3. La ficha se pide siempre con el `X-User-Id` del pedido, nunca con un id que llegue del
+   front: así cada alumno ve solo la suya. El nombre del docente de una nota también sale de
+   acá.
+
+Las respuestas son las mismas que por el Gateway, así que el adaptador no cambió de forma. Si
+Backoffice rechaza el token (401), se pide otro y se reintenta una vez. Backoffice limita a 120
+pedidos por minuto por módulo (`429`, que el BFF trata como módulo no disponible); sedes y
+nombres están cacheados una hora. Código: `apps/bff/src/servicio/` y
+`apps/bff/src/modulos/backoffice/backoffice.interno.ts`.
 
 ## Stack
 

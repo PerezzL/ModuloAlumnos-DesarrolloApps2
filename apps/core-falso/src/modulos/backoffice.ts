@@ -9,13 +9,13 @@ interface Sede {
 }
 
 /**
- * Módulo 8. Usuario y sedes siguen su documento de flujo de datos; `careers` lo adelantaron
- * aparte. La ruta del usuario está a confirmar.
+ * Módulo 8. Usuario y sedes con las mismas respuestas que su spec (BO1): por el Gateway
+ * (`/api/v1/...`) y por las lecturas internas (`/internal/v1/...`, ver servicio.ts).
  */
-export function moduloBackoffice() {
+export function rutasBackoffice() {
   const router = Router();
-  router.get('/api/v1/users/:userId', (req, res) => {
-    const usuarios = fixture<Record<string, unknown>>('backoffice/users.provisional.json');
+  router.get('/users/:userId', (req, res) => {
+    const usuarios = fixture<Record<string, unknown>>('backoffice/users.json');
     const usuario = Object.hasOwn(usuarios, req.params.userId)
       ? usuarios[req.params.userId]
       : undefined;
@@ -24,7 +24,7 @@ export function moduloBackoffice() {
   });
 
   const sedes = () => fixture<{ items: Sede[] }>('backoffice/sites.json').items;
-  router.get('/api/v1/sites', (req, res) => {
+  router.get('/sites', (req, res) => {
     const { status, cursor, limit } = req.query;
     const filtradas = status === undefined ? sedes() : sedes().filter((s) => s.status === status);
     try {
@@ -34,10 +34,15 @@ export function moduloBackoffice() {
       enviarProblema(res, 400, 'VALIDATION_ERROR', error.message);
     }
   });
-  router.get('/api/v1/sites/:siteId', (req, res) => {
+  router.get('/sites/:siteId', (req, res) => {
     const sede = sedes().find((s) => s.siteId === req.params.siteId);
     if (!sede) return enviarProblema(res, 404, 'NOT_FOUND', 'Sede inexistente');
     res.json(sede);
   });
   return router;
+}
+
+/** Backoffice detrás del Gateway: recibe la ruta ya reescrita a `/api/v1/...` */
+export function moduloBackoffice() {
+  return Router().use('/api/v1', rutasBackoffice());
 }

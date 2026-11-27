@@ -1,5 +1,5 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
-import { GW } from './app-e2e';
+import { BO, GW } from './app-e2e';
 import { fixture } from './fixtures';
 
 /** Rutas de las tres fuentes del calendario detrás del Gateway simulado */
@@ -10,7 +10,7 @@ export const RUTAS_CALENDARIO = {
 } as const;
 
 /** Catálogo de sedes de Backoffice: Comedor manda solo el `siteId` */
-export const RUTA_SEDES = `${GW}/api/v1/backoffice/sites`;
+export const RUTA_SEDES = `${BO}/sites`;
 
 export type FuenteCalendario = keyof typeof RUTAS_CALENDARIO;
 

@@ -61,14 +61,16 @@ Los tests (`*.test.ts(x)`) están junto a lo que prueban y corren con Vitest y T
 ## BFF — `apps/bff`
 
 NestJS. Recibe por el Gateway los pedidos de `/api/v1/student/*`, llama a los módulos
-externos también por el Gateway y devuelve los modelos del contrato.
+externos también por el Gateway (salvo Backoffice, que se lee directo con un token de
+servicio) y devuelve los modelos del contrato.
 
 | Carpeta (`src/`) | Qué hay |
 | --- | --- |
 | `main.ts`, `app.ts`, `app.module.ts` | Arranque. `app.ts` arma lo común a producción y a los tests: logger, correlation id, health, Swagger y el prefijo `/api/v1` |
-| `config/` | Variables de entorno validadas con zod (Gateway, JWKS, issuer, audience, prefijos de cada módulo, timeout) |
+| `config/` | Variables de entorno validadas con zod (Gateway, JWKS, issuer, audience, prefijos de cada módulo, timeout, token de servicio y URL interna de Backoffice) |
 | `auth/` | Guard global que valida el JWT contra el JWKS de CORE; decorador `@AlumnoActual()` que lee `X-User-Id`; `@Publico()` para lo que no requiere token |
-| `gateway/` | `GatewayClient`: único cliente HTTP hacia los módulos. Arma la URL con el prefijo configurado, reenvía el token y el `X-Correlation-Id`, aplica el timeout y traduce 502, 503 y 504 |
+| `gateway/` | `pedido.ts`: el `fetch` hacia un módulo, con timeout, y la traducción de 502, 503, 504 y 429. `GatewayClient`: arma la URL con el prefijo configurado y reenvía el token del alumno y el `X-Correlation-Id` |
+| `servicio/` | `TokenServicio`: token de servicio de CORE (`student-service`), cacheado hasta poco antes de vencer. Lo usa solo el cliente interno de Backoffice (`modulos/backoffice/backoffice.interno.ts`) |
 | `comun/` | Errores problem+json (`problema.ts` y su filtro), contexto por request con `AsyncLocalStorage` (`contexto.ts`), logger, caché en memoria con TTL (`cache.ts`) y validación de parámetros |
 | `modulos/` | Un adaptador por módulo externo (ver abajo) |
 | `calendario/`, `inscripcion/`, `cursadas/`, `compras/`, `perfil/`, `sedes/` | Un módulo de Nest por feature: controller con los endpoints del contrato, service que combina adaptadores y funciones puras con la lógica (`oferta.ts`, `historial.ts`, `detalle.ts`, `rango.ts`) |

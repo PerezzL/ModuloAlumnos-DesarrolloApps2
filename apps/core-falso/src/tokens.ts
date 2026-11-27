@@ -21,10 +21,20 @@ export interface ClaimsUsuario extends JWTPayload {
   planIds: string[];
 }
 
+export interface ClaimsServicio extends JWTPayload {
+  sub: string;
+  service: string;
+  clientId: string;
+  permissions: string[];
+}
+
 interface Sesion {
   sid: string;
   userId: string;
 }
+
+/** Vida del token de servicio, como el `expiresIn` de CORE */
+export const TTL_SERVICIO_S = 900;
 
 /**
  * Emite y valida tokens como CORE: access token RS256 de vida corta y refresh token opaco
@@ -77,6 +87,33 @@ export class Tokens {
         audience: this.config.audience,
       });
       return payload as ClaimsUsuario;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Token de servicio como el de CORE: `sub: service:<módulo>`, `service`, `clientId` y permisos. */
+  async emitirServicio(clientId: string, permissions: string[]) {
+    const servicio = clientId.replace(/-service$/, '');
+    return new SignJWT({ service: servicio, clientId, permissions })
+      .setProtectedHeader({ alg: 'RS256', kid: this.jwk.kid })
+      .setSubject(`service:${servicio}`)
+      .setIssuer(this.config.issuer)
+      .setAudience(this.config.audience)
+      .setIssuedAt()
+      .setExpirationTime(`${TTL_SERVICIO_S}s`)
+      .setJti(randomUUID())
+      .sign(this.privada);
+  }
+
+  /** Valida un token de servicio; uno de usuario (sin `service`) no sirve. */
+  async verificarServicio(token: string): Promise<ClaimsServicio | undefined> {
+    try {
+      const { payload } = await jwtVerify(token, this.publica, {
+        issuer: this.config.issuer,
+        audience: this.config.audience,
+      });
+      return typeof payload.service === 'string' ? (payload as ClaimsServicio) : undefined;
     } catch {
       return undefined;
     }

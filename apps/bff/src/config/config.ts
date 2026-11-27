@@ -19,8 +19,14 @@ const esquema = z.object({
   PREFIJO_COMEDOR: prefijo,
   PREFIJO_TIENDA: prefijo,
   PREFIJO_EVENTOS: prefijo,
-  PREFIJO_BACKOFFICE: prefijo,
   PREFIJO_ACADEMICO: prefijo,
+  // Token de servicio de CORE (`student-service`). Solo para Backoffice, que se lee directo
+  // por sus rutas internas y no por el Gateway (docs/arquitectura.md)
+  SERVICE_TOKEN_URL: url,
+  SERVICE_CLIENT_ID: z.string().min(1),
+  SERVICE_CLIENT_SECRET: z.string().min(1),
+  // Base de las lecturas internas de Backoffice, con `/internal/v1` incluido
+  BACKOFFICE_INTERNAL_URL: url,
 });
 
 export type Config = z.infer<typeof esquema>;

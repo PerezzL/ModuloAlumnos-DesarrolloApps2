@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { ListaSedes } from '@uadenet/api-types';
 import type { Alumno } from '../../auth/alumno.decorator';
 import { CacheTtl } from '../../comun/cache';
-import { GatewayClient, RespuestaModuloError } from '../../gateway/gateway.client';
+import { RespuestaModuloError } from '../../gateway/pedido';
+import { BackofficeInternoClient } from './backoffice.interno';
 import {
   aFicha,
   aListaSedes,
@@ -19,21 +20,23 @@ const TTL_NOMBRES_MS = 60 * 60 * 1000;
 /** Tope de páginas de 100 sedes: corta un cursor que nunca termina */
 const MAX_PAGINAS_SEDES = 10;
 
-/** Módulo 8 · Backoffice. Único lugar que conoce la forma de sus respuestas. */
+/**
+ * Módulo 8 · Backoffice. Único lugar que conoce la forma de sus respuestas. Lee las rutas
+ * internas (`/internal/v1/*`) con el token de servicio: Backoffice no le da al alumno permiso
+ * de lectura por el Gateway (docs/integraciones.md).
+ */
 @Injectable()
 export class BackofficeAdapter {
   // Una sola entrada con el catálogo completo: un llamado (o pocos) en lugar de uno por sede
   private readonly catalogoSedes = new CacheTtl<ReadonlyMap<string, string>>(TTL_SEDES_MS);
   private readonly nombres = new CacheTtl<string | null>(TTL_NOMBRES_MS);
 
-  constructor(private readonly gateway: GatewayClient) {}
+  constructor(private readonly backoffice: BackofficeInternoClient) {}
 
   async ficha(alumno: Alumno): Promise<FichaAlumno> {
     try {
-      const usuario = await this.gateway.get(
-        'BACKOFFICE',
-        `/users/${encodeURIComponent(alumno.id)}`,
-      );
+      // El id sale siempre del token (X-User-Id): cada alumno ve solo su ficha
+      const usuario = await this.backoffice.get(`/users/${encodeURIComponent(alumno.id)}`);
       return aFicha(alumno, usuario);
     } catch (error) {
       if (error instanceof RespuestaModuloError && error.estadoOrigen === 404) {
@@ -51,9 +54,7 @@ export class BackofficeAdapter {
   nombreDeUsuario(userId: string): Promise<string | null> {
     return this.nombres.obtener(userId, async () => {
       try {
-        return aNombreCompleto(
-          await this.gateway.get('BACKOFFICE', `/users/${encodeURIComponent(userId)}`),
-        );
+        return aNombreCompleto(await this.backoffice.get(`/users/${encodeURIComponent(userId)}`));
       } catch (error) {
         if (error instanceof RespuestaModuloError && error.estadoOrigen === 404) return null;
         throw error;
@@ -72,7 +73,7 @@ export class BackofficeAdapter {
       let cursor: string | null = null;
       for (let pagina = 0; pagina < MAX_PAGINAS_SEDES; pagina++) {
         const respuesta = aSedes(
-          await this.gateway.get('BACKOFFICE', '/sites', {
+          await this.backoffice.get('/sites', {
             query: { limit: 100, cursor: cursor ?? undefined },
           }),
         );

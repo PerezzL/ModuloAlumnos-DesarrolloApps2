@@ -217,9 +217,10 @@ El módulo de mentira de cada uno está en `apps/core-falso/src/modulos/`.
 
 | | |
 | --- | --- |
-| Falta confirmar | Que publiquen `careers: [{ careerId, planId }]`; la ruta definitiva de la ficha (lo define CORE) y el permiso de lectura |
-| Fixtures | `packages/fixtures/backoffice/users.provisional.json`; el nombre de la carrera sale de `academic/carreras.provisional.json` (Módulo 9) |
-| Adaptador | `apps/bff/src/modulos/backoffice/`. Lo usan `apps/bff/src/perfil/` (que resuelve el nombre de la carrera con el Módulo 9) y `apps/bff/src/inscripcion/` (para el `planId`). Si se manejan varias carreras, ver [`integraciones.md`](integraciones.md) |
+| Falta confirmar | Que el backend de Backoffice acepte los tokens del CORE real (la spec BO1 del 02/11 dice que valida los del CORE simulado). Ruta, forma y permisos ya están confirmados: se lee por `/internal/v1` con el token de servicio |
+| Variables | `SERVICE_TOKEN_URL`, `SERVICE_CLIENT_ID`, `SERVICE_CLIENT_SECRET` (secreto, lo pasó CORE) y `BACKOFFICE_INTERNAL_URL` |
+| Fixtures | `packages/fixtures/backoffice/users.json`; el nombre de la carrera sale de `academic/carreras.provisional.json` (Módulo 9) |
+| Adaptador | `apps/bff/src/modulos/backoffice/` (cliente directo en `backoffice.interno.ts`, token en `apps/bff/src/servicio/`). Lo usan `apps/bff/src/perfil/` (que resuelve el nombre de la carrera con el Módulo 9) y `apps/bff/src/inscripcion/` (para el `planId`). Si se manejan varias carreras, ver [`integraciones.md`](integraciones.md) |
 | Contrato | `Perfil`: `carrera` y `planId` (`x-provisional`); `nombre`, `apellido` y `legajo` ya están confirmados |
 | Decisiones | **11**: sin `planId` de Backoffice, la oferta usa el plan activo de la carrera en el Módulo 9; sin carrera, sale sin materias (`filtradaPorPlan: false`, en `apps/bff/src/inscripcion/inscripcion.service.ts`). Si Backoffice publica `careers`, revisar si el respaldo sigue haciendo falta |
 | Pruebas y demo | [`pruebas.md`](pruebas.md) "Home y perfil" e "Inscripción" (caso "Sin plan" con `j.perez`); [`demo-guide.md`](demo-guide.md) pasos 3 y 5 |

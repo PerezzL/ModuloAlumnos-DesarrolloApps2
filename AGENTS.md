@@ -69,8 +69,12 @@ Las respuestas del BFF se validan contra el contrato con `@uadenet/contrato`
 **Adaptadores**
 - Un adaptador por módulo externo. Es el único lugar que conoce la forma de la respuesta
   de ese módulo; el resto del BFF y el frontend solo ven los modelos del [`openapi.yaml`](openapi.yaml).
-- El BFF habla con los demás módulos únicamente por el Gateway de CORE. La URL del Gateway
-  y los prefijos de ruta son configuración, no constantes en el código.
+- El BFF habla con los demás módulos únicamente por el Gateway de CORE, con el token del alumno.
+  Única excepción: Backoffice se lee directo por sus rutas internas (`/internal/v1/*`) con el
+  token de servicio de CORE (`student-service`), porque no le da al alumno permiso de lectura.
+  El token de servicio no se usa para nada más, y la ficha se pide siempre con el `X-User-Id`.
+- La URL del Gateway, la de Backoffice, la del token de servicio y los prefijos de ruta son
+  configuración, no constantes en el código.
 - Cada adaptador tiene tests con fixtures: JSON de ejemplo del módulo externo → modelo propio.
   Las fixtures viven en `packages/fixtures/<modulo>/` y el CORE falso sirve las mismas;
   las que dependen de un contrato no confirmado se nombran `*.provisional.json`.

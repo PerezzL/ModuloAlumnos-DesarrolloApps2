@@ -84,9 +84,9 @@ CORE aclara que todo es compatible: no se quitaron rutas, campos, roles ni permi
 - **No nos afecta:** `GET /internal/v1/identities/{userId}` y sus errores `AUTH_*` (para
   Backoffice), reversa idempotente del saldo, `events:read` en
   `GET /internal/v1/events/{eventId}`.
-- **Credenciales de servicio:** CORE ya nos asignó el `clientId` `student-service` y su
-  `clientSecret` (para `POST /internal/v1/service-auth/token`). Hoy no se usan: no llamamos a
-  `/internal/v1/*`. El secreto no va al repo; si hace falta, entra como variable de entorno.
+- **Credenciales de servicio:** CORE nos asignó el `clientId` `student-service` y su
+  `clientSecret` (para `POST /internal/v1/service-auth/token`). Se usan solo para leer
+  Backoffice (ver Módulo 8). El secreto no va al repo: va en `SERVICE_CLIENT_SECRET` en Railway.
 - **Límite de pedidos:** 100 por minuto por IP de cliente, en toda la API. Ver el pendiente
   de abajo.
 - **Alta en el Gateway (respuesta de CORE, 17/11):**
@@ -381,12 +381,22 @@ Recordatorio: `tipo`, `usuarioId` (el mismo id del JWT de CORE), `eventoId`, `ti
 
 | Tema | Estado |
 | --- | --- |
-| `GET /api/v1/backoffice/users/{userId}` | Confirmado (documento de flujo de datos del Módulo 8) |
+| Spec de las lecturas internas ("BO1") | Publicada: Swagger en <https://frontend-production-d79fc.up.railway.app/docs/swagger-ui/index.html> ("Lecturas internas para otros backends") |
+| Cómo se lee | **Directo a Backoffice, con token de servicio**, por `https://backend-production-e464.up.railway.app/internal/v1` (`BACKOFFICE_INTERNAL_URL`). No pasa por el Gateway ni lleva `X-Core-Signature` |
+| `GET /internal/v1/users/{userId}` | Confirmado. Pide `backoffice:read` y `backoffice:people:read`, que `student-service` tiene. Misma respuesta que `GET /api/v1/backoffice/users/{userId}` |
+| `GET /internal/v1/sites?status=&cursor=&limit=` | Confirmado. Pide `backoffice:read`. Misma respuesta que `GET /api/v1/backoffice/sites` |
+| Por el Gateway con el token del alumno | **No:** Backoffice responde `403 FORBIDDEN` a `/users/{id}` y a `/sites` (verificado en Railway el 26/11), y CORE no le da `backoffice:read` a STUDENT |
 | Campos de la ficha | Confirmado: `userId`, `email`, `firstName`, `lastName`, `documentId`, `fileNumber`, `roles`, `status`, `siteId`, `careerId` |
-| `careers: [{ careerId, planId }]` (un plan por carrera, asignado en el alta) | Comprometido; todavía no publicado |
-| Ruta definitiva de la consulta | Pendiente; adelantaron `GET /internal/v1/users/{userId}` con token de servicio. Lo define CORE: mientras tanto seguimos con la ruta del Gateway |
-| Permiso de lectura | Pendiente; nos avisan |
-| `GET /api/v1/backoffice/sites` · `/sites/{siteId}` | Confirmado (documento de flujo de datos del Módulo 8) |
+| `careers: [{ careerId, planId }]` (un plan por carrera, asignado en el alta) | Confirmado: obligatorio en la ficha de la spec |
+| Límite de pedidos | 120 por minuto por módulo, contado por el token de servicio. Si se pasa, `429 HTTP_429` con `Retry-After` |
+| Tokens del CORE real | A verificar con la primera llamada: la spec (02/11) dice que el backend desplegado valida los del CORE simulado |
+
+Respuesta de CORE (26/11) sobre el 403: lo devuelve Backoffice, no el Gateway (cuando rechaza
+CORE, el código es `AUTH_FORBIDDEN`). CORE no le va a dar `backoffice:read` al rol STUDENT
+porque ese permiso no distingue rutas: cualquier alumno podría leer las fichas de otras
+personas. Para la ficha se usa siempre el `sub` del token del alumno (`X-User-Id`) como
+`{userId}`. Cómo lo implementa el BFF: [`arquitectura.md`](arquitectura.md), "Backoffice:
+lecturas internas".
 
 - `careerId` y `planId` son ids del Módulo 9: numéricos, pero los mandan como texto.
 - El 404 para un `userId` que no existe está confirmado.
@@ -421,7 +431,7 @@ Cómo lo usa el BFF (`GET /me`, adaptador en `apps/bff/src/modulos/backoffice/` 
 - Un 404 de Backoffice (usuario que no conoce) no es error: el perfil sale con id, mail y, si
   el token la trae, la carrera.
 
-Fixture: `backoffice/users.provisional.json`, con la ficha del documento más `careers`.
+Fixture: `backoffice/users.json`, con la ficha del documento más `careers`.
 Provisional hasta que publiquen `careers`.
 
 Sedes: Backoffice es el dueño del catálogo de sedes, y las sedes no tienen evento: se

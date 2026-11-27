@@ -9,9 +9,7 @@ import {
   fichaSoloIdentidad,
 } from './backoffice.mapper';
 
-const usuarios = fixture<Record<string, Record<string, unknown>>>(
-  'backoffice/users.provisional.json',
-);
+const usuarios = fixture<Record<string, Record<string, unknown>>>('backoffice/users.json');
 const conPlan = usuarios['ba310c57-a684-4dbf-a4a4-905fcfbefa08']!;
 const sinCarreras = usuarios['6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f']!;
 const alumno = { id: 'ba310c57-a684-4dbf-a4a4-905fcfbefa08', email: 'v.moreno@uade.edu.ar' };

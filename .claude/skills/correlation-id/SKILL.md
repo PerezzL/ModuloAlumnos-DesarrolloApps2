@@ -72,6 +72,14 @@ Cómo lo traduce el BFF (`apps/bff/src/gateway/gateway.client.ts`): 503 y fallas
 conexión → `UPSTREAM_UNAVAILABLE`; 502 o cuerpo que no es JSON → `UPSTREAM_INVALID`;
 504 o timeout propio (`GATEWAY_TIMEOUT_MS`) → timeout; 401 → `AUTH_TOKEN_INVALID`.
 
+Backoffice no pasa por el Gateway: el BFF lo llama directo con el token de servicio
+(`context=BackofficeInternoClient`). Su línea de error es `Respuesta de error de Backoffice`
+(filtrar por ese mensaje). Un `403` ahí es un permiso que falta en el token de servicio
+(`backoffice:read` o `backoffice:people:read`); un `429`, el límite de 120 pedidos por minuto
+de Backoffice. Si falla el pedido del token a CORE, el error sale con `modulo: CORE`
+(`context=TokenServicio`, línea `Respuesta de error del token de servicio`): revisar
+`SERVICE_CLIENT_ID`, `SERVICE_CLIENT_SECRET` y `SERVICE_TOKEN_URL` en Railway.
+
 Errores propios del BFF, sin llamada al Gateway:
 
 - `GATEWAY_SIGNATURE_INVALID` (403): el pedido no trae una `X-Core-Signature` válida.

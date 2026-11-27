@@ -2,13 +2,13 @@ import { Contrato } from '@uadenet/contrato';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { RUTAS_ACADEMICO } from './academico-gateway';
-import { ALUMNO, cuerpo, GW, prepararE2E } from './app-e2e';
+import { ALUMNO, BO, cuerpo, prepararE2E, TOKEN_SERVICIO } from './app-e2e';
 import { fixture } from './fixtures';
 
 const contrato = new Contrato();
-const USUARIO = `${GW}/api/v1/backoffice/users/${ALUMNO}`;
+const USUARIO = `${BO}/users/${ALUMNO}`;
 const datos = Object.values(
-  fixture<Record<string, Record<string, unknown>>>('backoffice/users.provisional.json'),
+  fixture<Record<string, Record<string, unknown>>>('backoffice/users.json'),
 )[0]!;
 const carreras = () =>
   http.get(RUTAS_ACADEMICO.CARRERAS, () =>
@@ -39,7 +39,8 @@ describe('GET /me', () => {
       planId: '12',
     });
     expect(contrato.validar('get', '/me', 200, res.body).errores).toEqual([]);
-    expect(autorizacion).toBe(`Bearer ${e2e.token}`);
+    // Backoffice se lee con el token de servicio: el del alumno no sale del BFF
+    expect(autorizacion).toBe(`Bearer ${TOKEN_SERVICIO}`);
   });
 
   it('sin carreras no consulta al Módulo 9', async () => {
