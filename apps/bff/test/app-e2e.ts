@@ -13,6 +13,10 @@ import { configurarApp } from '../src/app';
 import { firmar } from '../src/auth/firma';
 
 export const GW = envDePrueba.GATEWAY_URL;
+/** Lecturas internas de Backoffice: se llaman directo, con el token de servicio */
+export const BO = envDePrueba.BACKOFFICE_INTERNAL_URL;
+/** Token de servicio que emite el CORE simulado en todos los e2e */
+export const TOKEN_SERVICIO = 'token-de-servicio-e2e';
 export const ALUMNO = 'alumno-opaco-1';
 
 /**
@@ -45,7 +49,12 @@ export function headersFirmados(
  */
 export function prepararE2E(opciones: { claims?: Record<string, unknown> } = {}) {
   let jwks: { keys: object[] } = { keys: [] };
-  const server = setupServer(http.get(envDePrueba.JWKS_URL, () => HttpResponse.json(jwks)));
+  const server = setupServer(
+    http.get(envDePrueba.JWKS_URL, () => HttpResponse.json(jwks)),
+    http.post(envDePrueba.SERVICE_TOKEN_URL, () =>
+      HttpResponse.json({ accessToken: TOKEN_SERVICIO, expiresIn: 900, tokenType: 'Bearer' }),
+    ),
+  );
   const ctx = {
     server,
     app: undefined as unknown as INestApplication,
@@ -76,7 +85,7 @@ export function prepararE2E(opciones: { claims?: Record<string, unknown> } = {})
     // supertest le habla al BFF por localhost: eso pasa; un módulo sin handler, falla
     server.listen({
       onUnhandledRequest: (req, print) => {
-        if (new URL(req.url).origin === GW) print.error();
+        if ([GW, new URL(BO).origin].includes(new URL(req.url).origin)) print.error();
       },
     });
     const modulo = await Test.createTestingModule({ imports: [AppModule] }).compile();

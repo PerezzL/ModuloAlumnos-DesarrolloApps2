@@ -11,7 +11,10 @@ const completa = {
   PREFIJO_COMEDOR: '/api/v1/dining',
   PREFIJO_TIENDA: '/api/v1/store',
   PREFIJO_EVENTOS: '/api/v1/events',
-  PREFIJO_BACKOFFICE: '/api/v1/backoffice',
+  SERVICE_TOKEN_URL: 'http://localhost:4000/internal/v1/service-auth/token',
+  SERVICE_CLIENT_ID: 'student-service',
+  SERVICE_CLIENT_SECRET: 'secreto',
+  BACKOFFICE_INTERNAL_URL: 'http://localhost:4000/backoffice/internal/v1',
   PREFIJO_ACADEMICO: '/api/v1/academic',
 };
 
@@ -37,5 +40,12 @@ describe('cargarConfig', () => {
 
   it('rechaza un prefijo sin barra inicial', () => {
     expect(() => cargarConfig({ ...completa, PREFIJO_TIENDA: 'store' })).toThrow(/PREFIJO_TIENDA/);
+  });
+
+  it('sin las credenciales del token de servicio no arranca', () => {
+    const { SERVICE_CLIENT_SECRET: _s, BACKOFFICE_INTERNAL_URL: _b, ...sinServicio } = completa;
+    expect(() => cargarConfig(sinServicio)).toThrow(
+      /SERVICE_CLIENT_SECRET[\s\S]*BACKOFFICE_INTERNAL_URL/,
+    );
   });
 });

@@ -10,7 +10,10 @@ export const envDePrueba = {
   PREFIJO_COMEDOR: '/api/v1/dining',
   PREFIJO_TIENDA: '/api/v1/store',
   PREFIJO_EVENTOS: '/api/v1/events',
-  PREFIJO_BACKOFFICE: '/api/v1/backoffice',
+  SERVICE_TOKEN_URL: 'http://gateway.test/internal/v1/service-auth/token',
+  SERVICE_CLIENT_ID: 'student-service',
+  SERVICE_CLIENT_SECRET: 'secreto-de-servicio-de-prueba',
+  BACKOFFICE_INTERNAL_URL: 'http://backoffice.test/internal/v1',
   PREFIJO_ACADEMICO: '/api/v1/academic',
   LOG_LEVEL: 'silent',
 };

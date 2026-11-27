@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { GW } from './app-e2e';
+import { BO, GW } from './app-e2e';
 import { fixture } from './fixtures';
 
 const M2 = `${GW}/api/v1/teacher/students/:alumnoId`;
@@ -9,7 +9,7 @@ export const RUTAS_DOCENTE = {
   ASISTENCIA: `${M2}/courses/:cursoId/attendance`,
   NOTAS: `${M2}/courses/:cursoId/grades`,
   RESULTADOS: `${M2}/results`,
-  USUARIO: `${GW}/api/v1/backoffice/users/:userId`,
+  USUARIO: `${BO}/users/:userId`,
 } as const;
 
 /** Fixture del Módulo 2 por curso; un curso sin datos es 404, como en el CORE falso */
@@ -40,7 +40,7 @@ export function docenteConFixtures() {
       HttpResponse.json(resultados(new URL(request.url).searchParams.get('courseId'))),
     ),
     http.get(RUTAS_DOCENTE.USUARIO, ({ params }) =>
-      porCurso('backoffice/users.provisional.json', params.userId),
+      porCurso('backoffice/users.json', params.userId),
     ),
   ];
 }

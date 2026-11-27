@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { ALUMNO, GW } from './app-e2e';
+import { ALUMNO, BO, GW } from './app-e2e';
 import { fixture } from './fixtures';
 
 const M9 = `${GW}/api/v1/academic`;
@@ -14,12 +14,10 @@ export const RUTAS_ACADEMICO = {
   CORRELATIVIDADES: `${M9}/academica/asignaturas/:asignaturaId/correlatividades`,
   INSCRIPCIONES: `${M9}/planificacion/alumnos/:alumnoId/inscripciones`,
   INSCRIBIR: `${M9}/planificacion/cursos/:cursoId/inscripciones`,
-  USUARIO: `${GW}/api/v1/backoffice/users/${ALUMNO}`,
+  USUARIO: `${BO}/users/${ALUMNO}`,
 } as const;
 
-const usuarios = fixture<Record<string, Record<string, unknown>>>(
-  'backoffice/users.provisional.json',
-);
+const usuarios = fixture<Record<string, Record<string, unknown>>>('backoffice/users.json');
 export const USUARIO_CON_PLAN = Object.values(usuarios)[0]!;
 
 /**

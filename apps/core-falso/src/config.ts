@@ -33,6 +33,8 @@ export interface ConfigCore {
   timeoutGatewayMs: number;
   /** Secreto de la firma `X-Core-Signature` de los pedidos que el Gateway reenvía. Solo de desarrollo */
   secretoFirma: string;
+  /** Cliente de servicio del portal (`student-service`) para `POST /internal/v1/service-auth/token` */
+  clienteServicio: { clientId: string; clientSecret: string };
 }
 
 export function cargarConfig(env: NodeJS.ProcessEnv = process.env): ConfigCore {
@@ -57,5 +59,10 @@ export function cargarConfig(env: NodeJS.ProcessEnv = process.env): ConfigCore {
     cookieSecure: env.CORE_COOKIE_SECURE === 'true',
     timeoutGatewayMs: Number(env.CORE_GATEWAY_TIMEOUT_MS ?? 10_000),
     secretoFirma: env.CORE_SIGNATURE_SECRET ?? 'secreto-de-desarrollo',
+    // Las mismas variables que usa el BFF para pedir el token: solo de desarrollo
+    clienteServicio: {
+      clientId: env.SERVICE_CLIENT_ID ?? 'student-service',
+      clientSecret: env.SERVICE_CLIENT_SECRET ?? 'secreto-de-servicio-de-desarrollo',
+    },
   };
 }

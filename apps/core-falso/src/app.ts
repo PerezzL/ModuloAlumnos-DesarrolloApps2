@@ -9,7 +9,7 @@ import { Fallas } from './fallas.js';
 import { routerFalso } from './falso.js';
 import { gateway } from './gateway.js';
 import { EstadoAcademico, moduloAcademico } from './modulos/academico.js';
-import { moduloBackoffice } from './modulos/backoffice.js';
+import { moduloBackoffice, rutasBackoffice } from './modulos/backoffice.js';
 import { moduloComedor } from './modulos/comedor.js';
 import { moduloDocente } from './modulos/docente.js';
 import { moduloEventos } from './modulos/eventos.js';
@@ -17,6 +17,7 @@ import { moduloTienda } from './modulos/tienda.js';
 import { Notificaciones, routerNotificaciones } from './notificaciones.js';
 import { enviarProblema } from './problema.js';
 import { routerSaldo, Saldos } from './saldo.js';
+import { backofficeInterno, routerTokenServicio } from './servicio.js';
 import { conectarSocket } from './socket.js';
 import { Tokens } from './tokens.js';
 
@@ -54,6 +55,10 @@ export async function crearApp(config: ConfigCore, opciones: OpcionesApp = {}) {
   // El portal usa notificaciones y saldo directo de CORE, sin pasar por el BFF
   app.use('/api/v1/notifications', routerNotificaciones(tokens, notificaciones));
   app.use('/api/v1/wallets', routerSaldo(tokens, saldos));
+  // Token de servicio (backend a backend) y las lecturas internas de Backoffice, que el BFF
+  // llama directo, sin Gateway. En el despliegue real Backoffice es otro servidor
+  app.use('/internal/v1/service-auth', routerTokenServicio(config, tokens));
+  app.use('/backoffice/internal/v1', backofficeInterno(config, tokens, fallas, rutasBackoffice()));
 
   // Módulos externos de mentira: responden si no hay un {MODULO}_SERVICE_URL configurado
   const locales: Record<Exclude<Modulo, 'student'>, RequestHandler> = {
