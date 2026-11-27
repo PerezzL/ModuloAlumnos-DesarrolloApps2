@@ -32,19 +32,19 @@ Una fixture se llama `*.provisional.json` cuando **la forma de la respuesta no e
 confirmada** por el módulo dueño: algunos nombres de campo, tipos o estructuras son
 suposición nuestra. Pasa por dos motivos:
 
-- **El módulo informó qué datos trae, pero no con qué nombres o forma.** Backoffice adelantó
-  `careers` con el `planId`, pero todavía no lo publicó.
+- **El módulo informó qué datos trae, pero no con qué nombres o forma.**
 - **El módulo publicó la forma, pero falta que se confirme.** Las del Módulo 9 siguen su
   documento y el pedido de alta que le mandó a CORE (noviembre 2026), que CORE todavía no
   confirmó; el status de sus rechazos es suposición nuestra.
 - **El endpoint existe, pero no tenemos la respuesta.** Partes de CORE (el ítem de
   notificación), porque no tenemos su `contracts/openapi.yaml`.
 
-Además, las rutas detrás del Gateway están sin confirmar para los módulos 4, 5, 8 y 9 y
+Además, las rutas detrás del Gateway están sin confirmar para los módulos 4, 5 y 9 y
 usamos una suposición ("prefijo + recurso"). Todo eso está detallado, módulo por módulo, en
 [`docs/integraciones.md`](../../docs/integraciones.md).
 
-Las fixtures del Módulo 2 (`teacher/*.json`) están confirmadas por su OpenAPI. También
+Las fixtures del Módulo 2 (`teacher/*.json`) están confirmadas por su OpenAPI, y las de
+Backoffice (`backoffice/*.json`) por su spec (BO1). También
 `events/eventos.json`: el Módulo 6 documentó todos sus
 campos.
 
@@ -85,8 +85,8 @@ Cuando un módulo confirma o cambia su respuesta:
 | `dining/calendar-me.json` | `GET /api/v1/calendar/me?from=&to=` |
 | `events/eventos.json` | `GET /api/v1/eventos` (y cada ítem, `GET /api/v1/eventos/{id}`) |
 | `store/orders-me.json` | `GET /api/v1/orders/me?status=&siteId=&from=&to=&limit=&cursor=` (y cada ítem, `GET /api/v1/orders/{id}`) |
-| `backoffice/users.provisional.json` | `GET /api/v1/users/{userId}`, por id |
-| `backoffice/sites.json` | `GET /api/v1/sites` (y cada ítem, `GET /api/v1/sites/{siteId}`) |
+| `backoffice/users.json` | `GET /api/v1/users/{userId}` y `GET /internal/v1/users/{userId}`, por id |
+| `backoffice/sites.json` | `GET /api/v1/sites` y `GET /internal/v1/sites` (y cada ítem, `GET /api/v1/sites/{siteId}`) |
 | `academic/carreras.provisional.json` | `GET /api/v1/academica/carreras` y `/carreras/con-ultimo-plan-activo` |
 | `academic/periodos.provisional.json` | `GET /api/v1/planificacion/periodos` |
 | `academic/turnos-examen.provisional.json` | `GET /api/v1/planificacion/turnos-examen` |
